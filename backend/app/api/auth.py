@@ -93,26 +93,28 @@ async def register(user_data: UserRegister, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-async def login(credentials: UserLogin, db: Session = Depends(get_db)):
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
-    Login user and return JWT tokens.
+    Login user and return JWT tokens. Uses OAuth2 standard form data.
     """
     # Find user by username or email
     user = db.query(User).filter(
-        (User.username == credentials.username) | (User.email == credentials.username)
+        (User.username == form_data.username) | (User.email == form_data.username)
     ).first()
     
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password"
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"}
         )
     
     # Verify password
-    if not verify_password(credentials.password, user.hashed_password):
+    if not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password"
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"}
         )
     
     if not user.is_active:
