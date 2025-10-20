@@ -382,10 +382,11 @@ export default function DashboardPage() {
                       <table className="w-full">
                         <thead className="bg-gray-50 border-b-2 border-gray-200">
                           <tr>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Report ID</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Name</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Type</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Report Type</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Upload Date</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Size</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Type</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Status</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Severity</th>
                             <th className="px-3 py-2 text-center text-[11px] font-bold text-gray-700 uppercase tracking-wider">Actions</th>
@@ -406,6 +407,11 @@ export default function DashboardPage() {
                                 report.analysis_status !== 'processing' ? 'cursor-pointer' : ''
                               }`}
                             >
+                              <td className="px-3 py-2.5">
+                                <code className="text-[10px] font-mono text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                                  {report.id.substring(0, 8)}...
+                                </code>
+                              </td>
                               <td className="px-3 py-2.5">
                                 <div className="flex items-center gap-2">
                                   <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
@@ -428,8 +434,12 @@ export default function DashboardPage() {
                                   year: 'numeric' 
                                 })}
                               </td>
-                              <td className="px-3 py-2.5 text-xs text-gray-600 font-medium">
-                                {report.file_size ? `${(report.file_size / 1024).toFixed(0)} KB` : '—'}
+                              <td className="px-3 py-2.5">
+                                {report.file_name && (
+                                  <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-bold uppercase">
+                                    {report.file_name.split('.').pop()?.toUpperCase()}
+                                  </span>
+                                )}
                               </td>
                               <td className="px-3 py-2.5">
                                 <div className="flex items-center gap-1.5">

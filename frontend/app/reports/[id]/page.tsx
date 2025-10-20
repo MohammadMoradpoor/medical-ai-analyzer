@@ -176,7 +176,7 @@ export default function ReportDetailPage() {
           
           {/* Page Title Section */}
           <div className="bg-white border-b-2 border-gray-200 px-6 py-5">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 mb-1">Medical Analysis Report</h1>
                 <p className="text-sm text-gray-600 font-medium">
@@ -196,16 +196,29 @@ export default function ReportDetailPage() {
                 </div>
               )}
             </div>
+            {/* Report ID Badge */}
+            <div className="flex items-center gap-2 px-6">
+              <span className="text-xs font-bold text-gray-500 uppercase">Report ID:</span>
+              <code className="text-xs font-mono text-gray-900 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200">
+                {reportId}
+              </code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(reportId)
+                  toast.success('Report ID copied to clipboard')
+                }}
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Copy ID
+              </button>
+            </div>
           </div>
 
-          {/* Two-Column Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-6">
+          {/* Content Layout */}
+          <div className="p-6 space-y-4">
             
-            {/* Left Column - Summary & Test Results */}
-            <div className="space-y-4">
-              
-              {/* Summary Section */}
-              {report.summary && (
+            {/* Summary Section */}
+            {report.summary && (
                 <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
                   <div className="px-4 py-3 bg-gradient-to-r from-blue-50 to-white border-b border-gray-200">
                     <div className="flex items-center gap-2">
@@ -294,13 +307,9 @@ export default function ReportDetailPage() {
                   </div>
                 </div>
               )}
-            </div>
 
-            {/* Right Column - Recommendations & Agent Logs */}
-            <div className="space-y-4">
-              
-              {/* Recommendations Section */}
-              {report.recommendations && report.recommendations.length > 0 && (
+            {/* Test Results Section */}
+            {report.test_analysis && report.test_analysis.length > 0 && (
                 <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
                   <div className="px-4 py-3 bg-gradient-to-r from-green-50 to-white border-b border-gray-200">
                     <div className="flex items-center gap-2">
@@ -319,8 +328,28 @@ export default function ReportDetailPage() {
                 </div>
               )}
 
-              {/* Agent Execution Logs Section */}
+            {/* Recommendations Section */}
+            {report.recommendations && report.recommendations.length > 0 && (
               <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                <div className="px-4 py-3 bg-gradient-to-r from-green-50 to-white border-b border-gray-200">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <h3 className="text-base font-bold text-gray-900">Recommendations ({report.recommendations.length})</h3>
+                  </div>
+                </div>
+                <div className="px-4 py-4 space-y-2.5">
+                  {report.recommendations.map((recommendation, index) => (
+                    <div key={index} className="flex items-start gap-2.5 p-3 bg-gradient-to-r from-green-50 to-white rounded-lg border-l-4 border-green-500">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-900 leading-relaxed font-medium">{recommendation}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Agent Execution Logs Section - Always Visible */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
                 <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-white border-b border-gray-200">
                   <div className="flex items-center gap-2">
                     <Activity className="h-5 w-5 text-indigo-600" />
@@ -342,12 +371,11 @@ export default function ReportDetailPage() {
                 </div>
               </div>
 
-              {/* Medical Disclaimer */}
-              <div className="bg-gradient-to-r from-blue-50 to-white border-l-4 border-blue-500 rounded-r-lg p-4">
-                <p className="text-xs text-blue-900 leading-relaxed font-medium">
-                  <strong className="font-bold text-sm">⚕️ Medical Disclaimer:</strong> This analysis is for informational purposes only and should not be considered as medical advice. Please consult with a qualified healthcare professional for proper interpretation and treatment.
-                </p>
-              </div>
+            {/* Medical Disclaimer */}
+            <div className="bg-gradient-to-r from-blue-50 to-white border-l-4 border-blue-500 rounded-r-lg p-4">
+              <p className="text-xs text-blue-900 leading-relaxed font-medium">
+                <strong className="font-bold text-sm">⚕️ Medical Disclaimer:</strong> This analysis is for informational purposes only and should not be considered as medical advice. Please consult with a qualified healthcare professional for proper interpretation and treatment.
+              </p>
             </div>
           </div>
         </div>
