@@ -56,8 +56,9 @@ export default function DashboardPage() {
   const fetchReports = async () => {
     try {
       const data = await reportsApi.list()
-      setReports(data)
+      setReports(data || [])
     } catch (error) {
+      console.error('Error fetching reports:', error)
       setReports([])
     } finally {
       setIsLoading(false)
@@ -70,7 +71,14 @@ export default function DashboardPage() {
       toast.success('Report deleted successfully')
       fetchReports()
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Failed to delete report')
+      let errorMsg = 'Failed to delete report'
+      if (error?.response?.data?.detail) {
+        const detail = error.response.data.detail
+        errorMsg = typeof detail === 'string' ? detail : (detail[0]?.msg || JSON.stringify(detail))
+      } else if (error?.message) {
+        errorMsg = error.message
+      }
+      toast.error(errorMsg)
     }
   }
 
@@ -421,7 +429,7 @@ export default function DashboardPage() {
                               <td className="px-3 py-2.5">
                                 {report.report_type ? (
                                   <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                                    {report.report_type}
+                                    {String(report.report_type)}
                                   </span>
                                 ) : (
                                   <span className="text-gray-400 text-xs">—</span>
@@ -437,7 +445,7 @@ export default function DashboardPage() {
                               <td className="px-3 py-2.5">
                                 {report.file_name && (
                                   <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-bold uppercase">
-                                    {report.file_name.split('.').pop()?.toUpperCase()}
+                                    {String(report.file_name.split('.').pop() || '').toUpperCase()}
                                   </span>
                                 )}
                               </td>

@@ -50,7 +50,14 @@ export default function RegisterPage() {
       toast.success('Registration successful! Please log in.')
       router.push('/login')
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Registration failed. Please try again.')
+      let errorMsg = 'Registration failed. Please try again.'
+      if (error?.response?.data?.detail) {
+        const detail = error.response.data.detail
+        errorMsg = typeof detail === 'string' ? detail : (detail[0]?.msg || 'Invalid input')
+      } else if (error?.message) {
+        errorMsg = error.message
+      }
+      toast.error(errorMsg)
     } finally {
       setIsLoading(false)
     }

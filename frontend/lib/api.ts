@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -55,7 +55,16 @@ export const authApi = {
   },
 
   login: async (credentials: { username: string; password: string }) => {
-    const response = await api.post('/auth/login', credentials)
+    // Send as form data for OAuth2 compatibility
+    const formData = new URLSearchParams()
+    formData.append('username', credentials.username)
+    formData.append('password', credentials.password)
+    
+    const response = await api.post('/auth/login', formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    })
     return response.data
   },
 

@@ -59,8 +59,15 @@ export default function ReportDetailPage() {
       setReport(data)
       // Fetch agent logs too
       fetchAgentLogs()
-    } catch (error) {
-      toast.error('Error loading report')
+    } catch (error: any) {
+      let errorMsg = 'Error loading report'
+      if (error?.response?.data?.detail) {
+        const detail = error.response.data.detail
+        errorMsg = typeof detail === 'string' ? detail : (detail[0]?.msg || 'Failed to load')
+      } else if (error?.message) {
+        errorMsg = error.message
+      }
+      toast.error(errorMsg)
       router.push('/dashboard')
     } finally {
       setIsLoading(false)
@@ -308,37 +315,17 @@ export default function ReportDetailPage() {
                 </div>
               )}
 
-            {/* Test Results Section */}
-            {report.test_analysis && report.test_analysis.length > 0 && (
-                <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-                  <div className="px-4 py-3 bg-gradient-to-r from-green-50 to-white border-b border-gray-200">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-5 w-5 text-green-600" />
-                      <h3 className="text-base font-bold text-gray-900">Recommendations ({report.recommendations.length})</h3>
-                    </div>
-                  </div>
-                  <div className="px-4 py-4 space-y-2.5">
-                    {report.recommendations.map((recommendation, index) => (
-                      <div key={index} className="flex items-start gap-2.5 p-3 bg-gradient-to-r from-green-50 to-white rounded-lg border-l-4 border-green-500">
-                        <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm text-gray-900 leading-relaxed font-medium">{recommendation}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
             {/* Recommendations Section */}
             {report.recommendations && report.recommendations.length > 0 && (
               <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
                 <div className="px-4 py-3 bg-gradient-to-r from-green-50 to-white border-b border-gray-200">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-600" />
-                    <h3 className="text-base font-bold text-gray-900">Recommendations ({report.recommendations.length})</h3>
+                    <h3 className="text-base font-bold text-gray-900">Recommendations ({report.recommendations?.length || 0})</h3>
                   </div>
                 </div>
                 <div className="px-4 py-4 space-y-2.5">
-                  {report.recommendations.map((recommendation, index) => (
+                  {(report.recommendations || []).map((recommendation, index) => (
                     <div key={index} className="flex items-start gap-2.5 p-3 bg-gradient-to-r from-green-50 to-white rounded-lg border-l-4 border-green-500">
                       <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                       <span className="text-sm text-gray-900 leading-relaxed font-medium">{recommendation}</span>

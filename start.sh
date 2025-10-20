@@ -36,14 +36,9 @@ cleanup() {
         kill $FRONTEND_PID 2>/dev/null || true
     fi
     
-    # Clean up all related processes
-    pkill -f "uvicorn.*medical" 2>/dev/null || true
-    pkill -f "next.*medical" 2>/dev/null || true
-    
-    # Free ports
-    for port in 3000 3001 3002 3003 3333 8000; do
-        lsof -ti:$port | xargs kill -9 2>/dev/null || true
-    done
+    # Gentle cleanup - only free the ports we need
+    fuser -k 8080/tcp 2>/dev/null || true
+    fuser -k 3333/tcp 2>/dev/null || true
     
     echo ""
     echo -e "${GREEN}✅ All services stopped successfully!${NC}"
@@ -78,17 +73,19 @@ echo -e "${MAGENTA}           STEP 1: Cleanup & Preparation${NC}"
 echo -e "${MAGENTA}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
 
-# Kill all existing processes
-echo -e "${YELLOW}🧹 Cleaning up existing processes...${NC}"
-pkill -9 -f "uvicorn.*medical" 2>/dev/null || true
-pkill -9 -f "next.*medical" 2>/dev/null || true
-pkill -9 -f "node.*next" 2>/dev/null || true
-
-# Free all ports
-echo -e "${YELLOW}🔓 Freeing ports 3000-3333 and 8000...${NC}"
-for port in 3000 3001 3002 3003 3333 8000; do
-    lsof -ti:$port | xargs kill -9 2>/dev/null || true
-done
+# Gentle cleanup - only if ports are actually in use
+echo -e "${YELLOW}🧹 Checking for existing processes...${NC}"
+# Check if backend port is in use
+if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo -e "${YELLOW}  Backend port 8080 in use, freeing...${NC}"
+    fuser -k 8080/tcp 2>/dev/null || true
+fi
+# Check if frontend port is in use  
+if lsof -Pi :3333 -sTCP:LISTEN -t >/dev/null 2>&1; then
+    echo -e "${YELLOW}  Frontend port 3333 in use, freeing...${NC}"
+    fuser -k 3333/tcp 2>/dev/null || true
+fi
+sleep 1
 
 sleep 2
 echo -e "${GREEN}✓ Cleanup complete${NC}"
@@ -188,17 +185,17 @@ echo ""
 echo -e "${CYAN}[1/2] 🔧 Starting Backend API Server...${NC}"
 cd "$BACKEND_DIR"
 source venv/bin/activate
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 > logs/backend.log 2>&1 &
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8080 > logs/backend.log 2>&1 &
 BACKEND_PID=$!
 echo -e "      ${GREEN}├─ Started (PID: $BACKEND_PID)${NC}"
-echo -e "      ${BLUE}├─ URL: http://localhost:8000${NC}"
-echo -e "      ${BLUE}└─ Docs: http://localhost:8000/docs${NC}"
+echo -e "      ${BLUE}├─ URL: http://localhost:8080${NC}"
+echo -e "      ${BLUE}└─ Docs: http://localhost:8080/docs${NC}"
 
 # Wait for backend to be ready
 echo -e "${YELLOW}      ⏳ Waiting for backend to initialize...${NC}"
 BACKEND_READY=0
 for i in {1..20}; do
-    if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+    if curl -s http://localhost:8080/health > /dev/null 2>&1; then
         echo -e "      ${GREEN}✓ Backend is healthy and ready!${NC}"
         BACKEND_READY=1
         break
@@ -249,8 +246,8 @@ echo -e "${GREEN}╚════════════════════
 echo ""
 echo -e "${CYAN}┌───────────────────────────────────────────────────────────────┐${NC}"
 echo -e "${CYAN}│  📱 Frontend:    ${GREEN}http://localhost:3333/dashboard${CYAN}             │${NC}"
-echo -e "${CYAN}│  🔧 Backend API: ${GREEN}http://localhost:8000${CYAN}                       │${NC}"
-echo -e "${CYAN}│  📚 API Docs:    ${GREEN}http://localhost:8000/docs${CYAN}                  │${NC}"
+echo -e "${CYAN}│  🔧 Backend API: ${GREEN}http://localhost:8080${CYAN}                       │${NC}"
+echo -e "${CYAN}│  📚 API Docs:    ${GREEN}http://localhost:8080/docs${CYAN}                  │${NC}"
 echo -e "${CYAN}└───────────────────────────────────────────────────────────────┘${NC}"
 echo ""
 echo -e "${YELLOW}📋 Process Information:${NC}"
@@ -268,7 +265,7 @@ echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━
 echo -e "${BLUE}📌 Quick Tips:${NC}"
 echo -e "   • Dashboard: ${CYAN}http://localhost:3333/dashboard${NC}"
 echo -e "   • Upload new report by clicking 'Upload New Report' button"
-echo -e "   • View API documentation at ${CYAN}http://localhost:8000/docs${NC}"
+echo -e "   • View API documentation at ${CYAN}http://localhost:8080/docs${NC}"
     echo ""
 echo -e "${RED}⚠️  Press Ctrl+C to stop all services${NC}"
     echo ""
