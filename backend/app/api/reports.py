@@ -50,6 +50,7 @@ class ReportListResponse(BaseModel):
     analysis_status: str
     severity_level: Optional[str]
     is_critical: bool
+    file_size: Optional[int]
 
 
 async def process_medical_report(
@@ -325,7 +326,8 @@ async def list_reports(
             upload_date=r.upload_date,
             analysis_status=r.analysis_status,
             severity_level=r.severity_level,
-            is_critical=r.is_critical or False
+            is_critical=r.is_critical or False,
+            file_size=r.file_size
         )
         for r in reports
     ]

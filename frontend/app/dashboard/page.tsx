@@ -429,7 +429,7 @@ export default function DashboardPage() {
                                 })}
                               </td>
                               <td className="px-3 py-2.5 text-xs text-gray-600 font-medium">
-                                {((report as any).file_size / 1024).toFixed(0)} KB
+                                {report.file_size ? `${(report.file_size / 1024).toFixed(0)} KB` : '—'}
                               </td>
                               <td className="px-3 py-2.5">
                                 <div className="flex items-center gap-1.5">

@@ -23,6 +23,7 @@ export interface MedicalReport {
   analysis_status: 'pending' | 'processing' | 'completed' | 'failed'
   severity_level?: 'normal' | 'attention_needed' | 'urgent' | 'critical'
   is_critical: boolean
+  file_size?: number
 }
 
 export interface ReportAnalysis {
