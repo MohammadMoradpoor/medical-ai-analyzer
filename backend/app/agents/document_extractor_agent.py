@@ -184,17 +184,31 @@ Return a JSON object with:
                         "content": [
                             {
                                 "type": "text",
-                                "text": """Extract ALL text from this medical document image in its original language. 
-                                
-Return the complete text exactly as written, preserving:
-- All test names and values
-- All dates and patient information  
-- All lab/hospital names
-- All reference ranges
-- All medical terminology
-- Original language (do not translate)
+                                "text": """You are analyzing a medical image/document. This could be:
+1. Lab test results (blood work, urine test, etc.)
+2. Medical imaging (X-Ray, MRI, CT scan, Ultrasound)
+3. Dental X-rays or imaging
+4. Pathology reports
+5. Other medical documents
 
-Return the extracted text, not JSON. Include everything visible in the image."""
+Your task:
+- If this is a LAB REPORT: Extract all text including test names, values, reference ranges
+- If this is MEDICAL IMAGING (X-Ray, MRI, CT, etc.): Describe what you see in detail:
+  * Body part being imaged
+  * Any visible abnormalities, fractures, masses, or pathology
+  * Bone density, alignment issues
+  * Soft tissue changes
+  * Any areas of concern
+  * Overall impression
+
+- If this is DENTAL IMAGING: Describe:
+  * Tooth conditions
+  * Cavities, decay
+  * Root issues
+  * Bone loss
+  * Any pathology
+
+Return ALL information you can extract or observe. Be detailed and thorough."""
                             },
                             {
                                 "type": "image_url",

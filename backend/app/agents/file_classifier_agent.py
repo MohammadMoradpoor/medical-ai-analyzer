@@ -41,7 +41,9 @@ RETURN JSON with:
 {
   "is_medical": true/false,
   "file_type": "pdf/image/unknown",
-  "document_type": "blood_test/urine_test/prescription/x_ray/mri/ct_scan/ultrasound/pathology/other",
+  "document_type": "blood_test/urine_test/x_ray/mri/ct_scan/ultrasound/dental_xray/dental_imaging/pathology/prescription/ecg/ekg/other",
+  "imaging_type": "chest_xray/dental_xray/brain_mri/spine_ct/abdominal_ultrasound/etc" (if medical imaging),
+  "body_part": "chest/head/spine/abdomen/dental/etc" (if imaging),
   "language": "english/spanish/french/arabic/etc",
   "quality": "high/medium/low",
   "is_processable": true/false,
@@ -55,6 +57,8 @@ RETURN JSON with:
   "rejection_reason": "if not medical or not processable",
   "recommendations": ["suggestions for user if needed"]
 }
+
+IMPORTANT: For medical imaging (X-Ray, MRI, CT, Dental), mark as processable and medical!
 
 VALIDATION RULES:
 - Reject non-medical content (recipes, invoices, personal photos, etc.)
