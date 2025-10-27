@@ -81,9 +81,12 @@ export const authApi = {
 
 // Reports API
 export const reportsApi = {
-  upload: async (file: File) => {
+  upload: async (file: File, userNotes?: string) => {
     const formData = new FormData()
     formData.append('file', file)
+    if (userNotes) {
+      formData.append('user_notes', userNotes)
+    }
     
     const response = await api.post('/reports/upload', formData, {
       headers: {

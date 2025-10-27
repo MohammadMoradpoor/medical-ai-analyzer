@@ -16,6 +16,7 @@ export function UploadModal({ isOpen, onClose, onSuccess }: UploadModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
+  const [userNotes, setUserNotes] = useState('')
 
   if (!isOpen) return null
 
@@ -75,9 +76,10 @@ export function UploadModal({ isOpen, onClose, onSuccess }: UploadModalProps) {
     setIsUploading(true)
 
     try {
-      await reportsApi.upload(selectedFile)
+      await reportsApi.upload(selectedFile, userNotes || undefined)
       toast.success('File uploaded successfully. Analysis in progress...')
       setSelectedFile(null)
+      setUserNotes('')
       onSuccess()
       onClose()
     } catch (error: any) {
@@ -90,6 +92,7 @@ export function UploadModal({ isOpen, onClose, onSuccess }: UploadModalProps) {
   const handleClose = () => {
     if (!isUploading) {
       setSelectedFile(null)
+      setUserNotes('')
       onClose()
     }
   }
@@ -188,13 +191,31 @@ export function UploadModal({ isOpen, onClose, onSuccess }: UploadModalProps) {
                   )}
                 </div>
 
+                {/* User Notes/Questions */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Additional Information (Optional)
+                  </label>
+                  <textarea
+                    value={userNotes}
+                    onChange={(e) => setUserNotes(e.target.value)}
+                    placeholder="Add any questions, context, or specific concerns about this report that you'd like the AI to address..."
+                    rows={3}
+                    disabled={isUploading}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-sm text-gray-900 font-medium placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Example: "Focus on liver enzymes" or "Any concerns about kidney function?"
+                  </p>
+                </div>
+
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-blue-900 text-sm mb-2">✨ AI-Powered Analysis</h4>
+                  <h4 className="font-semibold text-blue-900 text-sm mb-2">AI-Powered Analysis</h4>
                   <ul className="text-xs text-blue-800 space-y-1">
-                    <li>• Supports multiple languages automatically</li>
-                    <li>• Works with PDFs and images</li>
-                    <li>• Analysis typically takes 1-2 minutes</li>
-                    <li>• Secure and confidential processing</li>
+                    <li>• Supports all medical tests: Blood, Urine, X-Ray, MRI, CT, Dental</li>
+                    <li>• Multi-language support</li>
+                    <li>• Analysis typically takes 30-60 seconds</li>
+                    <li>• HIPAA-compliant secure processing</li>
                   </ul>
                 </div>
               </div>
