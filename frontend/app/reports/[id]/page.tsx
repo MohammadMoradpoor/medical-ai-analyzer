@@ -516,8 +516,8 @@ export default function ReportDetailPage() {
                 </div>
               </div>
 
-            {/* 6. Raw Extracted Data - Collapsible Section */}
-            {report.extracted_data && (
+            {/* 6. Raw Extracted Data - Collapsible Section (Only for Lab Reports) */}
+            {report.extracted_data && !report.extracted_data.is_medical_imaging && (
               <div className="bg-white rounded-xl border-2 border-gray-300 overflow-hidden shadow-md">
                 {/* Collapsed Header - Clickable */}
                 <button
@@ -558,6 +558,54 @@ export default function ReportDetailPage() {
                     />
                   </div>
                 )}
+              </div>
+            )}
+            
+            {/* Medical Imaging Note - Show instead of raw data for imaging */}
+            {report.extracted_data && report.extracted_data.is_medical_imaging && (
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 overflow-hidden shadow-md">
+                <div className="px-5 py-4 bg-blue-600 flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-white" />
+                  <h3 className="text-sm font-bold text-white">Medical Imaging Analysis</h3>
+                </div>
+                <div className="p-5 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-blue-500 p-2 rounded-lg flex-shrink-0">
+                      <Activity className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-bold text-blue-900 mb-2">
+                        {report.extracted_data.imaging_type?.replace(/_/g, ' ').toUpperCase()} Analysis
+                      </h4>
+                      <p className="text-sm text-gray-700 leading-relaxed">
+                        This is a medical imaging study (X-ray, MRI, CT, or Dental). The analysis has been performed using specialized radiological AI protocols. 
+                        There is no "raw text data" to extract from imaging studies - the visual analysis results are shown above in the findings sections.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg border-2 border-blue-200 p-4">
+                    <h5 className="text-xs font-bold text-blue-800 mb-2 uppercase tracking-wide">ℹ️ About Medical Imaging Analysis</h5>
+                    <ul className="text-xs text-gray-700 space-y-1.5">
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-600 font-bold">•</span>
+                        <span>Medical images (X-rays, MRI, CT scans) contain <strong>visual information</strong>, not text data</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-600 font-bold">•</span>
+                        <span>The AI performs <strong>systematic radiological review</strong> of visible structures</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-600 font-bold">•</span>
+                        <span>Analysis results are shown in the <strong>findings, impression, and recommendations</strong> sections above</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-600 font-bold">•</span>
+                        <span>There is no "editable raw data" for imaging studies - only the visual analysis</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             )}
 

@@ -140,15 +140,30 @@ Return a JSON object with:
                 "total_tokens": ocr_token_usage["total_tokens"] + structure_token_usage["total_tokens"]
             }
             
+            # Check if this was medical imaging analysis
+            is_medical_imaging = extracted_data.get("is_medical_imaging", False)
+            
+            # Prepare execution details
+            execution_details = {}
+            
+            # If imaging analysis was performed, include it in execution details
+            if is_medical_imaging and hasattr(self, '_last_imaging_analysis'):
+                logger.info("[DOCUMENT EXTRACTOR] Including imaging analysis in execution details")
+                execution_details["imaging_analysis"] = self._last_imaging_analysis
+                execution_details["imaging_token_usage"] = self._last_imaging_token_usage
+                execution_details["imaging_execution_time_ms"] = self._last_imaging_execution_time
+            
             self.log_event("extraction_completed", {
-                "tests_found": len(extracted_data.get("test_results", []))
+                "tests_found": len(extracted_data.get("test_results", [])),
+                "is_medical_imaging": is_medical_imaging
             })
             
             return {
                 "status": "success",
                 "data": extracted_data,
                 "error": None,
-                "token_usage": total_token_usage
+                "token_usage": total_token_usage,
+                "execution_details": execution_details
             }
             
         except Exception as e:
@@ -234,35 +249,30 @@ Return ONLY the category name (e.g., "LAB_REPORT" or "XRAY")."""
                 
                 # Use the specialized imaging agent
                 imaging_agent = MedicalImagingAgent(api_key=self.api_key)
+                
+                imaging_start = datetime.utcnow()
                 imaging_result = await imaging_agent.process({
                     "image_data": base64_image,
                     "imaging_type": imaging_type
                 })
+                imaging_execution_time = (datetime.utcnow() - imaging_start).total_seconds() * 1000
                 
                 if imaging_result["status"] == "success":
                     import json
-                    # Convert imaging analysis to text format for extraction
+                    # For medical imaging, we don't extract "text data"
+                    # Instead, we return a special marker and store the analysis directly
                     analysis_data = imaging_result["data"]
-                    extracted_text = f"""MEDICAL IMAGING ANALYSIS - {detected_type}
-
-Image Type: {analysis_data.get('image_type', 'Unknown')}
-Body Part: {analysis_data.get('body_part', 'Unknown')}
-Quality: {analysis_data.get('quality_assessment', {}).get('quality', 'Unknown')}
-
-FINDINGS:
-{json.dumps(analysis_data.get('findings', {}), indent=2)}
-
-IMPRESSION:
-{analysis_data.get('impression', 'No impression provided')}
-
-SEVERITY: {analysis_data.get('severity_level', 'unknown').upper()}
-
-RECOMMENDATIONS:
-{chr(10).join('- ' + rec for rec in analysis_data.get('recommendations', []))}
-
-RAW_ANALYSIS:
-{json.dumps(analysis_data, indent=2)}
-"""
+                    
+                    # Store imaging analysis for later retrieval
+                    self._last_imaging_analysis = analysis_data
+                    self._last_imaging_token_usage = imaging_result.get("token_usage", {})
+                    self._last_imaging_execution_time = imaging_execution_time
+                    
+                    logger.info(f"[DOCUMENT EXTRACTOR] Stored imaging analysis: {analysis_data.get('image_type')}, severity: {analysis_data.get('severity_level')}")
+                    
+                    # Return special marker indicating this is imaging analysis, not text extraction
+                    # The structured data will be stored directly in report.analysis_result
+                    extracted_text = f"__MEDICAL_IMAGING_ANALYSIS__:{detected_type}:{analysis_data.get('image_type', 'unknown')}"
                     
                     token_usage = imaging_result.get("token_usage", {
                         "prompt_tokens": 0,
@@ -327,9 +337,34 @@ Return ALL information you can extract or observe. Be detailed and thorough."""
             logger.error(f"Image text extraction error: {str(e)}", exc_info=True)
             return "", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
     
-    async def _extract_structured_data(self, text: str) -> Dict[str, Any]:
+    async def _extract_structured_data(self, text: str) -> tuple:
         """Use AI to extract structured data from text."""
         try:
+            # Check if this is medical imaging analysis (not text-based lab report)
+            if text.startswith("__MEDICAL_IMAGING_ANALYSIS__:"):
+                logger.info("[DOCUMENT EXTRACTOR] Detected medical imaging analysis - no raw data extraction needed")
+                
+                # Parse the marker to get imaging type
+                parts = text.split(":")
+                imaging_category = parts[1] if len(parts) > 1 else "unknown"
+                imaging_type = parts[2] if len(parts) > 2 else "unknown"
+                
+                # Return minimal structure indicating this is imaging analysis
+                # No raw data to extract - the analysis will be stored directly in report.analysis_result
+                return {
+                    "is_medical_imaging": True,
+                    "imaging_category": imaging_category,
+                    "imaging_type": imaging_type,
+                    "patient_info": None,
+                    "report_info": {
+                        "report_type": imaging_type,
+                        "imaging_analysis": True
+                    },
+                    "test_results": [],
+                    "note": "Medical imaging analysis - no extractable text data. See analysis_result for findings."
+                }, {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+            
+            # For lab reports and text-based documents, proceed with standard extraction
             user_prompt = f"""Analyze this medical test report and extract all information in structured JSON format.
 
 DOCUMENT TEXT:

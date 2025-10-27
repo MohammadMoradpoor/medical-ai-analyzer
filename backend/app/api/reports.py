@@ -7,6 +7,8 @@ from datetime import datetime
 from typing import Optional, List
 import os
 import uuid
+import json
+import logging
 from ..db.session import get_db
 from ..db.models import User, MedicalReport, TestResult, AgentLog
 from ..auth.dependencies import get_current_user
@@ -15,6 +17,7 @@ from ..agents.file_classifier_agent import FileClassifierAgent
 from ..services.file_service import FileService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 # Get OpenAI API key from environment
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -187,6 +190,39 @@ async def process_medical_report(
         )
         db.add(extraction_log)
         
+        # If imaging analysis was performed, also log it separately for easy retrieval
+        if extraction_result.get("execution_details", {}).get("imaging_analysis"):
+            imaging_analysis = extraction_result["execution_details"]["imaging_analysis"]
+            imaging_tokens = extraction_result["execution_details"].get("imaging_token_usage", {})
+            
+            imaging_cost = None
+            if imaging_tokens:
+                total_tokens = imaging_tokens.get("total_tokens", 0)
+                prompt_tokens = imaging_tokens.get("prompt_tokens", 0)
+                completion_tokens = imaging_tokens.get("completion_tokens", 0)
+                imaging_cost = (prompt_tokens / 1_000_000 * 2.50) + (completion_tokens / 1_000_000 * 10.00)
+            
+            imaging_log = AgentLog(
+                report_id=report_id,
+                user_id=report.user_id,
+                agent_type="medical_imaging",
+                operation="analyze_imaging",
+                status="success",
+                started_at=extraction_start,
+                completed_at=datetime.utcnow(),
+                duration_ms=int(extraction_result["execution_details"].get("imaging_execution_time_ms", 0)),
+                input_data={"imaging_type": imaging_analysis.get("image_type")},
+                output_data=imaging_analysis,
+                error_message=None,
+                model_used="gpt-4o",
+                tokens_used=imaging_tokens.get("total_tokens") if imaging_tokens else None,
+                cost_estimate=imaging_cost
+            )
+            db.add(imaging_log)
+            logger.info(f"[PROCESS REPORT] Created separate imaging agent log")
+        
+        db.commit()
+        
         if extraction_result["status"] != "success":
             report.analysis_status = "failed"
             report.extracted_data = None
@@ -194,19 +230,36 @@ async def process_medical_report(
             return
         
         extracted_data = extraction_result["data"]
-        report.extracted_data = extracted_data
         
-        # Extract metadata
-        if "report_info" in extracted_data:
-            report.report_type = extracted_data["report_info"].get("report_type")
-            test_date_str = extracted_data["report_info"].get("test_date")
-            if test_date_str:
-                try:
-                    report.test_date = datetime.fromisoformat(test_date_str)
-                except:
-                    pass
-            report.lab_name = extracted_data["report_info"].get("lab_name")
-            report.doctor_name = extracted_data["report_info"].get("doctor_name")
+        # Check if this is medical imaging (X-ray, MRI, CT, Dental)
+        is_medical_imaging = extracted_data.get("is_medical_imaging", False)
+        
+        if is_medical_imaging:
+            # For medical imaging, store minimal extracted data
+            # The actual imaging analysis will be stored in analysis_result
+            logger.info(f"[PROCESS REPORT] Medical imaging detected: {extracted_data.get('imaging_type')}")
+            report.extracted_data = {
+                "is_medical_imaging": True,
+                "imaging_type": extracted_data.get("imaging_type"),
+                "imaging_category": extracted_data.get("imaging_category"),
+                "note": "Medical imaging - no raw text data to extract. Analysis stored in analysis_result."
+            }
+            report.report_type = extracted_data.get("imaging_type", "medical_imaging")
+        else:
+            # For lab reports, store full extracted data
+            report.extracted_data = extracted_data
+            
+            # Extract metadata
+            if "report_info" in extracted_data:
+                report.report_type = extracted_data["report_info"].get("report_type")
+                test_date_str = extracted_data["report_info"].get("test_date")
+                if test_date_str:
+                    try:
+                        report.test_date = datetime.fromisoformat(test_date_str)
+                    except:
+                        pass
+                report.lab_name = extracted_data["report_info"].get("lab_name")
+                report.doctor_name = extracted_data["report_info"].get("doctor_name")
         
         db.commit()
         
@@ -258,41 +311,93 @@ async def process_medical_report(
         
         analysis_data = analysis_result["data"]
         
-        # Update report with analysis results
-        overall = analysis_data.get("overall_assessment", {})
-        test_analysis = analysis_data.get("test_analysis", [])
+        # Check if this is medical imaging
+        is_medical_imaging = analysis_data.get("is_medical_imaging", False)
         
-        # Don't set severity to "normal" if no test data was found
-        if test_analysis and len(test_analysis) > 0:
-            report.severity_level = overall.get("severity_level", "normal")
+        if is_medical_imaging:
+            # For medical imaging, the analysis is already in extraction_result from imaging agent
+            # Get the imaging analysis from the extraction phase
+            imaging_analysis = None
+            
+            # Try to get imaging analysis from extraction_log
+            imaging_log = db.query(AgentLog).filter(
+                AgentLog.report_id == report_id,
+                AgentLog.agent_type == "medical_imaging"
+            ).order_by(AgentLog.created_at.desc()).first()
+            
+            if imaging_log and imaging_log.output_data:
+                imaging_analysis = imaging_log.output_data
+                logger.info(f"[PROCESS REPORT] Retrieved imaging analysis from log")
+            
+            # If we have imaging analysis, use it directly
+            if imaging_analysis:
+                report.analysis_result = imaging_analysis
+                report.severity_level = imaging_analysis.get("severity_level", "normal")
+                report.is_critical = imaging_analysis.get("is_critical", False)
+                report.has_abnormalities = len(imaging_analysis.get("findings", {}).get("abnormal_findings", [])) > 0
+                report.summary = imaging_analysis.get("impression", "Medical imaging analysis completed")
+                report.detailed_report = json.dumps(imaging_analysis.get("findings", {}), indent=2)
+                report.recommendations = imaging_analysis.get("recommendations", [])
+                
+                # Format abnormal findings
+                abnormal_findings_list = []
+                for finding in imaging_analysis.get("findings", {}).get("abnormal_findings", []):
+                    abnormal_findings_list.append({
+                        "finding": finding.get("finding", "Unknown"),
+                        "severity": finding.get("severity", "unknown"),
+                        "explanation": finding.get("characteristics", ""),
+                        "action_needed": "Consult with radiologist for professional interpretation"
+                    })
+                report.abnormal_findings = abnormal_findings_list
+            else:
+                # Fallback if imaging analysis not found
+                logger.warning(f"[PROCESS REPORT] Imaging analysis not found in logs")
+                report.analysis_result = analysis_data
+                report.severity_level = None
+                report.is_critical = False
+                report.has_abnormalities = False
+                report.summary = "Medical imaging analysis - please refer to imaging agent logs"
+                report.recommendations = ["Consult with radiologist for professional interpretation"]
+                report.abnormal_findings = []
+            
+            # No test results to save for imaging
+            logger.info(f"[PROCESS REPORT] Stored imaging analysis for {report.report_type}")
         else:
-            report.severity_level = None  # No data to assess
+            # For lab reports, proceed with standard analysis storage
+            overall = analysis_data.get("overall_assessment", {})
+            test_analysis = analysis_data.get("test_analysis", [])
+            
+            # Don't set severity to "normal" if no test data was found
+            if test_analysis and len(test_analysis) > 0:
+                report.severity_level = overall.get("severity_level", "normal")
+            else:
+                report.severity_level = None  # No data to assess
+            
+            report.analysis_result = analysis_data
+            report.is_critical = overall.get("is_critical", False)
+            report.has_abnormalities = overall.get("has_abnormalities", False)
+            report.summary = overall.get("summary")
+            report.detailed_report = analysis_data.get("detailed_report")
+            report.recommendations = analysis_data.get("recommendations", [])
+            report.abnormal_findings = analysis_data.get("abnormal_findings", [])
+            
+            # Save individual test results for lab reports
+            for test_analysis in analysis_data.get("test_analysis", []):
+                test_result = TestResult(
+                    report_id=report_id,
+                    test_name=test_analysis.get("test_name"),
+                    value=test_analysis.get("value"),
+                    unit=test_analysis.get("unit"),
+                    reference_range=test_analysis.get("reference_range"),
+                    is_normal=test_analysis.get("is_normal", True),
+                    severity=test_analysis.get("severity", "normal"),
+                    interpretation=test_analysis.get("interpretation"),
+                    clinical_significance=test_analysis.get("clinical_significance")
+                )
+                db.add(test_result)
         
-        report.analysis_result = analysis_data
-        report.is_critical = overall.get("is_critical", False)
-        report.has_abnormalities = overall.get("has_abnormalities", False)
-        report.summary = overall.get("summary")
-        report.detailed_report = analysis_data.get("detailed_report")
-        report.recommendations = analysis_data.get("recommendations", [])
-        report.abnormal_findings = analysis_data.get("abnormal_findings", [])
         report.analysis_status = "completed"
         report.analysis_completed_at = datetime.utcnow()
-        
-        # Save individual test results
-        for test_analysis in analysis_data.get("test_analysis", []):
-            test_result = TestResult(
-                report_id=report_id,
-                test_name=test_analysis.get("test_name"),
-                value=test_analysis.get("value"),
-                unit=test_analysis.get("unit"),
-                reference_range=test_analysis.get("reference_range"),
-                is_normal=test_analysis.get("is_normal", True),
-                severity=test_analysis.get("severity", "normal"),
-                interpretation=test_analysis.get("interpretation"),
-                clinical_significance=test_analysis.get("clinical_significance")
-            )
-            db.add(test_result)
-        
         db.commit()
         
     except Exception as e:

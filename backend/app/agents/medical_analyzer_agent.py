@@ -151,11 +151,48 @@ FOR MEDICAL IMAGING (X-Ray, MRI, CT, Dental, Ultrasound):
         self,
         extracted_data: Dict[str, Any],
         patient_context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    ) -> tuple:
         """
         Use AI to analyze test results and provide medical insights.
+        
+        For medical imaging, the analysis is already complete - we just format it.
+        For lab reports, we perform comprehensive interpretation.
         """
         try:
+            # Check if this is medical imaging analysis (already analyzed by imaging agent)
+            if extracted_data.get("is_medical_imaging"):
+                logger.info("[MEDICAL ANALYZER] Detected medical imaging - analysis already complete")
+                
+                # Medical imaging analysis is already done by the imaging agent
+                # We just need to format it for storage
+                imaging_type = extracted_data.get("imaging_type", "unknown")
+                
+                return {
+                    "is_medical_imaging": True,
+                    "imaging_type": imaging_type,
+                    "overall_assessment": {
+                        "severity_level": "normal",  # Will be updated from imaging results
+                        "is_critical": False,
+                        "has_abnormalities": False,
+                        "summary": f"Medical imaging analysis completed for {imaging_type}. See imaging analysis results for detailed findings."
+                    },
+                    "test_analysis": [],  # No lab tests for imaging
+                    "abnormal_findings": [],
+                    "recommendations": [
+                        "Refer to imaging analysis section for detailed radiological findings",
+                        "Consult with a radiologist for professional interpretation"
+                    ],
+                    "detailed_report": f"This is a medical imaging study ({imaging_type}). The radiological analysis has been performed by the specialized imaging agent. Please refer to the imaging analysis section for comprehensive findings, impression, and recommendations.",
+                    "disclaimer": (
+                        "This imaging analysis is provided by AI for informational purposes only. "
+                        "It is not a substitute for professional radiological interpretation. "
+                        "Always consult with a qualified radiologist or healthcare professional "
+                        "for proper medical diagnosis and treatment."
+                    ),
+                    "note": "Medical imaging - raw data extraction not applicable"
+                }, {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+            
+            # For lab reports and text-based documents, proceed with standard analysis
             # Prepare the analysis prompt
             user_prompt = f"""Analyze the following medical test results and provide a comprehensive interpretation in JSON format.
 
