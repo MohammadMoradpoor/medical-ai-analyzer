@@ -15,6 +15,8 @@ export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState('account')
   const [reports, setReports] = useState<any[]>([])
   const [isLoadingReports, setIsLoadingReports] = useState(false)
+  const [usageStats, setUsageStats] = useState<any>(null)
+  const [isLoadingUsage, setIsLoadingUsage] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -33,6 +35,8 @@ export default function SettingsPage() {
   useEffect(() => {
     if (activeSection === 'history') {
       fetchReports()
+    } else if (activeSection === 'usage') {
+      fetchUsageStats()
     }
   }, [activeSection])
 
@@ -46,6 +50,19 @@ export default function SettingsPage() {
       toast.error('Failed to load report history')
     } finally {
       setIsLoadingReports(false)
+    }
+  }
+
+  const fetchUsageStats = async () => {
+    try {
+      setIsLoadingUsage(true)
+      const data = await reportsApi.getUsageStats()
+      setUsageStats(data)
+    } catch (error) {
+      console.error('Failed to load usage stats:', error)
+      toast.error('Failed to load usage statistics')
+    } finally {
+      setIsLoadingUsage(false)
     }
   }
 
@@ -136,6 +153,17 @@ export default function SettingsPage() {
                 >
                   <FileText className="h-5 w-5" />
                   Report History
+                </button>
+                <button
+                  onClick={() => setActiveSection('usage')}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                    activeSection === 'usage'
+                      ? 'bg-blue-50 text-blue-700 border-l-4 border-blue-600'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Activity className="h-5 w-5" />
+                  Usage & Costs
                 </button>
                 <button
                   onClick={() => setActiveSection('data')}
@@ -350,10 +378,10 @@ export default function SettingsPage() {
                                           report.severity_level === 'attention_needed' ? 'bg-yellow-500 text-white' :
                                           'bg-green-500 text-white'
                                         }`}>
-                                          {report.severity_level === 'critical' ? '🔴 Critical' :
-                                           report.severity_level === 'urgent' ? '🟠 Urgent' :
-                                           report.severity_level === 'attention_needed' ? '🟡 Attention' :
-                                           '🟢 Normal'}
+                                          {report.severity_level === 'critical' ? 'Critical' :
+                                           report.severity_level === 'urgent' ? 'Urgent' :
+                                           report.severity_level === 'attention_needed' ? 'Attention' :
+                                           'Normal'}
                                         </span>
                                       )}
                                     </div>
@@ -363,6 +391,143 @@ export default function SettingsPage() {
                             ))}
                           </div>
                         </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Usage & Costs Section */}
+              {activeSection === 'usage' && (
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <div className="px-6 py-4 border-b border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-900">AI Usage & Costs</h3>
+                    <p className="text-sm text-gray-600 mt-1">Track your AI token usage and estimated costs</p>
+                  </div>
+                  <div className="p-6">
+                    {isLoadingUsage ? (
+                      <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">Loading usage statistics...</p>
+                      </div>
+                    ) : usageStats ? (
+                      <div className="space-y-6">
+                        {/* Summary Cards */}
+                        <div className="grid grid-cols-4 gap-4">
+                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border-2 border-blue-200">
+                            <div className="text-xs text-blue-600 font-bold uppercase mb-1">Total Cost</div>
+                            <div className="text-3xl font-bold text-blue-900">${usageStats.total_cost_usd}</div>
+                            <div className="text-xs text-blue-700 mt-1">USD</div>
+                          </div>
+                          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border-2 border-green-200">
+                            <div className="text-xs text-green-600 font-bold uppercase mb-1">Total Tokens</div>
+                            <div className="text-3xl font-bold text-green-900">{usageStats.total_tokens.toLocaleString()}</div>
+                            <div className="text-xs text-green-700 mt-1">tokens</div>
+                          </div>
+                          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-5 border-2 border-purple-200">
+                            <div className="text-xs text-purple-600 font-bold uppercase mb-1">Processing Runs</div>
+                            <div className="text-3xl font-bold text-purple-900">{usageStats.total_processing_runs}</div>
+                            <div className="text-xs text-purple-700 mt-1">AI operations</div>
+                          </div>
+                          <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-5 border-2 border-orange-200">
+                            <div className="text-xs text-orange-600 font-bold uppercase mb-1">Reports</div>
+                            <div className="text-3xl font-bold text-orange-900">{usageStats.total_reports}</div>
+                            <div className="text-xs text-orange-700 mt-1">analyzed</div>
+                          </div>
+                        </div>
+
+                        {/* Token Breakdown */}
+                        <div className="bg-gray-50 rounded-xl border border-gray-200 p-5">
+                          <h4 className="text-sm font-bold text-gray-900 mb-4">Token Usage Breakdown</h4>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white rounded-lg p-4 border border-gray-200">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-semibold text-gray-600">Input Tokens</span>
+                                <span className="text-sm font-bold text-gray-900">{usageStats.total_input_tokens.toLocaleString()}</span>
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                ${usageStats.pricing.input_per_1m} per 1M tokens
+                              </div>
+                            </div>
+                            <div className="bg-white rounded-lg p-4 border border-gray-200">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-semibold text-gray-600">Output Tokens</span>
+                                <span className="text-sm font-bold text-gray-900">{usageStats.total_output_tokens.toLocaleString()}</span>
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                ${usageStats.pricing.output_per_1m} per 1M tokens
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Model Info */}
+                        <div className="bg-blue-50 rounded-xl border border-blue-200 p-5">
+                          <h4 className="text-sm font-bold text-blue-900 mb-3">AI Model Information</h4>
+                          <div className="bg-white rounded-lg p-4 border border-blue-200">
+                            <div className="flex items-center justify-between mb-3">
+                              <div>
+                                <div className="text-sm font-bold text-gray-900">Advanced AI Model</div>
+                                <div className="text-xs text-gray-600">Latest generation AI technology</div>
+                              </div>
+                              <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">Active</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 text-xs">
+                              <div>
+                                <span className="text-gray-600">Input pricing:</span>
+                                <span className="font-bold text-gray-900 ml-2">${usageStats.pricing.input_per_1m}/1M</span>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">Output pricing:</span>
+                                <span className="font-bold text-gray-900 ml-2">${usageStats.pricing.output_per_1m}/1M</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Agent Breakdown */}
+                        {Object.keys(usageStats.agent_breakdown).length > 0 && (
+                          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                            <div className="px-5 py-3 bg-gray-50 border-b border-gray-200">
+                              <h4 className="text-sm font-bold text-gray-900">Cost by Agent Type</h4>
+                            </div>
+                            <div className="p-5">
+                              <table className="w-full text-sm">
+                                <thead className="border-b border-gray-200">
+                                  <tr>
+                                    <th className="pb-2 text-left text-xs font-bold text-gray-600">Agent</th>
+                                    <th className="pb-2 text-right text-xs font-bold text-gray-600">Runs</th>
+                                    <th className="pb-2 text-right text-xs font-bold text-gray-600">Tokens</th>
+                                    <th className="pb-2 text-right text-xs font-bold text-gray-600">Cost (USD)</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                  {Object.entries(usageStats.agent_breakdown).map(([agent, stats]: [string, any]) => (
+                                    <tr key={agent} className="hover:bg-gray-50">
+                                      <td className="py-3 text-gray-900 font-medium capitalize">{agent.replace('_', ' ')}</td>
+                                      <td className="py-3 text-right text-gray-700 font-semibold">{stats.count}</td>
+                                      <td className="py-3 text-right text-gray-700 font-mono">{stats.tokens.toLocaleString()}</td>
+                                      <td className="py-3 text-right text-blue-900 font-bold">${stats.cost.toFixed(4)}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Note */}
+                        <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-r-lg p-4">
+                          <p className="text-xs text-yellow-900">
+                            <strong className="font-bold">Note:</strong> Costs are estimates based on current AI model pricing. 
+                            Actual token counts will be more accurate once OpenAI API responses include detailed token information.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-12">
+                        <Activity className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 font-medium">No usage data available</p>
                       </div>
                     )}
                   </div>
@@ -454,8 +619,8 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {/* Save Button - فقط برای بخش‌های قابل ویرایش */}
-            {activeSection !== 'history' && (
+            {/* Save Button - فقط برای بخش‌های قابل ویرایش (نه History و نه Usage) */}
+            {activeSection !== 'history' && activeSection !== 'usage' && (
               <div className="col-span-9">
                 <div className="flex justify-end gap-3 mt-6">
                   <button

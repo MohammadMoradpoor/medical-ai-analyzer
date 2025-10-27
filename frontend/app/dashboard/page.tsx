@@ -202,8 +202,6 @@ export default function DashboardPage() {
     }
   }
 
-
-
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center">
@@ -241,17 +239,30 @@ export default function DashboardPage() {
         <div className="px-6 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 bg-blue-600 rounded-lg">
-              <Activity className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Medical AI Analyzer</h1>
-              <p className="text-xs text-gray-500">Dashboard</p>
-            </div>
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+              title="Go to Home"
+            >
+              <div className="flex items-center justify-center h-10 w-10 bg-blue-600 rounded-lg">
+                <Activity className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Medical AI Analyzer</h1>
+                <p className="text-xs text-gray-500">Dashboard</p>
+              </div>
+            </button>
           </div>
 
           {/* Right: Actions */}
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold text-sm transition-colors"
+              title="Go to Home Page"
+            >
+              Home
+            </button>
             <button
               onClick={() => setUploadModalOpen(true)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm shadow-sm transition-all hover:shadow-md"
@@ -295,9 +306,8 @@ export default function DashboardPage() {
       <div className="flex-1 overflow-auto bg-gray-50">
         <div className="w-full">
           
-          {/* Stats Overview - Professional */}
-          {(
-            <div className="grid grid-cols-5 gap-4 px-6 py-4 bg-white border-b border-gray-200">
+          {/* Stats Overview */}
+          <div className="grid grid-cols-5 gap-4 px-6 py-4 bg-white border-b border-gray-200">
               <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-100">
                 <div className="p-2 bg-blue-500 rounded-lg">
                   <FileText className="h-5 w-5 text-white" />
@@ -357,87 +367,119 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
-            {/* Tab Content */}
+            {/* Filters - Compact و حرفه‌ای */}
           <div className="bg-white shadow-sm border-t border-gray-200">
               <div>
-                  {/* Search and Filters - Professional */}
-                  <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <input
-                          type="text"
-                          placeholder="Search by filename or type..."
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          className="w-full pl-10 pr-10 py-2.5 text-sm font-medium text-gray-900 placeholder-gray-500 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-sm"
-                        />
-                        {searchQuery && (
-                          <button
-                            onClick={() => setSearchQuery('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-1 transition-colors"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        )}
+                  <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      {/* Left: Title & Info */}
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-sm font-bold text-gray-900">All Reports</h2>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-bold">
+                          {filteredReports.length}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Showing {startIndex + 1}-{Math.min(endIndex, filteredReports.length)} of {filteredReports.length}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-300">
-                        <label className="text-xs font-bold text-gray-700 whitespace-nowrap">Status:</label>
+
+                      {/* Right: Compact Filters */}
+                      <div className="flex items-center gap-2">
+                        {/* Search */}
+                        <div className="relative">
+                          <Search className={`absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 ${
+                            searchQuery ? 'text-green-600' : 'text-gray-400'
+                          }`} />
+                          <input
+                            type="text"
+                            placeholder="Search..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className={`w-44 pl-8 pr-8 py-1.5 text-xs border rounded-md focus:ring-1 focus:ring-blue-500 ${
+                              searchQuery 
+                                ? 'border-green-400 bg-green-50 text-green-900 font-semibold' 
+                                : 'border-gray-300 bg-white text-gray-700 focus:border-blue-500'
+                            }`}
+                          />
+                          {searchQuery && (
+                            <button
+                              onClick={() => setSearchQuery('')}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700 bg-green-100 hover:bg-green-200 rounded-full p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Status */}
                         <select
                           value={statusFilter}
                           onChange={(e) => setStatusFilter(e.target.value)}
-                          className="text-sm font-semibold text-gray-900 border-none focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                          className={`px-2.5 py-1.5 text-xs font-semibold text-gray-900 border rounded-md focus:ring-1 focus:ring-blue-500 ${
+                            statusFilter === 'all' 
+                              ? 'border-gray-300 bg-white' 
+                              : 'border-blue-400 bg-blue-50'
+                          }`}
                         >
-                          <option value="all">All</option>
+                          <option value="all">All Status</option>
                           <option value="completed">Completed</option>
                           <option value="processing">Processing</option>
                           <option value="failed">Failed</option>
                         </select>
-                      </div>
-                      <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-300">
-                        <label className="text-xs font-bold text-gray-700 whitespace-nowrap">Severity:</label>
+
+                        {/* Severity */}
                         <select
                           value={severityFilter}
                           onChange={(e) => setSeverityFilter(e.target.value)}
-                          className="text-sm font-semibold text-gray-900 border-none focus:outline-none focus:ring-0 bg-transparent cursor-pointer"
+                          className={`px-2.5 py-1.5 text-xs font-semibold text-gray-900 border rounded-md focus:ring-1 focus:ring-blue-500 ${
+                            severityFilter === 'all' 
+                              ? 'border-gray-300 bg-white' 
+                              : 'border-purple-400 bg-purple-50'
+                          }`}
                         >
-                          <option value="all">All</option>
+                          <option value="all">All Severity</option>
                           <option value="normal">Normal</option>
                           <option value="attention_needed">Attention</option>
                           <option value="urgent">Urgent</option>
                           <option value="critical">Critical</option>
                         </select>
+
+                        {/* Per Page */}
+                        <select
+                          value={itemsPerPage}
+                          onChange={(e) => {
+                            setItemsPerPage(Number(e.target.value))
+                            setCurrentPage(1)
+                          }}
+                          className="px-2.5 py-1.5 text-xs font-semibold border border-gray-300 bg-white text-gray-700 rounded-md focus:ring-1 focus:ring-blue-500"
+                        >
+                          <option value={10}>10</option>
+                          <option value={25}>25</option>
+                          <option value={50}>50</option>
+                          <option value={100}>100</option>
+                        </select>
+
+                        {/* Clear */}
+                        {(searchQuery || statusFilter !== 'all' || severityFilter !== 'all') && (
+                          <button
+                            onClick={() => {
+                              setSearchQuery('')
+                              setStatusFilter('all')
+                              setSeverityFilter('all')
+                            }}
+                            className="px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                            title="Clear all filters"
+                          >
+                            Clear
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   <div className="px-6 py-3 bg-white">
-                    <div className="flex items-center justify-between mb-2">
-                      <h2 className="text-base font-bold text-gray-900">All Reports</h2>
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm text-gray-600 font-semibold">
-                          Showing {startIndex + 1}-{Math.min(endIndex, filteredReports.length)} of {filteredReports.length}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <label className="text-xs font-bold text-gray-700">Per page:</label>
-                          <select
-                            value={itemsPerPage}
-                            onChange={(e) => {
-                              setItemsPerPage(Number(e.target.value))
-                              setCurrentPage(1)
-                            }}
-                            className="px-2 py-1 text-xs font-semibold text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                          >
-                            <option value={10}>10</option>
-                            <option value={25}>25</option>
-                            <option value={50}>50</option>
-                            <option value={100}>100</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
                   {filteredReports.length === 0 ? (
                     <div className="text-center py-6">
                       <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
@@ -506,15 +548,13 @@ export default function DashboardPage() {
                                     <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
                                       {String(report.report_type)}
                                     </span>
-                                  ) : (
-                                    <span className="text-gray-400 text-xs">—</span>
-                                  )}
-                                  {/* No Data Warning */}
-                                  {report.analysis_status === 'completed' && !report.report_type && (
+                                  ) : report.analysis_status === 'completed' ? (
                                     <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-bold flex items-center gap-1">
                                       <AlertCircle className="h-3 w-3" />
-                                      No Data
+                                      No Medical Data
                                     </span>
+                                  ) : (
+                                    <span className="text-gray-400 text-xs">Processing...</span>
                                   )}
                                 </div>
                               </td>
@@ -577,8 +617,14 @@ export default function DashboardPage() {
                                     {getSeverityIcon(report.severity_level)}
                                     {getSeverityLabel(report.severity_level)}
                                   </span>
+                                ) : report.analysis_status === 'completed' && !report.report_type ? (
+                                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-semibold">
+                                    Not Assessed
+                                  </span>
+                                ) : report.analysis_status === 'processing' ? (
+                                  <span className="text-gray-400 text-xs">Analyzing...</span>
                                 ) : (
-                                  <span className="text-gray-400 text-xs font-medium">—</span>
+                                  <span className="text-gray-400 text-xs">Pending</span>
                                 )}
                               </td>
                               <td className="px-3 py-2.5">
@@ -668,7 +714,6 @@ export default function DashboardPage() {
                   </div>
               </div>
             </div>
-          </div>
         </div>
       </div>
     </div>

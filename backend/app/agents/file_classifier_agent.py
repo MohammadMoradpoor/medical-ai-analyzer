@@ -91,7 +91,7 @@ VALIDATION RULES:
             metadata = self._extract_file_metadata(file_content, file_type)
             
             # Use AI to classify the file
-            classification = await self._classify_with_ai(file_content, file_type, metadata)
+            classification, token_usage = await self._classify_with_ai(file_content, file_type, metadata)
             
             # Add metadata to classification
             classification["metadata"] = metadata
@@ -105,7 +105,8 @@ VALIDATION RULES:
             return {
                 "status": "success",
                 "data": classification,
-                "error": None
+                "error": None,
+                "token_usage": token_usage
             }
             
         except Exception as e:
@@ -218,11 +219,19 @@ Determine:
             
             import json
             classification = json.loads(response.choices[0].message.content)
-            return classification
+            
+            # Extract token usage from OpenAI response
+            token_usage = {
+                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                "total_tokens": response.usage.total_tokens if response.usage else 0
+            } if response.usage else {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+            
+            return classification, token_usage
             
         except Exception as e:
             logger.error(f"AI classification failed: {str(e)}")
-            # Return safe default
+            # Return safe default with zero tokens
             return {
                 "is_medical": True,  # Assume medical to allow processing
                 "file_type": file_type,
@@ -234,7 +243,7 @@ Determine:
                 "metadata": metadata,
                 "rejection_reason": None,
                 "recommendations": []
-            }
+            }, {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
 
 # Register the agent

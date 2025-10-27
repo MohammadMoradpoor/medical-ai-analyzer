@@ -117,7 +117,7 @@ ANALYSIS FRAMEWORK:
             })
             
             # Perform AI analysis
-            analysis_result = await self._analyze_test_results(
+            analysis_result, token_usage = await self._analyze_test_results(
                 extracted_data,
                 patient_context
             )
@@ -130,7 +130,8 @@ ANALYSIS FRAMEWORK:
             return {
                 "status": "success",
                 "data": analysis_result,
-                "error": None
+                "error": None,
+                "token_usage": token_usage
             }
             
         except Exception as e:
@@ -184,6 +185,13 @@ Remember to:
             
             analysis_result = json.loads(response.choices[0].message.content)
             
+            # Extract token usage from OpenAI response
+            token_usage = {
+                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                "total_tokens": response.usage.total_tokens if response.usage else 0
+            } if response.usage else None
+            
             # Add standard medical disclaimer if not present
             if "disclaimer" not in analysis_result:
                 analysis_result["disclaimer"] = (
@@ -193,7 +201,7 @@ Remember to:
                     "necessary medical treatment."
                 )
             
-            return analysis_result
+            return analysis_result, token_usage
             
         except Exception as e:
             logger.error(f"AI analysis failed: {str(e)}")

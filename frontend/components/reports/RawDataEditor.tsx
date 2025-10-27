@@ -132,8 +132,7 @@ export function RawDataEditor({ data, reportId, onSave, onReprocess }: RawDataEd
       await onReprocess()
       
       // Show success message
-      toast.success('✅ Reprocessing started! Redirecting to dashboard...', {
-        icon: '🔄',
+      toast.success('Reprocessing started! Redirecting to dashboard...', {
         duration: 2000
       })
       
@@ -201,7 +200,10 @@ export function RawDataEditor({ data, reportId, onSave, onReprocess }: RawDataEd
         </div>
       ) : (
         <div className="px-5 py-3 bg-yellow-50 border-b-2 border-yellow-300 flex items-center justify-between">
-          <span className="text-sm font-bold text-yellow-900">✏️ Editing Mode - Make your changes below</span>
+          <span className="text-sm font-bold text-yellow-900 flex items-center gap-2">
+            <Edit3 className="h-4 w-4" />
+            Editing Mode - Make your changes below
+          </span>
           <div className="flex gap-2">
             <button
               onClick={handleCancel}
@@ -463,7 +465,7 @@ export function RawDataEditor({ data, reportId, onSave, onReprocess }: RawDataEd
         {isEditing && (
           <div className="bg-blue-50 border-l-4 border-blue-500 rounded-r p-3">
             <p className="text-xs text-blue-900 font-medium">
-              💡 After saving, click <strong>"Reprocess"</strong> to update analysis with your changes.
+              After saving, click <strong>"Reprocess"</strong> to update analysis with your changes.
             </p>
           </div>
         )}

@@ -122,6 +122,11 @@ export const reportsApi = {
     const response = await api.post(`/reports/${reportId}/reprocess`)
     return response.data
   },
+
+  getUsageStats: async () => {
+    const response = await api.get('/reports/usage-stats')
+    return response.data
+  },
 }
 
 export default api

@@ -2,13 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Settings, ChevronDown, Shield, Bell, FileText } from 'lucide-react'
+import { Settings, ChevronDown, Shield, Bell, FileText, Activity } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const settingsMenuItems = [
   { id: 'account', label: 'Account Settings', icon: Shield, action: 'account' },
   { id: 'notifications', label: 'Notifications', icon: Bell, action: 'notifications' },
   { id: 'reports', label: 'Report History', icon: FileText, action: 'reports' },
+  { id: 'usage', label: 'Usage & Costs', icon: Activity, action: 'usage' },
 ]
 
 export function SettingsDropdown() {
@@ -38,6 +39,9 @@ export function SettingsDropdown() {
         break
       case 'reports':
         router.push('/settings?section=history')
+        break
+      case 'usage':
+        router.push('/settings?section=usage')
         break
     }
     setIsOpen(false)

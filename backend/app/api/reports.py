@@ -90,6 +90,20 @@ async def process_medical_report(
         })
         classification_duration = (datetime.utcnow() - classification_start).total_seconds() * 1000
         
+        # Calculate cost for classification
+        classification_token_usage = classification_result.get("token_usage")
+        classification_tokens = None
+        classification_cost = None
+        
+        if classification_token_usage:
+            total_tokens = classification_token_usage.get("total_tokens", 0)
+            prompt_tokens = classification_token_usage.get("prompt_tokens", 0)
+            completion_tokens = classification_token_usage.get("completion_tokens", 0)
+            
+            # GPT-4o pricing
+            classification_cost = (prompt_tokens / 1_000_000 * 2.50) + (completion_tokens / 1_000_000 * 10.00)
+            classification_tokens = total_tokens
+        
         # Log classification
         classification_log = AgentLog(
             report_id=report_id,
@@ -103,7 +117,9 @@ async def process_medical_report(
             input_data={"file_type": file_type, "file_name": file_name},
             output_data=classification_result.get("data"),
             error_message=classification_result.get("error"),
-            model_used="gpt-4o"
+            model_used="gpt-4o",
+            tokens_used=classification_tokens,
+            cost_estimate=classification_cost
         )
         db.add(classification_log)
         db.commit()
@@ -138,6 +154,20 @@ async def process_medical_report(
         })
         extraction_duration = (datetime.utcnow() - extraction_start).total_seconds() * 1000
         
+        # Calculate cost for extraction
+        extraction_token_usage = extraction_result.get("token_usage")
+        extraction_tokens = None
+        extraction_cost = None
+        
+        if extraction_token_usage:
+            total_tokens = extraction_token_usage.get("total_tokens", 0)
+            prompt_tokens = extraction_token_usage.get("prompt_tokens", 0)
+            completion_tokens = extraction_token_usage.get("completion_tokens", 0)
+            
+            # GPT-4o pricing
+            extraction_cost = (prompt_tokens / 1_000_000 * 2.50) + (completion_tokens / 1_000_000 * 10.00)
+            extraction_tokens = total_tokens
+        
         # Log extraction
         extraction_log = AgentLog(
             report_id=report_id,
@@ -151,7 +181,9 @@ async def process_medical_report(
             input_data={"file_type": file_type},
             output_data=extraction_result.get("data"),
             error_message=extraction_result.get("error"),
-            model_used="gpt-4o"
+            model_used="gpt-4o",
+            tokens_used=extraction_tokens,
+            cost_estimate=extraction_cost
         )
         db.add(extraction_log)
         
@@ -186,6 +218,20 @@ async def process_medical_report(
         })
         analysis_duration = (datetime.utcnow() - analysis_start).total_seconds() * 1000
         
+        # Calculate cost based on token usage
+        token_usage_data = analysis_result.get("token_usage")
+        tokens_used = None
+        cost_estimate = None
+        
+        if token_usage_data:
+            total_tokens = token_usage_data.get("total_tokens", 0)
+            prompt_tokens = token_usage_data.get("prompt_tokens", 0)
+            completion_tokens = token_usage_data.get("completion_tokens", 0)
+            
+            # GPT-4o pricing: $2.50/1M input, $10.00/1M output
+            cost_estimate = (prompt_tokens / 1_000_000 * 2.50) + (completion_tokens / 1_000_000 * 10.00)
+            tokens_used = total_tokens
+        
         # Log analysis
         analysis_log = AgentLog(
             report_id=report_id,
@@ -199,7 +245,9 @@ async def process_medical_report(
             input_data={"extracted_data": extracted_data},
             output_data=analysis_result.get("data"),
             error_message=analysis_result.get("error"),
-            model_used="gpt-4o"
+            model_used="gpt-4o",
+            tokens_used=tokens_used,
+            cost_estimate=cost_estimate
         )
         db.add(analysis_log)
         
@@ -212,8 +260,15 @@ async def process_medical_report(
         
         # Update report with analysis results
         overall = analysis_data.get("overall_assessment", {})
+        test_analysis = analysis_data.get("test_analysis", [])
+        
+        # Don't set severity to "normal" if no test data was found
+        if test_analysis and len(test_analysis) > 0:
+            report.severity_level = overall.get("severity_level", "normal")
+        else:
+            report.severity_level = None  # No data to assess
+        
         report.analysis_result = analysis_data
-        report.severity_level = overall.get("severity_level", "normal")
         report.is_critical = overall.get("is_critical", False)
         report.has_abnormalities = overall.get("has_abnormalities", False)
         report.summary = overall.get("summary")
@@ -333,15 +388,15 @@ async def list_reports(
             processing_duration = int(duration_delta.total_seconds())
         
         result.append(
-            ReportListResponse(
-                id=str(r.id),
-                file_name=r.file_name,
-                report_type=r.report_type,
-                test_date=r.test_date,
-                upload_date=r.upload_date,
-                analysis_status=r.analysis_status,
-                severity_level=r.severity_level,
-                is_critical=r.is_critical or False,
+        ReportListResponse(
+            id=str(r.id),
+            file_name=r.file_name,
+            report_type=r.report_type,
+            test_date=r.test_date,
+            upload_date=r.upload_date,
+            analysis_status=r.analysis_status,
+            severity_level=r.severity_level,
+            is_critical=r.is_critical or False,
                 file_size=r.file_size,
                 analysis_completed_at=r.analysis_completed_at,
                 processing_duration=processing_duration
@@ -351,6 +406,95 @@ async def list_reports(
     return result
 
 
+@router.get("/usage-stats")
+async def get_usage_stats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get token usage and cost statistics for the current user.
+    """
+    # Get all agent logs for user's reports
+    logs = db.query(AgentLog).join(
+        MedicalReport, AgentLog.report_id == MedicalReport.id
+    ).filter(
+        MedicalReport.user_id == current_user.id
+    ).all()
+    
+    # GPT-4o pricing (as of Oct 2024)
+    # Input: $2.50 per 1M tokens
+    # Output: $10.00 per 1M tokens
+    INPUT_COST_PER_1M = 2.50
+    OUTPUT_COST_PER_1M = 10.00
+    
+    total_input_tokens = 0
+    total_output_tokens = 0
+    total_cost = 0.0
+    model_usage = {}
+    agent_usage = {}
+    
+    for log in logs:
+        # Use stored cost if available, otherwise estimate
+        if log.cost_estimate and log.cost_estimate > 0:
+            cost = log.cost_estimate
+        elif log.tokens_used and isinstance(log.tokens_used, int):
+            # Estimate: assume 60% input, 40% output
+            input_tokens = int(log.tokens_used * 0.6)
+            output_tokens = int(log.tokens_used * 0.4)
+            cost = (input_tokens / 1_000_000 * INPUT_COST_PER_1M) + (output_tokens / 1_000_000 * OUTPUT_COST_PER_1M)
+        else:
+            input_tokens = 0
+            output_tokens = 0
+            cost = 0
+        
+        # Calculate tokens
+        if log.tokens_used:
+            input_tokens = int(log.tokens_used * 0.6)
+            output_tokens = int(log.tokens_used * 0.4)
+        else:
+            input_tokens = 0
+            output_tokens = 0
+        
+        total_input_tokens += input_tokens
+        total_output_tokens += output_tokens
+        total_cost += cost
+        
+        # Track by model
+        model = log.model_used or 'gpt-4o'
+        if model not in model_usage:
+            model_usage[model] = {'count': 0, 'tokens': 0, 'cost': 0}
+        model_usage[model]['count'] += 1
+        model_usage[model]['tokens'] += (input_tokens + output_tokens)
+        model_usage[model]['cost'] += cost
+        
+        # Track by agent type
+        agent = log.agent_type or 'unknown'
+        if agent not in agent_usage:
+            agent_usage[agent] = {'count': 0, 'tokens': 0, 'cost': 0}
+        agent_usage[agent]['count'] += 1
+        agent_usage[agent]['tokens'] += (input_tokens + output_tokens)
+        agent_usage[agent]['cost'] += cost
+    
+    # Get report count
+    report_count = db.query(MedicalReport).filter(
+        MedicalReport.user_id == current_user.id
+    ).count()
+    
+    return {
+        "total_reports": report_count,
+        "total_processing_runs": len(logs),
+        "total_input_tokens": total_input_tokens,
+        "total_output_tokens": total_output_tokens,
+        "total_tokens": total_input_tokens + total_output_tokens,
+        "total_cost_usd": round(total_cost, 4),
+        "model_breakdown": model_usage,
+        "agent_breakdown": agent_usage,
+        "pricing": {
+            "model": "gpt-4o",
+            "input_per_1m": INPUT_COST_PER_1M,
+            "output_per_1m": OUTPUT_COST_PER_1M
+        }
+    }
 @router.get("/{report_id}", response_model=ReportAnalysisResponse)
 async def get_report(
     report_id: str,
@@ -579,6 +723,8 @@ async def delete_report(
     db.commit()
     
     return {"message": "Report deleted successfully"}
+
+
 
 
 @router.get("/{report_id}/agent-logs")

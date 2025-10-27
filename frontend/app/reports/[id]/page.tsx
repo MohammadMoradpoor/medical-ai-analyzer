@@ -99,16 +99,7 @@ export default function ReportDetailPage() {
   const handleReprocess = async () => {
     await reportsApi.reprocess(reportId)
     
-    // Show success toast and redirect to dashboard
-    toast.success('✅ Reprocessing started! Returning to dashboard...', {
-      icon: '🔄',
-      duration: 2000
-    })
-    
-    // Redirect to dashboard to show processing status
-    setTimeout(() => {
-      router.push('/dashboard')
-    }, 2000)
+    // Redirect handled by RawDataEditor component
   }
 
   const getSeverityColor = (severity?: string) => {
@@ -291,7 +282,7 @@ export default function ReportDetailPage() {
               </div>
             ) : report.status === 'completed' && (
               <div className="bg-yellow-50 rounded-lg p-3 border-2 border-yellow-300">
-                <div className="text-xs text-yellow-700 font-bold mb-1">⚠️ Data Status</div>
+                <div className="text-xs text-yellow-700 font-bold mb-1">Data Status</div>
                 <div className="text-base font-bold text-yellow-900 mb-1">
                   No Tests Found
                 </div>
@@ -335,7 +326,8 @@ export default function ReportDetailPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-orange-900 mb-2 flex items-center gap-2">
-                      ⚠️ No Medical Data Extracted
+                      <AlertCircle className="h-6 w-6" />
+                      No Medical Data Extracted
                     </h3>
                     <p className="text-sm text-orange-800 mb-3 leading-relaxed">
                       The AI was unable to extract medical test data from this file. This could happen if:
@@ -391,7 +383,7 @@ export default function ReportDetailPage() {
                 <div className="bg-gradient-to-br from-red-50 to-white rounded-xl border-2 border-red-200 overflow-hidden shadow-md">
                   <div className="px-4 py-2.5 bg-red-600 flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 text-white" />
-                    <h3 className="text-sm font-bold text-white">⚠️ Abnormal Findings</h3>
+                    <h3 className="text-sm font-bold text-white">Abnormal Findings</h3>
                     <span className="px-2 py-0.5 bg-white text-red-600 text-xs font-bold rounded-full">
                       {report.abnormal_findings.length}
                     </span>
@@ -399,9 +391,9 @@ export default function ReportDetailPage() {
                   <div className="p-3 space-y-2">
                     {report.abnormal_findings.map((finding, index) => (
                       <div key={index} className="bg-white rounded-lg border-2 border-red-200 p-3">
-                        <div className="flex items-start gap-2">
-                          <span className="text-lg">⚠️</span>
-                          <div className="flex-1">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                        <div className="flex-1">
                             <h4 className="font-bold text-red-900 text-sm mb-1">{finding.finding}</h4>
                             <p className="text-xs text-gray-700 leading-snug mb-2">{finding.explanation}</p>
                             {finding.action_needed && (
@@ -429,11 +421,13 @@ export default function ReportDetailPage() {
                       </span>
                     </div>
                     <div className="flex gap-2 text-xs">
-                      <span className="px-2 py-0.5 bg-green-500 text-white rounded font-bold">
-                        {report.test_analysis.filter(t => t.is_normal).length} ✓
+                      <span className="px-2 py-0.5 bg-green-500 text-white rounded font-bold flex items-center gap-1">
+                        <CheckCircle className="h-3 w-3" />
+                        {report.test_analysis.filter(t => t.is_normal).length}
                       </span>
-                      <span className="px-2 py-0.5 bg-red-500 text-white rounded font-bold">
-                        {report.test_analysis.filter(t => !t.is_normal).length} ⚠
+                      <span className="px-2 py-0.5 bg-red-500 text-white rounded font-bold flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {report.test_analysis.filter(t => !t.is_normal).length}
                       </span>
                     </div>
                   </div>
@@ -470,7 +464,7 @@ export default function ReportDetailPage() {
                                   ? 'bg-green-500 text-white' 
                                   : 'bg-red-500 text-white'
                               }`}>
-                                {test.is_normal ? '✓ Normal' : '⚠ ' + (test.severity || 'Abnormal')}
+                                {test.is_normal ? 'Normal' : (test.severity || 'Abnormal')}
                               </span>
                             </td>
                           </tr>
@@ -506,7 +500,7 @@ export default function ReportDetailPage() {
             <div className="bg-white rounded-xl border-2 border-indigo-200 overflow-hidden shadow-md">
                 <div className="px-4 py-2.5 bg-indigo-600 flex items-center gap-2">
                   <Activity className="h-4 w-4 text-white" />
-                  <h3 className="text-sm font-bold text-white">🔧 Processing Steps</h3>
+                  <h3 className="text-sm font-bold text-white">Processing Steps</h3>
                   {agentLogs.length > 0 && (
                     <span className="px-2 py-0.5 bg-white text-indigo-600 text-xs font-bold rounded-full">
                       {agentLogs.length}
@@ -539,7 +533,7 @@ export default function ReportDetailPage() {
                         <FileText className="h-5 w-5 text-white" />
                       </div>
                       <div className="text-left">
-                        <h3 className="text-sm font-bold text-gray-900">📊 Extracted Data (Editable)</h3>
+                        <h3 className="text-sm font-bold text-gray-900">Extracted Data (Editable)</h3>
                         <p className="text-xs text-gray-600 font-medium">Click to view and edit raw extracted data</p>
                       </div>
                     </div>
@@ -574,7 +568,7 @@ export default function ReportDetailPage() {
             {/* Medical Disclaimer - Compact */}
             <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-500 rounded-r-xl p-3 shadow-sm">
               <p className="text-xs text-gray-800 leading-snug">
-                <strong className="font-bold text-yellow-900">⚕️ Medical Disclaimer:</strong> This AI analysis is for informational purposes only. Consult a qualified healthcare professional for proper medical interpretation and treatment.
+                <strong className="font-bold text-yellow-900">Medical Disclaimer:</strong> This AI analysis is for informational purposes only. Consult a qualified healthcare professional for proper medical interpretation and treatment.
               </p>
             </div>
           </div>

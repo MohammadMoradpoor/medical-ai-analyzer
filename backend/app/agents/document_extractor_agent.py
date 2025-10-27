@@ -114,11 +114,13 @@ Return a JSON object with:
             self.log_event("extraction_started", {"file_type": file_type})
             
             # Extract text from document
+            ocr_token_usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+            
             if file_type == "pdf":
                 text = self._extract_text_from_pdf(file_content)
             else:
                 # For images, we'll use OCR or direct vision API
-                text = await self._extract_text_from_image(file_content)
+                text, ocr_token_usage = await self._extract_text_from_image(file_content)
             
             if not text:
                 return {
@@ -128,7 +130,14 @@ Return a JSON object with:
                 }
             
             # Use AI to extract structured data
-            extracted_data = await self._extract_structured_data(text)
+            extracted_data, structure_token_usage = await self._extract_structured_data(text)
+            
+            # Combine token usage from OCR and structuring
+            total_token_usage = {
+                "prompt_tokens": ocr_token_usage["prompt_tokens"] + structure_token_usage["prompt_tokens"],
+                "completion_tokens": ocr_token_usage["completion_tokens"] + structure_token_usage["completion_tokens"],
+                "total_tokens": ocr_token_usage["total_tokens"] + structure_token_usage["total_tokens"]
+            }
             
             self.log_event("extraction_completed", {
                 "tests_found": len(extracted_data.get("test_results", []))
@@ -137,7 +146,8 @@ Return a JSON object with:
             return {
                 "status": "success",
                 "data": extracted_data,
-                "error": None
+                "error": None,
+                "token_usage": total_token_usage
             }
             
         except Exception as e:
@@ -201,11 +211,19 @@ Return the extracted text, not JSON. Include everything visible in the image."""
             )
             
             extracted_text = response.choices[0].message.content
-            return extracted_text or ""
+            
+            # Extract token usage
+            token_usage = {
+                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                "total_tokens": response.usage.total_tokens if response.usage else 0
+            } if response.usage else {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+            
+            return extracted_text or "", token_usage
             
         except Exception as e:
             logger.error(f"Image text extraction error: {str(e)}")
-            return ""
+            return "", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
     
     async def _extract_structured_data(self, text: str) -> Dict[str, Any]:
         """Use AI to extract structured data from text."""
@@ -228,11 +246,19 @@ Extract all test results, patient information, and abnormal findings following t
             )
             
             extracted_data = json.loads(response.choices[0].message.content)
-            return extracted_data
+            
+            # Extract token usage
+            token_usage = {
+                "prompt_tokens": response.usage.prompt_tokens if response.usage else 0,
+                "completion_tokens": response.usage.completion_tokens if response.usage else 0,
+                "total_tokens": response.usage.total_tokens if response.usage else 0
+            } if response.usage else {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
+            
+            return extracted_data, token_usage
             
         except Exception as e:
             logger.error(f"AI extraction failed: {str(e)}")
-            return {}
+            return {}, {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
 
 # Register the agent
