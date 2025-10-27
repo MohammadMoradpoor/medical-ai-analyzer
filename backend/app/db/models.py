@@ -1,7 +1,6 @@
 from sqlalchemy import Column, String, DateTime, Boolean, Text, ForeignKey, JSON, Integer, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 import uuid
 from datetime import datetime
 
@@ -12,7 +11,7 @@ class User(Base):
     """User model for authentication and authorization"""
     __tablename__ = "users"
     
-    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     email = Column(String(255), unique=True, nullable=False, index=True)
     username = Column(String(100), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
@@ -36,8 +35,8 @@ class MedicalReport(Base):
     """Medical report/test model for storing uploaded test results"""
     __tablename__ = "medical_reports"
     
-    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
     
     # File information
     file_name = Column(String(255), nullable=False)
@@ -86,8 +85,8 @@ class TestResult(Base):
     """Individual test results extracted from medical reports"""
     __tablename__ = "test_results"
     
-    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    report_id = Column(PG_UUID(as_uuid=True), ForeignKey("medical_reports.id"), nullable=False, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    report_id = Column(String(36), ForeignKey("medical_reports.id"), nullable=False, index=True)
     
     # Test information
     test_name = Column(String(200), nullable=False)
@@ -126,9 +125,9 @@ class AgentLog(Base):
     """Logs for AI agent operations and analysis"""
     __tablename__ = "agent_logs"
     
-    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    report_id = Column(PG_UUID(as_uuid=True), ForeignKey("medical_reports.id", ondelete="CASCADE"), nullable=True, index=True)
-    user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    report_id = Column(String(36), ForeignKey("medical_reports.id", ondelete="CASCADE"), nullable=True, index=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True)
     
     # Agent information
     agent_type = Column(String(100))  # medical_analyzer, document_extractor, report_generator

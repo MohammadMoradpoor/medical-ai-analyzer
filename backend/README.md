@@ -17,7 +17,7 @@ AI-powered medical test analysis system using FastAPI and OpenAI.
 ### Prerequisites
 
 - Python 3.10+
-- PostgreSQL 12+
+- MySQL 8.0+
 - OpenAI API key
 
 ### Installation
@@ -41,13 +41,10 @@ cp .env.example .env
 
 4. Setup database:
 ```bash
-# Create database
-createdb medical_analyzer
-
-# Or using psql
-psql -U postgres
-CREATE DATABASE medical_analyzer;
-\q
+# Create database using MySQL
+mysql -u root -p
+CREATE DATABASE medical_analyzer CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+exit;
 ```
 
 5. Run migrations:
@@ -111,7 +108,7 @@ Once running, visit:
 
 ```bash
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/medical_analyzer
+DATABASE_URL=mysql+pymysql://root:password@localhost:3306/medical_analyzer
 
 # OpenAI
 OPENAI_API_KEY=your_openai_api_key
