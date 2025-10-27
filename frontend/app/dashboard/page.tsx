@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { reportsApi, authApi } from '@/lib/api'
 import { MedicalReport } from '@/types'
-import { Activity, Upload, FileText, AlertCircle, CheckCircle, Clock, XCircle, X, Trash2, ArrowRight, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Activity, Upload, FileText, AlertCircle, CheckCircle, Clock, XCircle, X, Trash2, ArrowRight, Search, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
@@ -35,6 +35,7 @@ export default function DashboardPage() {
     fileName: ''
   })
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(true)
 
   useEffect(() => {
     // Check authentication
@@ -52,6 +53,23 @@ export default function DashboardPage() {
     
     fetchReports()
   }, [])
+
+  // Auto-refresh for processing reports
+  useEffect(() => {
+    // Only auto-refresh if there are processing reports and auto-refresh is enabled
+    const hasProcessingReports = reports.some(r => r.analysis_status === 'processing' || r.analysis_status === 'pending')
+    
+    if (!autoRefresh || !hasProcessingReports) {
+      return
+    }
+    
+    // Auto-refresh every 3 seconds when there are processing reports
+    const interval = setInterval(() => {
+      fetchReports()
+    }, 3000)
+    
+    return () => clearInterval(interval)
+  }, [reports, autoRefresh])
 
   const fetchReports = async () => {
     try {
@@ -241,6 +259,28 @@ export default function DashboardPage() {
               <Upload className="h-4 w-4" />
               New Analysis
             </button>
+            
+            {/* Auto-refresh indicator & toggle */}
+            {reports.some(r => r.analysis_status === 'processing' || r.analysis_status === 'pending') && (
+              <>
+                <div className="h-8 w-px bg-gray-300"></div>
+                <button
+                  onClick={() => setAutoRefresh(!autoRefresh)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg font-medium text-sm transition-all ${
+                    autoRefresh 
+                      ? 'bg-green-50 text-green-700 border-2 border-green-300' 
+                      : 'bg-gray-100 text-gray-600 border-2 border-gray-300'
+                  }`}
+                  title={autoRefresh ? 'Auto-refresh enabled' : 'Auto-refresh disabled'}
+                >
+                  <RefreshCw className={`h-4 w-4 ${autoRefresh ? 'animate-spin text-green-600' : ''}`} />
+                  <span className="text-xs font-bold">
+                    {autoRefresh ? 'Auto-Refreshing...' : 'Auto-Refresh Off'}
+                  </span>
+                </button>
+              </>
+            )}
+            
             <div className="h-8 w-px bg-gray-300"></div>
             <NotificationDropdown />
             <SettingsDropdown />
@@ -257,7 +297,7 @@ export default function DashboardPage() {
           
           {/* Stats Overview - Professional */}
           {(
-            <div className="grid grid-cols-4 gap-4 px-6 py-4 bg-white border-b border-gray-200">
+            <div className="grid grid-cols-5 gap-4 px-6 py-4 bg-white border-b border-gray-200">
               <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-100">
                 <div className="p-2 bg-blue-500 rounded-lg">
                   <FileText className="h-5 w-5 text-white" />
@@ -286,6 +326,22 @@ export default function DashboardPage() {
                   <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Processing</div>
                   <div className="text-2xl font-bold text-blue-600">
                     {reports.filter(r => r.analysis_status === 'processing').length}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-purple-50 to-white rounded-lg border border-purple-100">
+                <div className="p-2 bg-purple-500 rounded-lg">
+                  <Clock className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Avg Duration</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {(() => {
+                      const completedReports = reports.filter(r => r.analysis_status === 'completed' && r.processing_duration)
+                      if (completedReports.length === 0) return '—'
+                      const avgSeconds = completedReports.reduce((sum, r) => sum + (r.processing_duration || 0), 0) / completedReports.length
+                      return formatDuration(Math.round(avgSeconds))
+                    })()}
                   </div>
                 </div>
               </div>
@@ -410,6 +466,7 @@ export default function DashboardPage() {
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Name</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Report Type</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Upload Date</th>
+                            <th className="px-3 py-2 text-right text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Size</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Type</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Status</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Duration</th>
@@ -444,13 +501,22 @@ export default function DashboardPage() {
                                 </div>
                               </td>
                               <td className="px-3 py-2.5">
-                                {report.report_type ? (
-                                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                                    {String(report.report_type)}
-                                  </span>
-                                ) : (
-                                  <span className="text-gray-400 text-xs">—</span>
-                                )}
+                                <div className="flex flex-col gap-1">
+                                  {report.report_type ? (
+                                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                                      {String(report.report_type)}
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-400 text-xs">—</span>
+                                  )}
+                                  {/* No Data Warning */}
+                                  {report.analysis_status === 'completed' && !report.report_type && (
+                                    <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-bold flex items-center gap-1">
+                                      <AlertCircle className="h-3 w-3" />
+                                      No Data
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="px-3 py-2.5 text-xs text-gray-600 font-medium">
                                 {new Date(report.upload_date).toLocaleDateString('en-US', { 
@@ -458,6 +524,18 @@ export default function DashboardPage() {
                                   day: 'numeric', 
                                   year: 'numeric' 
                                 })}
+                              </td>
+                              <td className="px-3 py-2.5 text-right">
+                                {report.file_size ? (
+                                  <span className="text-xs font-semibold text-gray-700 font-mono">
+                                    {report.file_size < 1024 * 1024 
+                                      ? `${(report.file_size / 1024).toFixed(1)} KB` 
+                                      : `${(report.file_size / 1024 / 1024).toFixed(2)} MB`
+                                    }
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 text-xs">—</span>
+                                )}
                               </td>
                               <td className="px-3 py-2.5">
                                 {report.file_name && (

@@ -31,13 +31,13 @@ export function SettingsDropdown() {
   const handleMenuClick = (action: string) => {
     switch (action) {
       case 'account':
-        router.push('/settings')
+        router.push('/settings?section=account')
         break
       case 'notifications':
-        router.push('/settings')
+        router.push('/settings?section=notifications')
         break
       case 'reports':
-        router.push('/dashboard')
+        router.push('/settings?section=history')
         break
     }
     setIsOpen(false)

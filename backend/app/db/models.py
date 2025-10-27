@@ -53,6 +53,7 @@ class MedicalReport(Base):
     
     # Analysis status
     analysis_status = Column(String(50), default="pending")  # pending, processing, completed, failed
+    analysis_started_at = Column(DateTime)  # When analysis/processing actually started
     analysis_completed_at = Column(DateTime)
     
     # AI Analysis Results

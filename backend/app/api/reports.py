@@ -40,6 +40,7 @@ class ReportAnalysisResponse(BaseModel):
     abnormal_findings: Optional[List[dict]]
     recommendations: Optional[List[str]]
     extracted_data: Optional[dict]  # Raw extracted data from document
+    test_analysis: Optional[List[dict]]  # Individual test results from database
 
 
 class ReportListResponse(BaseModel):
@@ -65,9 +66,10 @@ async def process_medical_report(
 ):
     """Background task to process medical report."""
     try:
-        # Update status to processing
+        # Update status to processing and set start time
         report = db.query(MedicalReport).filter(MedicalReport.id == report_id).first()
         report.analysis_status = "processing"
+        report.analysis_started_at = datetime.utcnow()
         db.commit()
         
         # Read file
@@ -324,8 +326,10 @@ async def list_reports(
     for r in reports:
         # Calculate processing duration if completed
         processing_duration = None
-        if r.analysis_completed_at and r.upload_date:
-            duration_delta = r.analysis_completed_at - r.upload_date
+        if r.analysis_completed_at:
+            # Use analysis_started_at if available, otherwise fall back to upload_date
+            start_time = r.analysis_started_at if r.analysis_started_at else r.upload_date
+            duration_delta = r.analysis_completed_at - start_time
             processing_duration = int(duration_delta.total_seconds())
         
         result.append(
@@ -367,6 +371,26 @@ async def get_report(
             detail="Report not found"
         )
     
+    # Get test results from database
+    test_results = db.query(TestResult).filter(
+        TestResult.report_id == report_id
+    ).all()
+    
+    # Format test results for response
+    test_analysis = [
+        {
+            "test_name": tr.test_name,
+            "value": tr.value,
+            "unit": tr.unit,
+            "reference_range": tr.reference_range,
+            "is_normal": bool(tr.is_normal) if tr.is_normal is not None else True,
+            "severity": tr.severity,
+            "interpretation": tr.interpretation,
+            "clinical_significance": tr.clinical_significance
+        }
+        for tr in test_results
+    ]
+    
     return {
         "report_id": str(report.id),
         "status": report.analysis_status,
@@ -376,7 +400,8 @@ async def get_report(
         "summary": report.summary,
         "abnormal_findings": report.abnormal_findings,
         "recommendations": report.recommendations,
-        "extracted_data": report.extracted_data
+        "extracted_data": report.extracted_data,
+        "test_analysis": test_analysis if test_analysis else None
     }
 
 
@@ -439,8 +464,9 @@ async def reprocess_report(
             detail="No extracted data available to reprocess"
         )
     
-    # Reset analysis status
+    # Reset analysis status and set new start time
     report.analysis_status = "processing"
+    report.analysis_started_at = datetime.utcnow()  # Set new start time for accurate duration
     report.summary = None
     report.severity_level = None
     report.is_critical = False

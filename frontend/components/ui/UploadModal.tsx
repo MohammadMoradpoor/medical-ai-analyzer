@@ -171,7 +171,10 @@ export function UploadModal({ isOpen, onClose, onSuccess }: UploadModalProps) {
                     <div>
                       <p className="font-semibold text-gray-900">{selectedFile.name}</p>
                       <p className="text-sm text-gray-500">
-                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                        {selectedFile.size < 1024 * 1024 
+                          ? `${(selectedFile.size / 1024).toFixed(2)} KB` 
+                          : `${(selectedFile.size / 1024 / 1024).toFixed(2)} MB`
+                        }
                       </p>
                     </div>
                   </div>
