@@ -12,6 +12,7 @@ import PyPDF2
 import io
 from openai import AsyncOpenAI
 from .base_agent import BaseAgent, AgentRegistry
+from .imaging_agent import MedicalImagingAgent
 
 logger = logging.getLogger(__name__)
 
@@ -170,12 +171,110 @@ Return a JSON object with:
             logger.error(f"PDF extraction error: {str(e)}")
             return ""
     
-    async def _extract_text_from_image(self, image_content: bytes) -> str:
-        """Extract text from image using OpenAI Vision API."""
+    async def _extract_text_from_image(self, image_content: bytes) -> tuple:
+        """
+        Extract text/data from image using OpenAI Vision API.
+        Now enhanced to detect and handle medical imaging properly.
+        """
         try:
             import base64
             base64_image = base64.b64encode(image_content).decode('utf-8')
             
+            # First, detect what type of medical content this is
+            detection_response = await self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": """Quickly identify what type of medical content this is:
+1. LAB_REPORT - Contains test results with values and reference ranges
+2. XRAY - X-ray radiograph image (bones, chest, etc.)
+3. MRI - MRI scan image
+4. CT_SCAN - CT/CAT scan image
+5. DENTAL - Dental X-ray or imaging
+6. ULTRASOUND - Ultrasound image
+7. OTHER_MEDICAL - Other medical document
+
+Return ONLY the category name (e.g., "LAB_REPORT" or "XRAY")."""
+                            },
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{base64_image}",
+                                    "detail": "low"  # Low detail for quick detection
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens=50,
+                temperature=0.0
+            )
+            
+            detected_type = detection_response.choices[0].message.content.strip().upper()
+            logger.info(f"[DOCUMENT EXTRACTOR] Detected image type: {detected_type}")
+            
+            # If it's medical imaging (not lab report), use specialized imaging agent
+            if detected_type in ["XRAY", "MRI", "CT_SCAN", "DENTAL", "ULTRASOUND"]:
+                logger.info(f"[DOCUMENT EXTRACTOR] Routing to MedicalImagingAgent for {detected_type}")
+                
+                # Map detected type to imaging agent type
+                imaging_type_map = {
+                    "XRAY": "xray",
+                    "MRI": "mri", 
+                    "CT_SCAN": "ct_scan",
+                    "DENTAL": "dental",
+                    "ULTRASOUND": "general"
+                }
+                
+                imaging_type = imaging_type_map.get(detected_type, "general")
+                
+                # Use the specialized imaging agent
+                imaging_agent = MedicalImagingAgent(api_key=self.api_key)
+                imaging_result = await imaging_agent.process({
+                    "image_data": base64_image,
+                    "imaging_type": imaging_type
+                })
+                
+                if imaging_result["status"] == "success":
+                    import json
+                    # Convert imaging analysis to text format for extraction
+                    analysis_data = imaging_result["data"]
+                    extracted_text = f"""MEDICAL IMAGING ANALYSIS - {detected_type}
+
+Image Type: {analysis_data.get('image_type', 'Unknown')}
+Body Part: {analysis_data.get('body_part', 'Unknown')}
+Quality: {analysis_data.get('quality_assessment', {}).get('quality', 'Unknown')}
+
+FINDINGS:
+{json.dumps(analysis_data.get('findings', {}), indent=2)}
+
+IMPRESSION:
+{analysis_data.get('impression', 'No impression provided')}
+
+SEVERITY: {analysis_data.get('severity_level', 'unknown').upper()}
+
+RECOMMENDATIONS:
+{chr(10).join('- ' + rec for rec in analysis_data.get('recommendations', []))}
+
+RAW_ANALYSIS:
+{json.dumps(analysis_data, indent=2)}
+"""
+                    
+                    token_usage = imaging_result.get("token_usage", {
+                        "prompt_tokens": 0,
+                        "completion_tokens": 0,
+                        "total_tokens": 0
+                    })
+                    
+                    return extracted_text, token_usage
+                else:
+                    logger.warning(f"[DOCUMENT EXTRACTOR] Imaging agent failed, falling back to standard extraction")
+            
+            # For lab reports or if imaging agent failed, use standard extraction
             response = await self.client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
@@ -184,29 +283,18 @@ Return a JSON object with:
                         "content": [
                             {
                                 "type": "text",
-                                "text": """You are analyzing a medical image/document. This could be:
-1. Lab test results (blood work, urine test, etc.)
-2. Medical imaging (X-Ray, MRI, CT scan, Ultrasound)
-3. Dental X-rays or imaging
-4. Pathology reports
-5. Other medical documents
+                                "text": """You are analyzing a medical document/image. 
 
-Your task:
-- If this is a LAB REPORT: Extract all text including test names, values, reference ranges
-- If this is MEDICAL IMAGING (X-Ray, MRI, CT, etc.): Describe what you see in detail:
-  * Body part being imaged
-  * Any visible abnormalities, fractures, masses, or pathology
-  * Bone density, alignment issues
-  * Soft tissue changes
-  * Any areas of concern
-  * Overall impression
+If this is a LAB REPORT or contains TEXT:
+- Extract ALL text including test names, values, reference ranges
+- Extract patient information
+- Extract dates, lab names, doctor names
 
-- If this is DENTAL IMAGING: Describe:
-  * Tooth conditions
-  * Cavities, decay
-  * Root issues
-  * Bone loss
-  * Any pathology
+If this is MEDICAL IMAGING without specialized analysis:
+- Describe what you see in the image
+- Note body part being imaged
+- Describe any visible abnormalities
+- Note any areas of concern
 
 Return ALL information you can extract or observe. Be detailed and thorough."""
                             },
@@ -236,7 +324,7 @@ Return ALL information you can extract or observe. Be detailed and thorough."""
             return extracted_text or "", token_usage
             
         except Exception as e:
-            logger.error(f"Image text extraction error: {str(e)}")
+            logger.error(f"Image text extraction error: {str(e)}", exc_info=True)
             return "", {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
     
     async def _extract_structured_data(self, text: str) -> Dict[str, Any]:
