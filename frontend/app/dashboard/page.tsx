@@ -11,6 +11,7 @@ import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { UploadModal } from '@/components/ui/UploadModal'
+import { Loading } from '@/components/ui/Loading'
 
 type TabType = 'overview'
 
@@ -203,11 +204,7 @@ export default function DashboardPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
+    return <Loading fullScreen message="Loading dashboard..." />
   }
 
   return (
@@ -239,11 +236,7 @@ export default function DashboardPage() {
         <div className="px-6 py-4 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push('/')}
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-              title="Go to Home"
-            >
+            <div className="flex items-center gap-3">
               <div className="flex items-center justify-center h-10 w-10 bg-blue-600 rounded-lg">
                 <Activity className="h-6 w-6 text-white" />
               </div>
@@ -251,18 +244,11 @@ export default function DashboardPage() {
                 <h1 className="text-xl font-bold text-gray-900">Medical AI Analyzer</h1>
                 <p className="text-xs text-gray-500">Dashboard</p>
               </div>
-            </button>
+            </div>
           </div>
 
           {/* Right: Actions */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push('/')}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-semibold text-sm transition-colors"
-              title="Go to Home Page"
-            >
-              Home
-            </button>
             <button
               onClick={() => setUploadModalOpen(true)}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm shadow-sm transition-all hover:shadow-md"
@@ -554,7 +540,10 @@ export default function DashboardPage() {
                                       No Medical Data
                                     </span>
                                   ) : (
-                                    <span className="text-gray-400 text-xs">Processing...</span>
+                                    <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-semibold flex items-center gap-1">
+                                      <Clock className="h-3 w-3 animate-spin" />
+                                      Processing
+                                    </span>
                                   )}
                                 </div>
                               </td>
@@ -622,9 +611,14 @@ export default function DashboardPage() {
                                     Not Assessed
                                   </span>
                                 ) : report.analysis_status === 'processing' ? (
-                                  <span className="text-gray-400 text-xs">Analyzing...</span>
+                                  <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-semibold flex items-center gap-1">
+                                    <Clock className="h-3 w-3 animate-spin" />
+                                    Analyzing
+                                  </span>
                                 ) : (
-                                  <span className="text-gray-400 text-xs">Pending</span>
+                                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-semibold">
+                                    Pending
+                                  </span>
                                 )}
                               </td>
                               <td className="px-3 py-2.5">

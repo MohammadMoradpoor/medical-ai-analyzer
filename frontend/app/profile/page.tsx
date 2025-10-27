@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { User as UserIcon, Mail, Calendar, Activity } from 'lucide-react'
+import { User as UserIcon, Mail, Calendar, Activity, ChevronRight } from 'lucide-react'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
@@ -19,29 +19,31 @@ export default function ProfilePage() {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="px-6 py-4 flex items-center justify-between">
+      {/* Header - مانند Report Details */}
+      <div className="bg-white border-b-2 border-gray-200 shadow-md">
+        <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 bg-blue-600 rounded-lg">
-              <Activity className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Medical AI Analyzer</h1>
-              <p className="text-xs text-gray-500">Profile</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
             <button
               onClick={() => router.push('/dashboard')}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm"
+              className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+              title="Back to Dashboard"
             >
-              ← Back to Dashboard
+              <ChevronRight className="h-5 w-5 rotate-180" />
             </button>
+            <div className="flex items-center gap-2">
+              <div className="bg-blue-600 p-2 rounded-lg">
+                <UserIcon className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-gray-900">Profile</h1>
+                <p className="text-xs text-gray-500 font-medium">Manage your account</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
             <NotificationDropdown />
             <SettingsDropdown />
-            <div className="h-8 w-px bg-gray-300 mx-1"></div>
+            <div className="h-8 w-px bg-gray-300"></div>
             <UserDropdown />
           </div>
         </div>

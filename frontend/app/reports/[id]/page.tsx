@@ -11,6 +11,7 @@ import { RawDataEditor } from '@/components/reports/RawDataEditor'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
+import { Loading } from '@/components/ui/Loading'
 
 export default function ReportDetailPage() {
   const router = useRouter()
@@ -146,11 +147,7 @@ export default function ReportDetailPage() {
 
 
   if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
+    return <Loading fullScreen message="Loading report..." />
   }
 
   if (!report) {

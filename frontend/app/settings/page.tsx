@@ -8,6 +8,7 @@ import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
 import { reportsApi } from '@/lib/api'
 import toast from 'react-hot-toast'
+import { Loading } from '@/components/ui/Loading'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -272,9 +273,8 @@ export default function SettingsPage() {
                   </div>
                   <div className="p-6">
                     {isLoadingReports ? (
-                      <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading report history...</p>
+                      <div className="py-12">
+                        <Loading message="Loading report history..." />
                       </div>
                     ) : reports.length === 0 ? (
                       <div className="text-center py-12">
@@ -406,9 +406,8 @@ export default function SettingsPage() {
                   </div>
                   <div className="p-6">
                     {isLoadingUsage ? (
-                      <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600">Loading usage statistics...</p>
+                      <div className="py-12">
+                        <Loading message="Loading usage statistics..." />
                       </div>
                     ) : usageStats ? (
                       <div className="space-y-6">
