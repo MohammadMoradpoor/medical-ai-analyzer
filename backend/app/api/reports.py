@@ -39,6 +39,7 @@ class ReportAnalysisResponse(BaseModel):
     summary: Optional[str]
     abnormal_findings: Optional[List[dict]]
     recommendations: Optional[List[str]]
+    extracted_data: Optional[dict]  # Raw extracted data from document
 
 
 class ReportListResponse(BaseModel):
@@ -51,6 +52,8 @@ class ReportListResponse(BaseModel):
     severity_level: Optional[str]
     is_critical: bool
     file_size: Optional[int]
+    analysis_completed_at: Optional[datetime]
+    processing_duration: Optional[int]  # Duration in seconds
 
 
 async def process_medical_report(
@@ -317,20 +320,31 @@ async def list_reports(
         MedicalReport.user_id == current_user.id
     ).order_by(MedicalReport.upload_date.desc()).offset(skip).limit(limit).all()
     
-    return [
-        ReportListResponse(
-            id=str(r.id),
-            file_name=r.file_name,
-            report_type=r.report_type,
-            test_date=r.test_date,
-            upload_date=r.upload_date,
-            analysis_status=r.analysis_status,
-            severity_level=r.severity_level,
-            is_critical=r.is_critical or False,
-            file_size=r.file_size
+    result = []
+    for r in reports:
+        # Calculate processing duration if completed
+        processing_duration = None
+        if r.analysis_completed_at and r.upload_date:
+            duration_delta = r.analysis_completed_at - r.upload_date
+            processing_duration = int(duration_delta.total_seconds())
+        
+        result.append(
+            ReportListResponse(
+                id=str(r.id),
+                file_name=r.file_name,
+                report_type=r.report_type,
+                test_date=r.test_date,
+                upload_date=r.upload_date,
+                analysis_status=r.analysis_status,
+                severity_level=r.severity_level,
+                is_critical=r.is_critical or False,
+                file_size=r.file_size,
+                analysis_completed_at=r.analysis_completed_at,
+                processing_duration=processing_duration
+            )
         )
-        for r in reports
-    ]
+    
+    return result
 
 
 @router.get("/{report_id}", response_model=ReportAnalysisResponse)
@@ -361,8 +375,153 @@ async def get_report(
         "has_abnormalities": report.has_abnormalities or False,
         "summary": report.summary,
         "abnormal_findings": report.abnormal_findings,
-        "recommendations": report.recommendations
+        "recommendations": report.recommendations,
+        "extracted_data": report.extracted_data
     }
+
+
+@router.put("/{report_id}/extracted-data")
+async def update_extracted_data(
+    report_id: str,
+    extracted_data: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update the extracted data for a report (manual editing).
+    """
+    report = db.query(MedicalReport).filter(
+        MedicalReport.id == report_id,
+        MedicalReport.user_id == current_user.id
+    ).first()
+    
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Report not found"
+        )
+    
+    # Update extracted data
+    report.extracted_data = extracted_data
+    report.updated_at = datetime.utcnow()
+    db.commit()
+    
+    return {
+        "status": "success",
+        "message": "Extracted data updated successfully"
+    }
+
+
+@router.post("/{report_id}/reprocess")
+async def reprocess_report(
+    report_id: str,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Reprocess a report using updated extracted data.
+    """
+    report = db.query(MedicalReport).filter(
+        MedicalReport.id == report_id,
+        MedicalReport.user_id == current_user.id
+    ).first()
+    
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Report not found"
+        )
+    
+    if not report.extracted_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No extracted data available to reprocess"
+        )
+    
+    # Reset analysis status
+    report.analysis_status = "processing"
+    report.summary = None
+    report.severity_level = None
+    report.is_critical = False
+    report.has_abnormalities = False
+    report.recommendations = None
+    report.abnormal_findings = None
+    report.analysis_completed_at = None
+    db.commit()
+    
+    # Run analysis on existing extracted data
+    background_tasks.add_task(reprocess_with_extracted_data, report_id, db)
+    
+    return {
+        "status": "processing",
+        "message": "Report is being reprocessed with updated data",
+        "report_id": report_id
+    }
+
+
+async def reprocess_with_extracted_data(report_id: str, db: Session):
+    """Background task to reprocess report with existing extracted data."""
+    try:
+        report = db.query(MedicalReport).filter(MedicalReport.id == report_id).first()
+        if not report or not report.extracted_data:
+            return
+        
+        # Initialize analyzer
+        analyzer = MedicalAnalyzerAgent(OPENAI_API_KEY)
+        
+        # Run analysis
+        analysis_start = datetime.utcnow()
+        analysis_result = await analyzer.process({
+            "extracted_data": report.extracted_data,
+            "patient_context": {}
+        })
+        
+        if analysis_result["status"] != "success":
+            report.analysis_status = "failed"
+            db.commit()
+            return
+        
+        analysis_data = analysis_result["data"]
+        
+        # Update report
+        overall = analysis_data.get("overall_assessment", {})
+        report.analysis_result = analysis_data
+        report.severity_level = overall.get("severity_level", "normal")
+        report.is_critical = overall.get("is_critical", False)
+        report.has_abnormalities = overall.get("has_abnormalities", False)
+        report.summary = overall.get("summary")
+        report.detailed_report = analysis_data.get("detailed_report")
+        report.recommendations = analysis_data.get("recommendations", [])
+        report.abnormal_findings = analysis_data.get("abnormal_findings", [])
+        report.analysis_status = "completed"
+        report.analysis_completed_at = datetime.utcnow()
+        
+        # Delete old test results
+        db.query(TestResult).filter(TestResult.report_id == report_id).delete()
+        
+        # Save new test results
+        for test_analysis in analysis_data.get("test_analysis", []):
+            test_result = TestResult(
+                report_id=report_id,
+                test_name=test_analysis.get("test_name"),
+                value=test_analysis.get("value"),
+                unit=test_analysis.get("unit"),
+                reference_range=test_analysis.get("reference_range"),
+                is_normal=test_analysis.get("is_normal", True),
+                severity=test_analysis.get("severity", "normal"),
+                interpretation=test_analysis.get("interpretation"),
+                clinical_significance=test_analysis.get("clinical_significance")
+            )
+            db.add(test_result)
+        
+        db.commit()
+        
+    except Exception as e:
+        report = db.query(MedicalReport).filter(MedicalReport.id == report_id).first()
+        if report:
+            report.analysis_status = "failed"
+            db.commit()
 
 
 @router.delete("/{report_id}")

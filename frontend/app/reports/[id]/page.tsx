@@ -7,6 +7,7 @@ import { ReportAnalysis } from '@/types'
 import { Activity, AlertCircle, CheckCircle, FileText, TrendingUp, Clock, ChevronDown, ChevronRight, ArrowRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { AgentLogsViewer } from '@/components/reports/AgentLogsViewer'
+import { RawDataEditor } from '@/components/reports/RawDataEditor'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
@@ -19,7 +20,7 @@ export default function ReportDetailPage() {
   const [agentLogs, setAgentLogs] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingLogs, setIsLoadingLogs] = useState(false)
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['summary', 'agent-logs']))
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['summary', 'raw-data']))
 
   useEffect(() => {
     // Check authentication
@@ -84,6 +85,22 @@ export default function ReportDetailPage() {
     } finally {
       setIsLoadingLogs(false)
     }
+  }
+
+  const handleSaveExtractedData = async (data: any) => {
+    await reportsApi.updateExtractedData(reportId, data)
+    // Update local state
+    if (report) {
+      setReport({ ...report, extracted_data: data })
+    }
+  }
+
+  const handleReprocess = async () => {
+    await reportsApi.reprocess(reportId)
+    // Refresh report data after a delay to allow processing
+    setTimeout(() => {
+      fetchReport()
+    }, 2000)
   }
 
   const getSeverityColor = (severity?: string) => {
@@ -333,6 +350,16 @@ export default function ReportDetailPage() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Raw Extracted Data Section */}
+            {report.extracted_data && (
+              <RawDataEditor
+                data={report.extracted_data}
+                reportId={reportId}
+                onSave={handleSaveExtractedData}
+                onReprocess={handleReprocess}
+              />
             )}
 
             {/* Agent Execution Logs Section - Always Visible */}

@@ -168,6 +168,22 @@ export default function DashboardPage() {
     }
   }
 
+  const formatDuration = (seconds?: number) => {
+    if (!seconds) return '—'
+    
+    if (seconds < 60) {
+      return `${seconds}s`
+    } else if (seconds < 3600) {
+      const mins = Math.floor(seconds / 60)
+      const secs = seconds % 60
+      return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`
+    } else {
+      const hours = Math.floor(seconds / 3600)
+      const mins = Math.floor((seconds % 3600) / 60)
+      return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
+    }
+  }
+
 
 
   if (isLoading) {
@@ -396,6 +412,7 @@ export default function DashboardPage() {
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Upload Date</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Type</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Duration</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Severity</th>
                             <th className="px-3 py-2 text-center text-[11px] font-bold text-gray-700 uppercase tracking-wider">Actions</th>
                           </tr>
@@ -463,6 +480,18 @@ export default function DashboardPage() {
                                     {getStatusText(report.analysis_status)}
                                   </span>
                                 </div>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                {report.processing_duration !== undefined && report.processing_duration !== null ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <Clock className="h-4 w-4 text-gray-400" />
+                                    <span className="text-xs font-semibold text-gray-700 font-mono">
+                                      {formatDuration(report.processing_duration)}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400 text-xs">—</span>
+                                )}
                               </td>
                               <td className="px-3 py-2.5">
                                 {report.severity_level ? (

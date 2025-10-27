@@ -24,6 +24,8 @@ export interface MedicalReport {
   severity_level?: 'normal' | 'attention_needed' | 'urgent' | 'critical'
   is_critical: boolean
   file_size?: number
+  analysis_completed_at?: string
+  processing_duration?: number  // Duration in seconds
 }
 
 export interface ReportAnalysis {
@@ -37,6 +39,7 @@ export interface ReportAnalysis {
   recommendations?: string[]
   test_results?: TestResult[]
   test_analysis?: TestResult[]
+  extracted_data?: any  // Raw extracted data from document
 }
 
 export interface AbnormalFinding {

@@ -112,6 +112,16 @@ export const reportsApi = {
     const response = await api.get(`/reports/${reportId}/agent-logs`)
     return response.data
   },
+
+  updateExtractedData: async (reportId: string, extractedData: any) => {
+    const response = await api.put(`/reports/${reportId}/extracted-data`, extractedData)
+    return response.data
+  },
+
+  reprocess: async (reportId: string) => {
+    const response = await api.post(`/reports/${reportId}/reprocess`)
+    return response.data
+  },
 }
 
 export default api
