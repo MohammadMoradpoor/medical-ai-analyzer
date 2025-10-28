@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { reportsApi } from '@/lib/api'
 import { Activity, Upload, FileText, X, Search, Bell, Settings, User } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '@/lib/toast'
 
 export default function UploadPage() {
   const router = useRouter()

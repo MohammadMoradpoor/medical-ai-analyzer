@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { FileText, Edit3, Save, X, RefreshCw, User, Calendar, Stethoscope, TestTube, Plus, Trash2, AlertTriangle } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '@/lib/toast'
 
 interface RawDataEditorProps {
   data: any

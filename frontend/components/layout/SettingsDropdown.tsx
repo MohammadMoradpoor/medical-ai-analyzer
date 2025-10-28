@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Settings, ChevronDown, Shield, Bell, FileText, Activity } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '@/lib/toast'
 
 const settingsMenuItems = [
   { id: 'account', label: 'Account Settings', icon: Shield, action: 'account' },

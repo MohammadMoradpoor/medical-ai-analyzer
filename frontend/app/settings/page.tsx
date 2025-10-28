@@ -7,7 +7,7 @@ import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
 import { reportsApi } from '@/lib/api'
-import toast from 'react-hot-toast'
+import toast from '@/lib/toast'
 import { Loading } from '@/components/ui/Loading'
 
 export default function SettingsPage() {

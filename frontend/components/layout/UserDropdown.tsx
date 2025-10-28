@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { User, LogOut, Settings as SettingsIcon, ChevronDown, Activity } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '@/lib/toast'
 
 export function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false)

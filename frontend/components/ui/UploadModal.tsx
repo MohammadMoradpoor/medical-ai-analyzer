@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react'
 import { X, Upload, FileText } from 'lucide-react'
 import { reportsApi } from '@/lib/api'
-import toast from 'react-hot-toast'
+import toast from '@/lib/toast'
 
 interface UploadModalProps {
   isOpen: boolean

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Activity, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '@/lib/toast'
 
 export default function LoginPage() {
   const [username, setUsername] = useState('')

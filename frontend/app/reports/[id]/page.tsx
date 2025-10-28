@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { reportsApi } from '@/lib/api'
 import { ReportAnalysis } from '@/types'
-import { Activity, AlertCircle, CheckCircle, FileText, TrendingUp, Clock, ChevronDown, ChevronRight, ArrowRight, TestTube, MessageCircle } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { Activity, AlertCircle, CheckCircle, FileText, TrendingUp, Clock, ChevronDown, ChevronRight, ArrowRight, TestTube, MessageCircle, Copy, Check, Printer } from 'lucide-react'
+import toast from '@/lib/toast'
 import { AgentLogsViewer } from '@/components/reports/AgentLogsViewer'
 import { RawDataEditor } from '@/components/reports/RawDataEditor'
 import { ChatPanel } from '@/components/reports/ChatPanel'
@@ -27,6 +27,7 @@ export default function ReportDetailPage() {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['summary']))
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [chatMessageCount, setChatMessageCount] = useState(0)
+  const [reportIdCopied, setReportIdCopied] = useState(false)
 
   useEffect(() => {
     // Check authentication
@@ -309,17 +310,38 @@ export default function ReportDetailPage() {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(reportId)
+                  setReportIdCopied(true)
                   toast.success('Report ID copied!')
+                  
+                  // Reset after 2 seconds
+                  setTimeout(() => {
+                    setReportIdCopied(false)
+                  }, 2000)
                 }}
-                className="w-full px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition-colors"
+                className={`w-full px-3 py-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 ${
+                  reportIdCopied
+                    ? 'bg-green-500 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
               >
-                📋 Copy Report ID
+                {reportIdCopied ? (
+                  <>
+                    <Check className="h-3.5 w-3.5" />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" />
+                    Copy Report ID
+                  </>
+                )}
               </button>
               <button
                 onClick={() => window.print()}
-                className="w-full px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition-colors"
+                className="w-full px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-2"
               >
-                🖨️ Print Report
+                <Printer className="h-3.5 w-3.5" />
+                Print Report
               </button>
             </div>
           </div>

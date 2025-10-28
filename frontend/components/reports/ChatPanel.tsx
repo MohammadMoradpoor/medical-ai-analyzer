@@ -24,7 +24,7 @@ import {
   Bot,
   ChevronDown
 } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '@/lib/toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { MarkdownText } from '@/components/ui/MarkdownText'
 
