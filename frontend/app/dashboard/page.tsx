@@ -310,7 +310,7 @@ export default function DashboardPage() {
                 <div>
                   <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Completed</div>
                   <div className="text-2xl font-bold text-green-600">
-                    {reports.filter(r => r.analysis_status === 'completed' || r.analysis_status === 'quality_issue').length}
+                    {reports.filter(r => r.analysis_status === 'completed').length}
                   </div>
                 </div>
               </div>
@@ -509,8 +509,8 @@ export default function DashboardPage() {
                               onClick={() => {
                                 if (report.analysis_status === 'completed') {
                                   router.push(`/reports/${report.id}`)
-                                } else if (report.analysis_status === 'failed' || report.analysis_status === 'quality_issue') {
-                                  router.push(`/reports/${report.id}`)
+                                } else if (report.analysis_status === 'failed') {
+                                  router.push(`/reports/${report.id}?tab=agent-logs`)
                                 }
                               }}
                               className={`hover:bg-blue-50 transition-all ${
@@ -577,16 +577,14 @@ export default function DashboardPage() {
                                 <div className="flex items-center gap-1.5">
                                   {report.analysis_status === 'completed' && <CheckCircle className="h-4 w-4 text-green-600" />}
                                   {report.analysis_status === 'processing' && <Clock className="h-4 w-4 text-blue-600 animate-spin" />}
-                                  {report.analysis_status === 'quality_issue' && <AlertCircle className="h-4 w-4 text-orange-600" />}
                                   {report.analysis_status === 'failed' && <XCircle className="h-4 w-4 text-red-600" />}
                                   <span className={`px-2 py-1 rounded-md text-xs font-bold ${
                                     report.analysis_status === 'completed' ? 'bg-green-100 text-green-800' :
                                     report.analysis_status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                                    report.analysis_status === 'quality_issue' ? 'bg-orange-100 text-orange-800' :
                                     report.analysis_status === 'failed' ? 'bg-red-100 text-red-800' :
                                     'bg-gray-100 text-gray-800'
                                   }`}>
-                                    {report.analysis_status === 'quality_issue' ? 'Quality Issue' : getStatusText(report.analysis_status)}
+                                    {getStatusText(report.analysis_status)}
                                   </span>
                                 </div>
                               </td>

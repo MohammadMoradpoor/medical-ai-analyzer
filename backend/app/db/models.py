@@ -195,3 +195,36 @@ class ChatMessage(Base):
     def __repr__(self):
         return f"<ChatMessage(id={self.id}, role='{self.role}', report_id='{self.report_id}')>"
 
+
+class Notification(Base):
+    """User notifications for important events and quality issues"""
+    __tablename__ = "notifications"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    report_id = Column(String(36), ForeignKey("medical_reports.id", ondelete="CASCADE"), nullable=True, index=True)
+    
+    # Notification content
+    type = Column(String(50), nullable=False)  # quality_issue, critical_finding, analysis_complete, etc.
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    data = Column(JSON)  # Additional data (quality assessment, etc.)
+    
+    # Status
+    is_read = Column(Boolean, default=False)
+    is_actioned = Column(Boolean, default=False)  # User took action
+    action_taken = Column(String(100))  # proceed, retake, dismiss
+    
+    # Priority
+    priority = Column(String(20), default="normal")  # low, normal, high, critical
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    read_at = Column(DateTime)
+    actioned_at = Column(DateTime)
+    expires_at = Column(DateTime)
+    
+    def __repr__(self):
+        return f"<Notification(id={self.id}, type='{self.type}', user_id='{self.user_id}')>"
+
+

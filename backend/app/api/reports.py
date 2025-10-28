@@ -12,7 +12,7 @@ import logging
 from ..db.session import get_db
 from ..db.models import User, MedicalReport, TestResult, AgentLog
 from ..auth.dependencies import get_current_user
-from ..agents import DocumentExtractorAgent, MedicalAnalyzerAgent, ImageQualityAgent
+from ..agents import DocumentExtractorAgent, MedicalAnalyzerAgent
 from ..agents.file_classifier_agent import FileClassifierAgent
 from ..services.file_service import FileService
 
@@ -146,80 +146,7 @@ async def process_medical_report(
             # Store classification metadata
             report.report_type = classification_data.get("document_type")
         
-        # Step 2: Quality Assessment (for images only)
-        if file_type == "image":
-            quality_start = datetime.utcnow()
-            
-            quality_agent = ImageQualityAgent(OPENAI_API_KEY)
-            
-            # Prepare base64 image
-            import base64
-            base64_image = base64.b64encode(file_content).decode('utf-8')
-            
-            quality_result = await quality_agent.process({
-                "image_data": base64_image,
-                "image_type": classification_data.get("document_type", "medical image"),
-                "expected_content": "medical data or imaging"
-            })
-            
-            quality_duration = (datetime.utcnow() - quality_start).total_seconds() * 1000
-            
-            # Calculate cost for quality check
-            quality_token_usage = quality_result.get("token_usage", {})
-            quality_cost = None
-            quality_tokens = None
-            
-            if quality_token_usage:
-                total_tokens = quality_token_usage.get("total_tokens", 0)
-                prompt_tokens = quality_token_usage.get("prompt_tokens", 0)
-                completion_tokens = quality_token_usage.get("completion_tokens", 0)
-                quality_cost = (prompt_tokens / 1_000_000 * 2.50) + (completion_tokens / 1_000_000 * 10.00)
-                quality_tokens = total_tokens
-            
-            # Log quality assessment
-            quality_log = AgentLog(
-                report_id=report_id,
-                user_id=report.user_id,
-                agent_type="image_quality",
-                operation="assess_quality",
-                status=quality_result["status"],
-                started_at=quality_start,
-                completed_at=datetime.utcnow(),
-                duration_ms=int(quality_duration),
-                input_data={"file_type": file_type},
-                output_data=quality_result.get("data"),
-                error_message=quality_result.get("error"),
-                model_used="gpt-4o",
-                tokens_used=quality_tokens,
-                cost_estimate=quality_cost
-            )
-            db.add(quality_log)
-            db.commit()
-            
-            # Check if quality is acceptable
-            if quality_result["status"] == "success":
-                quality_data = quality_result["data"]
-                
-                if not quality_data.get("is_acceptable_for_analysis", True):
-                    # Image quality too low - mark as needs retake (not failed/error)
-                    report.analysis_status = "quality_issue"
-                    report.extracted_data = {
-                        "quality_check_failed": True,
-                        "quality_assessment": quality_data,
-                        "user_feedback": quality_data.get("user_feedback", {
-                            "title": "Image Quality Too Low",
-                            "message": "The uploaded image quality is insufficient for medical analysis.",
-                            "recommendations": ["Please upload a clearer, higher-quality image"]
-                        })
-                    }
-                    db.commit()
-                    logger.info(f"[QUALITY CHECK] Image needs retake - quality score: {quality_data.get('quality_score')}")
-                    return
-                
-                # Quality acceptable - store assessment data
-                logger.info(f"[QUALITY CHECK] Image accepted - quality score: {quality_data.get('quality_score')}")
-        
-        # Step 3: Extract data from document
+        # Step 2: Extract data from document
         extraction_start = datetime.utcnow()
         
         # Extract data from document

@@ -1,24 +1,29 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Bell, BellDot, CheckCircle, AlertCircle, Info, RefreshCw } from 'lucide-react'
+import { Bell, X, AlertCircle, Info } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { reportsApi } from '@/lib/api'
 
 interface Notification {
   id: string
+  type: string
   title: string
   message: string
-  type: 'info' | 'success' | 'warning' | 'error'
-  created_at: string
+  data?: any
+  priority: string
   is_read: boolean
+  created_at: string
+  report_id?: string
 }
 
 export function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -30,136 +35,143 @@ export function NotificationDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const unreadCount = notifications.filter(n => !n.is_read).length
+  useEffect(() => {
+    if (isOpen) {
+      loadNotifications()
+    }
+    loadUnreadCount()
+    
+    // Auto-refresh unread count every 10 seconds
+    const interval = setInterval(() => {
+      loadUnreadCount()
+      if (isOpen) {
+        loadNotifications()
+      }
+    }, 10000)
+    
+    return () => clearInterval(interval)
+  }, [isOpen])
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    // Simulate refresh
-    setTimeout(() => setIsRefreshing(false), 500)
-  }
-
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, is_read: true })))
-  }
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'error':
-        return <AlertCircle className="h-5 w-5 text-red-500" />
-      case 'warning':
-        return <AlertCircle className="h-5 w-5 text-yellow-500" />
-      case 'success':
-        return <CheckCircle className="h-5 w-5 text-green-500" />
-      default:
-        return <Info className="h-5 w-5 text-blue-500" />
+  const loadNotifications = async () => {
+    try {
+      const data = await reportsApi.getNotifications()
+      setNotifications(data)
+    } catch (error) {
+      console.error('Error loading notifications:', error)
     }
   }
 
-  const getRelativeTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    const diffHours = Math.floor(diffMins / 60)
-    if (diffHours < 24) return `${diffHours}h ago`
-    const diffDays = Math.floor(diffHours / 24)
-    return `${diffDays}d ago`
+  const loadUnreadCount = async () => {
+    try {
+      const data = await reportsApi.getUnreadCount()
+      setUnreadCount(data.count || 0)
+    } catch (error) {
+      console.error('Error loading unread count:', error)
+    }
+  }
+
+  const handleNotificationClick = async (notification: Notification) => {
+    try {
+      // Mark as read
+      await reportsApi.markNotificationAsRead(notification.id)
+      
+      // Immediately update local state
+      setNotifications(prev => prev.map(n => 
+        n.id === notification.id ? { ...n, is_read: true } : n
+      ))
+      setUnreadCount(prev => Math.max(0, prev - 1))
+      
+      // Also refresh to get latest from server
+      setTimeout(() => {
+        loadNotifications()
+        loadUnreadCount()
+      }, 500)
+    } catch (error) {
+      console.error('Error marking as read:', error)
+    }
+
+    if (notification.report_id) {
+      router.push(`/reports/${notification.report_id}`)
+      setIsOpen(false)
+    }
+  }
+
+  const getNotificationIcon = (type: string) => {
+    if (type === 'quality_issue') {
+      return <AlertCircle className="h-5 w-5 text-orange-500" />
+    }
+    return <Info className="h-5 w-5 text-blue-500" />
   }
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Notification Bell */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+        className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
       >
-        {unreadCount > 0 ? (
-          <BellDot className="h-5 w-5" />
-        ) : (
-          <Bell className="h-5 w-5" />
-        )}
+        <Bell className="h-5 w-5 text-gray-700" />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full">
-            {unreadCount > 99 ? '99+' : unreadCount}
+          <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+            {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
-      {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-          {/* Header */}
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
-              <div className="flex items-center gap-2">
-                {/* Refresh Button */}
-                <button
-                  onClick={handleRefresh}
-                  className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
-                  title="Refresh notifications"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                </button>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllAsRead}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    Mark all read
-                  </button>
-                )}
-              </div>
-            </div>
+        <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-2xl border-2 border-gray-200 z-50">
+          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <h3 className="font-bold text-gray-900">Notifications</h3>
+            <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-gray-100 rounded">
+              <X className="h-4 w-4 text-gray-500" />
+            </button>
           </div>
 
-          {/* Notifications List */}
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-[500px] overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="p-8 text-center">
-                <Bell className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500">No notifications</p>
-                <p className="text-sm text-gray-400 mt-1">You're all caught up!</p>
+                <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm font-medium">No notifications</p>
+                <p className="text-gray-400 text-xs mt-1">You're all caught up!</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100">
                 {notifications.map((notification) => (
-                  <div
+                  <button
                     key={notification.id}
-                    className={`p-4 hover:bg-gray-50 cursor-pointer transition-colors ${
+                    onClick={() => handleNotificationClick(notification)}
+                    className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${
                       !notification.is_read ? 'bg-blue-50' : ''
                     }`}
                   >
-                    <div className="flex items-start space-x-3">
-                      {/* Icon */}
+                    <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 mt-0.5">
                         {getNotificationIcon(notification.type)}
                       </div>
-
-                      {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                          <p className={`text-sm font-medium ${
-                            !notification.is_read ? 'text-gray-900' : 'text-gray-700'
-                          }`}>
-                            {notification.title}
-                          </p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="text-sm font-bold text-gray-900">{notification.title}</h4>
                           {!notification.is_read && (
-                            <span className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full ml-2 mt-1"></span>
+                            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                           )}
                         </div>
-                        <p className="mt-1 text-sm text-gray-600">
-                          {notification.message}
-                        </p>
-                        <div className="mt-2 text-xs text-gray-500">
-                          {getRelativeTime(notification.created_at)}
+                        <p className="text-xs text-gray-600 line-clamp-2">{notification.message}</p>
+                        {notification.data?.quality_score && (
+                          <div className="mt-2">
+                            <span className={`text-xs font-bold ${
+                              notification.data.quality_score >= 60 ? 'text-green-600' :
+                              notification.data.quality_score >= 40 ? 'text-yellow-600' :
+                              'text-red-600'
+                            }`}>
+                              Quality: {notification.data.quality_score}/100
+                            </span>
+                          </div>
+                        )}
+                        <div className="text-xs text-gray-400 mt-1">
+                          {new Date(notification.created_at).toLocaleString()}
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
@@ -169,4 +181,3 @@ export function NotificationDropdown() {
     </div>
   )
 }
-

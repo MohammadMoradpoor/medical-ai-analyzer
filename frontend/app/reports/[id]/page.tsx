@@ -115,7 +115,6 @@ export default function ReportDetailPage() {
 
   const handleReprocess = async () => {
     await reportsApi.reprocess(reportId)
-    
     // Redirect handled by RawDataEditor component
   }
 
@@ -378,95 +377,6 @@ export default function ReportDetailPage() {
                         Try uploading a clearer image or a different medical test report (PDF format recommended).
                       </p>
                     </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            {/* Image Quality Issue - Professional Feedback (Not an Error, Needs Retake) */}
-            {(report.status === 'quality_issue' || (report.status === 'failed' && report.extracted_data?.quality_check_failed)) && (
-              <div className="bg-gradient-to-r from-orange-100 to-red-100 border-l-4 border-orange-500 rounded-r-xl p-6 shadow-lg">
-                <div className="flex items-start gap-4">
-                  <div className="bg-orange-500 p-3 rounded-xl flex-shrink-0">
-                    <AlertCircle className="h-8 w-8 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-orange-900 mb-3">
-                      {report.extracted_data.user_feedback?.title || "Image Quality Assessment"}
-                    </h3>
-                    
-                    {/* Quality Score */}
-                    {report.extracted_data.quality_assessment?.quality_score && (
-                      <div className="mb-4 p-3 bg-white rounded-lg border-2 border-orange-300">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-bold text-gray-900">Quality Score</span>
-                          <span className={`text-2xl font-bold ${
-                            report.extracted_data.quality_assessment.quality_score >= 60 ? 'text-green-600' :
-                            report.extracted_data.quality_assessment.quality_score >= 40 ? 'text-yellow-600' :
-                            'text-red-600'
-                          }`}>
-                            {report.extracted_data.quality_assessment.quality_score}/100
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-3">
-                          <div 
-                            className={`h-3 rounded-full ${
-                              report.extracted_data.quality_assessment.quality_score >= 60 ? 'bg-green-500' :
-                              report.extracted_data.quality_assessment.quality_score >= 40 ? 'bg-yellow-500' :
-                              'bg-red-500'
-                            }`}
-                            style={{ width: `${report.extracted_data.quality_assessment.quality_score}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Main Message */}
-                    <p className="text-sm text-orange-900 mb-4 leading-relaxed font-medium">
-                      {report.extracted_data.user_feedback?.message}
-                    </p>
-                    
-                    {/* Issues Found */}
-                    {report.extracted_data.quality_assessment?.issues_found && report.extracted_data.quality_assessment.issues_found.length > 0 && (
-                      <div className="mb-4">
-                        <h4 className="text-sm font-bold text-orange-900 mb-2">Issues Detected:</h4>
-                        <div className="space-y-2">
-                          {report.extracted_data.quality_assessment.issues_found.map((issue: any, idx: number) => (
-                            <div key={idx} className="bg-white rounded-lg p-3 border-2 border-orange-200">
-                              <div className="flex items-start gap-2">
-                                <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                                  issue.severity === 'critical' ? 'bg-red-500 text-white' :
-                                  issue.severity === 'major' ? 'bg-orange-500 text-white' :
-                                  'bg-yellow-500 text-white'
-                                }`}>
-                                  {issue.severity}
-                                </span>
-                                <div className="flex-1">
-                                  <div className="font-bold text-gray-900 text-sm">{issue.issue}</div>
-                                  <div className="text-xs text-gray-700 mt-1">{issue.impact}</div>
-                                  <div className="text-xs text-blue-800 mt-1">→ {issue.recommendation}</div>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Recommendations */}
-                    {report.extracted_data.user_feedback?.recommendations && (
-                      <div className="mt-4 p-4 bg-white rounded-lg border-2 border-orange-300">
-                        <p className="text-sm font-bold text-gray-900 mb-2">🔧 How to improve:</p>
-                        <ul className="text-sm text-gray-800 space-y-2">
-                          {report.extracted_data.user_feedback.recommendations.map((rec: string, idx: number) => (
-                            <li key={idx} className="flex items-start gap-2">
-                              <span className="text-orange-600 font-bold">•</span>
-                              <span>{rec}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
