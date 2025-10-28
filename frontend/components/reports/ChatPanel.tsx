@@ -819,10 +819,10 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                 )}
               </div>
               
-              {/* Timestamp for User Messages - Right aligned below bubble */}
+              {/* Timestamp for User Messages - Same format as AI */}
               {!message.id.startsWith('temp_') && message.role === 'user' && (
                 <div className="mt-1.5 text-right">
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-400">
                     {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>

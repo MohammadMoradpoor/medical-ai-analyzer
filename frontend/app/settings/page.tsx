@@ -6,6 +6,7 @@ import { Shield, User as UserIcon, Bell, Database, Activity, ChevronRight, FileT
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { reportsApi } from '@/lib/api'
 import toast from '@/lib/toast'
 import { Loading } from '@/components/ui/Loading'
@@ -18,6 +19,7 @@ export default function SettingsPage() {
   const [isLoadingReports, setIsLoadingReports] = useState(false)
   const [usageStats, setUsageStats] = useState<any>(null)
   const [isLoadingUsage, setIsLoadingUsage] = useState(false)
+  const [showClearAllConversations, setShowClearAllConversations] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -64,6 +66,35 @@ export default function SettingsPage() {
       toast.error('Failed to load usage statistics')
     } finally {
       setIsLoadingUsage(false)
+    }
+  }
+
+  const handleClearAllConversations = async () => {
+    try {
+      // Ensure reports are loaded
+      if (reports.length === 0) {
+        await fetchReports()
+      }
+      
+      // Get fresh report list
+      const allReports = await reportsApi.list(1000, 0)
+      
+      let totalDeleted = 0
+      // Delete all conversations for each report
+      for (const report of allReports) {
+        try {
+          const result = await reportsApi.clearChatHistory(report.id)
+          totalDeleted += result.deleted_count || 0
+        } catch (err) {
+          console.error(`Failed to clear chat for report ${report.id}:`, err)
+        }
+      }
+      
+      setShowClearAllConversations(false)
+      toast.success(`All conversations deleted (${totalDeleted} messages removed)`)
+    } catch (error) {
+      console.error('Error deleting all conversations:', error)
+      toast.error('Failed to delete all conversations')
     }
   }
 
@@ -613,6 +644,16 @@ export default function SettingsPage() {
                         Export My Data
                       </button>
                     </div>
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="text-sm font-semibold text-red-900 mb-2">Delete All Conversations</div>
+                      <p className="text-xs text-red-800 mb-3">Permanently delete all chat conversations across all reports</p>
+                      <button
+                        onClick={() => setShowClearAllConversations(true)}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium text-sm"
+                      >
+                        Delete All Conversations
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -643,6 +684,18 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+      
+      {/* Clear All Conversations Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showClearAllConversations}
+        onClose={() => setShowClearAllConversations(false)}
+        onConfirm={handleClearAllConversations}
+        title="Delete All Conversations?"
+        message="Are you sure you want to delete ALL conversations for ALL reports? This action cannot be undone and will permanently remove all conversation history across your entire account."
+        confirmText="Delete All Conversations"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   )
 }
