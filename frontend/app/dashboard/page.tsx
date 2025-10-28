@@ -426,20 +426,20 @@ export default function DashboardPage() {
                           ]}
                         />
 
-                        {/* Per Page */}
-                        <select
-                          value={itemsPerPage}
-                          onChange={(e) => {
-                            setItemsPerPage(Number(e.target.value))
+                        {/* Per Page - Professional Custom Dropdown */}
+                        <ProfessionalSelect
+                          value={itemsPerPage.toString()}
+                          onChange={(val) => {
+                            setItemsPerPage(Number(val))
                             setCurrentPage(1)
                           }}
-                          className="px-2.5 py-1.5 text-xs font-semibold border border-gray-300 bg-white text-gray-700 rounded-md focus:ring-1 focus:ring-blue-500"
-                        >
-                          <option value={10}>10</option>
-                          <option value={25}>25</option>
-                          <option value={50}>50</option>
-                          <option value={100}>100</option>
-                        </select>
+                          options={[
+                            { value: '10', label: '10 per page' },
+                            { value: '25', label: '25 per page' },
+                            { value: '50', label: '50 per page' },
+                            { value: '100', label: '100 per page' }
+                          ]}
+                        />
 
                         {/* Clear */}
                         {(searchQuery || statusFilter !== 'all' || severityFilter !== 'all') && (
