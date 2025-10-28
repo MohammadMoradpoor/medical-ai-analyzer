@@ -5,18 +5,21 @@
 
 import { toast as sonnerToast } from 'sonner'
 
-const toastFn = (message: string, options?: any) => sonnerToast(message, options)
+// Wrapper function that can be called directly
+function toast(message: string, options?: any) {
+  return sonnerToast(message, options)
+}
 
-export const toast = Object.assign(toastFn, {
-  success: (message: string, options?: any) => sonnerToast.success(message, options),
-  error: (message: string, options?: any) => sonnerToast.error(message, options),
-  info: (message: string, options?: any) => sonnerToast.info(message, options),
-  loading: (message: string, options?: any) => sonnerToast.loading(message, options),
-  promise: sonnerToast.promise,
-  dismiss: sonnerToast.dismiss,
-  message: sonnerToast.message,
-})
+// Add methods to the function
+toast.success = (message: string, options?: any) => sonnerToast.success(message, options)
+toast.error = (message: string, options?: any) => sonnerToast.error(message, options)
+toast.info = (message: string, options?: any) => sonnerToast.info(message, options)
+toast.loading = (message: string, options?: any) => sonnerToast.loading(message, options)
+toast.promise = sonnerToast.promise
+toast.dismiss = sonnerToast.dismiss
+toast.message = sonnerToast.message
 
-// Default export for compatibility
+// Export
+export { toast }
 export default toast
 
