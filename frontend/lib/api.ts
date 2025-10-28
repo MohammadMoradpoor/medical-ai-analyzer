@@ -171,7 +171,7 @@ export const reportsApi = {
     return response.data
   },
 
-  // Streaming chat (ChatGPT-style)
+  // Real-time streaming chat responses
   sendChatMessageStreaming: async (
     reportId: string, 
     question: string, 

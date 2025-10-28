@@ -49,7 +49,7 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
           <p className="text-xs text-red-800 mb-1"><strong>Possible causes:</strong></p>
           <ul className="text-xs text-red-700 list-disc list-inside space-y-1">
             <li>File could not be read or processed</li>
-            <li>OpenAI API key not configured</li>
+            <li>AI service not configured properly</li>
             <li>Network connectivity issues</li>
             <li>Invalid file format or corrupted file</li>
           </ul>
@@ -456,7 +456,7 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium">Model:</span>
-                        <span>{log.model_used}</span>
+                        <span>Artificial Intelligence Model</span>
                       </div>
                       {log.tokens_used && (
                         <div className="flex justify-between">

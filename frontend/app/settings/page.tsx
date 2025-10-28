@@ -519,7 +519,7 @@ export default function SettingsPage() {
                         <div className="bg-yellow-50 border-l-4 border-yellow-500 rounded-r-lg p-4">
                           <p className="text-xs text-yellow-900">
                             <strong className="font-bold">Note:</strong> Costs are estimates based on current AI model pricing. 
-                            Actual token counts will be more accurate once OpenAI API responses include detailed token information.
+                            Actual token counts will be more accurate once AI service responses include detailed token information.
                           </p>
                         </div>
                       </div>
