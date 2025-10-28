@@ -152,8 +152,10 @@ export const reportsApi = {
   },
 
   clearChatHistory: async (reportId: string, conversationId?: string) => {
-    const params = conversationId ? `?conversation_id=${conversationId}` : ''
+    const params = conversationId ? `?conversation_id=${encodeURIComponent(conversationId)}` : ''
+    console.log('[API] Deleting chat history with params:', params)
     const response = await api.delete(`/reports/${reportId}/chat${params}`)
+    console.log('[API] Delete response:', response.data)
     return response.data
   },
 

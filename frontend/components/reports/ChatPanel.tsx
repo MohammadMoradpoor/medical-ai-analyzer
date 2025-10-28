@@ -134,9 +134,13 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
 
   const deleteConversation = async (convId: string) => {
     try {
-      console.log('Deleting conversation:', convId)
+      console.log('=== DELETE CONVERSATION DEBUG ===')
+      console.log('Conversation ID:', convId)
+      console.log('Report ID:', reportId)
+      console.log('API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1')
+      
       const result = await reportsApi.clearChatHistory(reportId, convId)
-      console.log('Delete result:', result)
+      console.log('Delete successful! Result:', result)
       
       // Remove from list immediately
       setAllConversations(prev => prev.filter(c => c.id !== convId))
@@ -156,10 +160,17 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
       }, 500)
       
     } catch (error: any) {
-      console.error('Error deleting conversation:', error)
-      console.error('Error details:', error?.response?.data)
+      console.error('=== DELETE CONVERSATION ERROR ===')
+      console.error('Conversation ID that failed:', convId)
+      console.error('Full error object:', error)
+      console.error('Error message:', error?.message)
+      console.error('Error code:', error?.code)
+      console.error('Error response:', error?.response)
+      console.error('Error response data:', error?.response?.data)
+      console.error('Error stack:', error?.stack)
+      
       const errorMsg = error?.response?.data?.detail || error?.message || 'Failed to delete conversation'
-      toast.error(errorMsg)
+      toast.error(`Delete failed: ${errorMsg}`)
     }
   }
 
