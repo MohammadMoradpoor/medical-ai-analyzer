@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { MarkdownText } from '@/components/ui/MarkdownText'
 
 interface ChatPanelProps {
   reportId: string
@@ -559,17 +560,23 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
                   ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md'
                   : 'bg-white border-2 border-purple-200 text-gray-900 shadow-sm'
               }`}>
-                {/* Message Content */}
-                <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                  {message.content}
-                  {/* Streaming indicator - blinking cursor */}
-                  {message.role === 'assistant' && message.id.startsWith('temp_ai_') && (
-                    <span className="inline-block w-0.5 h-4 bg-purple-600 ml-0.5 animate-pulse"></span>
+                {/* Message Content with Markdown */}
+                <div className="text-sm leading-relaxed">
+                  {message.role === 'assistant' ? (
+                    <>
+                      <MarkdownText content={message.content} />
+                      {/* Streaming indicator - blinking cursor */}
+                      {message.id.startsWith('temp_ai_') && message.content && (
+                        <span className="inline-block w-0.5 h-4 bg-purple-600 ml-0.5 animate-pulse"></span>
+                      )}
+                    </>
+                  ) : (
+                    <div className="whitespace-pre-wrap break-words">{message.content}</div>
                   )}
                 </div>
 
-                {/* AI Response Metadata */}
-                {message.role === 'assistant' && (
+                {/* AI Response Metadata - Only show for completed messages */}
+                {message.role === 'assistant' && !message.id.startsWith('temp_ai_') && (
                   <div className="mt-3 pt-3 border-t border-purple-100 space-y-2">
                     {/* Sources */}
                     {message.sources && message.sources.length > 0 && (
@@ -625,8 +632,9 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
                   </div>
                 )}
 
-                {/* Message Footer - Actions and Timestamp */}
-                <div className={`mt-2 pt-2 ${message.role === 'assistant' ? 'border-t border-purple-100' : ''} flex items-center justify-between`}>
+                {/* Message Footer - Actions and Timestamp (hide while streaming) */}
+                {!message.id.startsWith('temp_') && (
+                <div className={`mt-2 pt-2 ${message.role === 'assistant' && !message.id.startsWith('temp_ai_') ? 'border-t border-purple-100' : ''} flex items-center justify-between`}>
                   {/* Actions */}
                   <div className="flex items-center gap-1.5">
                     <button
@@ -682,6 +690,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
                     </span>
                   </div>
                 </div>
+                )}
               </div>
 
               {/* Follow-up Suggestions (only on latest AI message) */}
@@ -710,24 +719,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
           </div>
         ))}
 
-        {/* Loading Indicator */}
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="flex-shrink-0">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg ring-2 ring-purple-200 ring-offset-1">
-                <Bot className="h-5 w-5 text-white" strokeWidth={2.5} />
-              </div>
-            </div>
-            <div className="flex-1 max-w-[80%] ml-3">
-              <div className="bg-white border-2 border-purple-200 rounded-xl px-3.5 py-2.5 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 text-purple-600 animate-spin" />
-                  <span className="text-sm text-purple-900 font-medium">AI is thinking...</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Loading indicator removed - streaming message shows blinking cursor instead */}
 
         <div ref={messagesEndRef} />
         </>
