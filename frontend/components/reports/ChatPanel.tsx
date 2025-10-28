@@ -23,7 +23,10 @@ import {
   User2,
   Bot,
   ChevronDown,
-  Search
+  Search,
+  Menu,
+  PanelLeft,
+  Sidebar
 } from 'lucide-react'
 import toast from '@/lib/toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -59,6 +62,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
   const [hoveredConversationId, setHoveredConversationId] = useState<string | null>(null)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   const [conversationSearch, setConversationSearch] = useState('')
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -426,18 +430,28 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
       {/* Chat Window - Responsive positioning */}
       <div className={windowClasses} style={windowStyle}>
         <div className="flex h-full">
-          {/* Sidebar - Only in fullscreen mode */}
-          {isFullscreen && (
+          {/* Sidebar - Only in fullscreen mode, with toggle */}
+          {isFullscreen && isSidebarOpen && (
             <div className="w-80 bg-gray-900 border-r border-gray-700 flex flex-col flex-shrink-0">
               {/* Sidebar Header */}
               <div className="p-4 border-b border-gray-700 space-y-3">
-                <button
-                  onClick={startNewConversation}
-                  className="w-full px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors shadow-md"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  New Chat
-                </button>
+                <div className="flex items-center justify-between mb-3">
+                  <button
+                    onClick={startNewConversation}
+                    className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors shadow-md"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    New Chat
+                  </button>
+                  {/* Close Sidebar Button - Upper Right Corner */}
+                  <button
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="ml-2 p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white transition-colors"
+                    title="Close sidebar"
+                  >
+                    <PanelLeft className="h-4 w-4" />
+                  </button>
+                </div>
                 
                 {/* Search Conversations - Professional Style */}
                 <div className="relative">
@@ -460,8 +474,8 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                 </div>
               </div>
 
-              {/* Conversations List */}
-              <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+              {/* Conversations List - Professional Scrollbar */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800">
                 {allConversations
                   .filter(conv => 
                     conversationSearch === '' || 
@@ -522,6 +536,13 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                   </div>
                 )}
               </div>
+              
+              {/* Sidebar Footer - Conversation Count */}
+              <div className="p-4 border-t border-gray-700">
+                <div className="text-center text-xs text-gray-500">
+                  {allConversations.length} {allConversations.length === 1 ? 'conversation' : 'conversations'}
+                </div>
+              </div>
             </div>
           )}
 
@@ -530,6 +551,16 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         {/* Header */}
         <div className="px-4 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Sidebar Toggle Button - Only when sidebar is closed */}
+            {isFullscreen && !isSidebarOpen && (
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-1.5 hover:bg-purple-500 rounded-lg text-white transition-colors mr-1"
+                title="Open sidebar"
+              >
+                <Sidebar className="h-4 w-4" />
+              </button>
+            )}
             <div className="bg-white p-1.5 rounded-lg flex-shrink-0">
               <MessageCircle className="h-4 w-4 text-purple-600" />
             </div>

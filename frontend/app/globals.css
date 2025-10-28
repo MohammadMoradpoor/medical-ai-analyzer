@@ -50,6 +50,20 @@
   background: #9ca3af;
 }
 
+/* Dark Scrollbar for Sidebar */
+.scrollbar-thumb-gray-700::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 3px;
+}
+
+.scrollbar-thumb-gray-700::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+.scrollbar-track-gray-800::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
