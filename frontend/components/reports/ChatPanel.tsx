@@ -884,7 +884,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
               disabled={isLoading}
               rows={1}
               className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all resize-none overflow-hidden shadow-sm"
-              style={{ minHeight: '52px', maxHeight: '150px' }}
+              style={{ minHeight: '52px', maxHeight: '150px', lineHeight: '1.4' }}
             />
             <button
               onClick={() => sendMessage()}

@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { reportsApi, authApi } from '@/lib/api'
 import { MedicalReport } from '@/types'
-import { Activity, Upload, FileText, AlertCircle, CheckCircle, Clock, XCircle, X, Trash2, ArrowRight, Search, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
+import { Activity, Upload, FileText, AlertCircle, CheckCircle, Clock, XCircle, X, Trash2, ArrowRight, Search, ChevronLeft, ChevronRight, RefreshCw, MessageCircle } from 'lucide-react'
 import toast from '@/lib/toast'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
@@ -37,6 +37,7 @@ export default function DashboardPage() {
     fileName: ''
   })
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
+  const [chatCounts, setChatCounts] = useState<Record<string, number>>({})
   const [autoRefresh, setAutoRefresh] = useState(true)
 
   useEffect(() => {
@@ -77,11 +78,24 @@ export default function DashboardPage() {
     try {
       const data = await reportsApi.list()
       setReports(data || [])
+      fetchChatCounts()
     } catch (error) {
       console.error('Error fetching reports:', error)
       setReports([])
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchChatCounts = async () => {
+    try {
+      console.log('[Dashboard] Fetching chat counts...')
+      const counts = await reportsApi.getAllChatCounts()
+      console.log('[Dashboard] Chat counts received:', counts)
+      setChatCounts(counts || {})
+    } catch (error) {
+      console.error('[Dashboard] Failed to load chat counts:', error)
+      setChatCounts({})
     }
   }
 
@@ -479,15 +493,14 @@ export default function DashboardPage() {
                       <table className="w-full">
                         <thead className="bg-gray-50 border-b-2 border-gray-200">
                           <tr>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Report ID</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Name</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Report Type</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Upload Date</th>
-                            <th className="px-3 py-2 text-right text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Size</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Type</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Duration</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Severity</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Upload Date</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Duration</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Type</th>
+                            <th className="px-3 py-2 text-right text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Size</th>
                             <th className="px-3 py-2 text-center text-[11px] font-bold text-gray-700 uppercase tracking-wider">Actions</th>
                           </tr>
                         </thead>
@@ -506,62 +519,52 @@ export default function DashboardPage() {
                                 report.analysis_status !== 'processing' ? 'cursor-pointer' : ''
                               }`}
                             >
-                              <td className="px-3 py-2.5">
-                                <code className="text-[10px] font-mono text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                                  {report.id.substring(0, 8)}...
-                                </code>
-                              </td>
+                              {/* 1. File Name (with conversation badge) */}
                               <td className="px-3 py-2.5">
                                 <div className="flex items-center gap-2">
                                   <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                   <span className="font-semibold text-gray-900 text-sm">{report.file_name}</span>
-                                </div>
-                              </td>
-                              <td className="px-3 py-2.5">
-                                <div className="flex flex-col gap-1">
-                                  {report.report_type ? (
-                                    <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                                      {String(report.report_type)}
-                                    </span>
-                                  ) : report.analysis_status === 'completed' ? (
-                                    <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-bold flex items-center gap-1">
-                                      <AlertCircle className="h-3 w-3" />
-                                      No Medical Data
-                                    </span>
-                                  ) : (
-                                    <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-semibold flex items-center gap-1">
-                                      <Clock className="h-3 w-3 animate-spin" />
-                                      Processing
+                                  {chatCounts[report.id] && chatCounts[report.id] > 0 && (
+                                    <span 
+                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold flex-shrink-0"
+                                      title={`${chatCounts[report.id]} conversation${chatCounts[report.id] !== 1 ? 's' : ''}`}
+                                    >
+                                      <MessageCircle className="h-3 w-3" />
+                                      {chatCounts[report.id]}
                                     </span>
                                   )}
                                 </div>
                               </td>
-                              <td className="px-3 py-2.5 text-xs text-gray-600 font-medium">
-                                {new Date(report.upload_date).toLocaleDateString('en-US', { 
-                                  month: 'short', 
-                                  day: 'numeric', 
-                                  year: 'numeric' 
-                                })}
-                              </td>
-                              <td className="px-3 py-2.5 text-right">
-                                {report.file_size ? (
-                                  <span className="text-xs font-semibold text-gray-700 font-mono">
-                                    {report.file_size < 1024 * 1024 
-                                      ? `${(report.file_size / 1024).toFixed(1)} KB` 
-                                      : `${(report.file_size / 1024 / 1024).toFixed(2)} MB`
-                                    }
+                              
+                              {/* 2. Report Type */}
+                              <td className="px-3 py-2.5">
+                                {report.report_type ? (
+                                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                                    {String(report.report_type)}
+                                  </span>
+                                ) : report.analysis_status === 'completed' ? (
+                                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-bold flex items-center gap-1">
+                                    <AlertCircle className="h-3 w-3" />
+                                    No Data
                                   </span>
                                 ) : (
                                   <span className="text-gray-400 text-xs">—</span>
                                 )}
                               </td>
+                              
+                              {/* 3. Severity */}
                               <td className="px-3 py-2.5">
-                                {report.file_name && (
-                                  <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-bold uppercase">
-                                    {String(report.file_name.split('.').pop() || '').toUpperCase()}
+                                {report.severity_level ? (
+                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold ${getSeverityColor(report.severity_level)}`}>
+                                    {getSeverityIcon(report.severity_level)}
+                                    {getSeverityLabel(report.severity_level)}
                                   </span>
+                                ) : (
+                                  <span className="text-gray-400 text-xs">—</span>
                                 )}
                               </td>
+                              
+                              {/* 4. Status */}
                               <td className="px-3 py-2.5">
                                 <div className="flex items-center gap-1.5">
                                   {report.analysis_status === 'completed' && <CheckCircle className="h-4 w-4 text-green-600" />}
@@ -577,6 +580,17 @@ export default function DashboardPage() {
                                   </span>
                                 </div>
                               </td>
+                              
+                              {/* 5. Upload Date */}
+                              <td className="px-3 py-2.5 text-xs text-gray-600 font-medium">
+                                {new Date(report.upload_date).toLocaleDateString('en-US', { 
+                                  month: 'short', 
+                                  day: 'numeric', 
+                                  year: 'numeric' 
+                                })}
+                              </td>
+                              
+                              {/* 6. Duration */}
                               <td className="px-3 py-2.5">
                                 {report.processing_duration !== undefined && report.processing_duration !== null ? (
                                   <div className="flex items-center gap-1.5">
@@ -589,27 +603,31 @@ export default function DashboardPage() {
                                   <span className="text-gray-400 text-xs">—</span>
                                 )}
                               </td>
+                              
+                              {/* 7. File Type */}
                               <td className="px-3 py-2.5">
-                                {report.severity_level ? (
-                                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold ${getSeverityColor(report.severity_level)}`}>
-                                    {getSeverityIcon(report.severity_level)}
-                                    {getSeverityLabel(report.severity_level)}
-                                  </span>
-                                ) : report.analysis_status === 'completed' && !report.report_type ? (
-                                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-semibold">
-                                    Not Assessed
-                                  </span>
-                                ) : report.analysis_status === 'processing' ? (
-                                  <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-semibold flex items-center gap-1">
-                                    <Clock className="h-3 w-3 animate-spin" />
-                                    Analyzing
-                                  </span>
-                                ) : (
-                                  <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-semibold">
-                                    Pending
+                                {report.file_name && (
+                                  <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-bold uppercase">
+                                    {String(report.file_name.split('.').pop() || '').toUpperCase()}
                                   </span>
                                 )}
                               </td>
+                              
+                              {/* 8. File Size */}
+                              <td className="px-3 py-2.5 text-right">
+                                {report.file_size ? (
+                                  <span className="text-xs font-semibold text-gray-700 font-mono">
+                                    {report.file_size < 1024 * 1024 
+                                      ? `${(report.file_size / 1024).toFixed(1)} KB` 
+                                      : `${(report.file_size / 1024 / 1024).toFixed(2)} MB`
+                                    }
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 text-xs">—</span>
+                                )}
+                              </td>
+                              
+                              {/* 9. Actions */}
                               <td className="px-3 py-2.5">
                                 <div className="flex items-center justify-center">
                                   <button

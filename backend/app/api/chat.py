@@ -614,6 +614,36 @@ async def clear_chat_history(
     }
 
 
+@router.get("/chat/counts")
+async def get_all_chat_counts(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get conversation counts for all reports.
+    Returns a map of report_id -> conversation_count.
+    """
+    # Get all messages for user
+    messages = db.query(ChatMessage).filter(
+        ChatMessage.user_id == current_user.id
+    ).all()
+    
+    # Group by report and count unique conversations
+    report_counts = {}
+    for message in messages:
+        report_id = str(message.report_id)
+        if report_id not in report_counts:
+            report_counts[report_id] = set()
+        if message.conversation_id:
+            report_counts[report_id].add(message.conversation_id)
+    
+    # Convert sets to counts
+    return {
+        report_id: len(conv_set)
+        for report_id, conv_set in report_counts.items()
+    }
+
+
 @router.get("/{report_id}/chat/stats")
 async def get_chat_stats(
     report_id: str,

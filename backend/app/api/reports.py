@@ -519,13 +519,20 @@ async def get_usage_stats(
     db: Session = Depends(get_db)
 ):
     """
-    Get token usage and cost statistics for the current user.
+    Get comprehensive token usage and cost statistics including chat.
     """
     # Get all agent logs for user's reports
     logs = db.query(AgentLog).join(
         MedicalReport, AgentLog.report_id == MedicalReport.id
     ).filter(
         MedicalReport.user_id == current_user.id
+    ).all()
+    
+    # Get all chat messages for user
+    from ..db.models import ChatMessage
+    chat_messages = db.query(ChatMessage).filter(
+        ChatMessage.user_id == current_user.id,
+        ChatMessage.role == 'assistant'  # Only count AI responses
     ).all()
     
     # GPT-4o pricing (as of Oct 2024)
@@ -582,18 +589,49 @@ async def get_usage_stats(
         agent_usage[agent]['tokens'] += (input_tokens + output_tokens)
         agent_usage[agent]['cost'] += cost
     
+    # Calculate chat costs
+    chat_total_tokens = 0
+    chat_total_cost = 0.0
+    
+    for msg in chat_messages:
+        if msg.tokens_used:
+            chat_total_tokens += msg.tokens_used
+        if msg.cost_estimate:
+            chat_total_cost += msg.cost_estimate
+        elif msg.tokens_used:
+            # Estimate if not stored
+            input_tokens = int(msg.tokens_used * 0.6)
+            output_tokens = int(msg.tokens_used * 0.4)
+            chat_total_cost += (input_tokens / 1_000_000 * INPUT_COST_PER_1M) + (output_tokens / 1_000_000 * OUTPUT_COST_PER_1M)
+    
     # Get report count
     report_count = db.query(MedicalReport).filter(
         MedicalReport.user_id == current_user.id
     ).count()
     
+    # Combine totals
+    grand_total_tokens = total_input_tokens + total_output_tokens + chat_total_tokens
+    grand_total_cost = total_cost + chat_total_cost
+    
     return {
         "total_reports": report_count,
         "total_processing_runs": len(logs),
+        "total_chat_messages": len(chat_messages),
+        
+        # Report Processing Costs
+        "processing_tokens": total_input_tokens + total_output_tokens,
+        "processing_cost_usd": round(total_cost, 4),
+        
+        # Chat Costs
+        "chat_tokens": chat_total_tokens,
+        "chat_cost_usd": round(chat_total_cost, 4),
+        
+        # Grand Totals
         "total_input_tokens": total_input_tokens,
         "total_output_tokens": total_output_tokens,
-        "total_tokens": total_input_tokens + total_output_tokens,
-        "total_cost_usd": round(total_cost, 4),
+        "total_tokens": grand_total_tokens,
+        "total_cost_usd": round(grand_total_cost, 4),
+        
         "model_breakdown": model_usage,
         "agent_breakdown": agent_usage,
         "pricing": {

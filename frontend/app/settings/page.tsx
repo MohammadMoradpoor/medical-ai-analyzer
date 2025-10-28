@@ -442,12 +442,12 @@ export default function SettingsPage() {
                       </div>
                     ) : usageStats ? (
                       <div className="space-y-6">
-                        {/* Summary Cards */}
+                        {/* Summary Cards - Including Chat Costs */}
                         <div className="grid grid-cols-4 gap-4">
                           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border-2 border-blue-200">
                             <div className="text-xs text-blue-600 font-bold uppercase mb-1">Total Cost</div>
                             <div className="text-3xl font-bold text-blue-900">${usageStats.total_cost_usd}</div>
-                            <div className="text-xs text-blue-700 mt-1">USD</div>
+                            <div className="text-xs text-blue-700 mt-1">All Operations</div>
                           </div>
                           <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border-2 border-green-200">
                             <div className="text-xs text-green-600 font-bold uppercase mb-1">Total Tokens</div>
@@ -455,14 +455,53 @@ export default function SettingsPage() {
                             <div className="text-xs text-green-700 mt-1">tokens</div>
                           </div>
                           <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-5 border-2 border-purple-200">
-                            <div className="text-xs text-purple-600 font-bold uppercase mb-1">Processing Runs</div>
-                            <div className="text-3xl font-bold text-purple-900">{usageStats.total_processing_runs}</div>
-                            <div className="text-xs text-purple-700 mt-1">AI operations</div>
+                            <div className="text-xs text-purple-600 font-bold uppercase mb-1">Chat Messages</div>
+                            <div className="text-3xl font-bold text-purple-900">{usageStats.total_chat_messages || 0}</div>
+                            <div className="text-xs text-purple-700 mt-1">AI responses</div>
                           </div>
                           <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-5 border-2 border-orange-200">
                             <div className="text-xs text-orange-600 font-bold uppercase mb-1">Reports</div>
                             <div className="text-3xl font-bold text-orange-900">{usageStats.total_reports}</div>
                             <div className="text-xs text-orange-700 mt-1">analyzed</div>
+                          </div>
+                        </div>
+                        
+                        {/* Chat vs Processing Cost Breakdown */}
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                          <div className="bg-white rounded-xl border-2 border-gray-200 p-5">
+                            <div className="text-sm font-bold text-gray-700 mb-3">Report Processing</div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-600">Tokens:</span>
+                                <span className="text-sm font-bold text-gray-900">{(usageStats.processing_tokens || 0).toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-600">Cost:</span>
+                                <span className="text-sm font-bold text-blue-900">${usageStats.processing_cost_usd || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-600">Operations:</span>
+                                <span className="text-sm font-bold text-gray-900">{usageStats.total_processing_runs || 0}</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-white rounded-xl border-2 border-purple-200 p-5">
+                            <div className="text-sm font-bold text-purple-700 mb-3">Chat Conversations</div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-600">Tokens:</span>
+                                <span className="text-sm font-bold text-gray-900">{(usageStats.chat_tokens || 0).toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-600">Cost:</span>
+                                <span className="text-sm font-bold text-purple-900">${usageStats.chat_cost_usd || '0.00'}</span>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-600">Messages:</span>
+                                <span className="text-sm font-bold text-gray-900">{usageStats.total_chat_messages || 0}</span>
+                              </div>
+                            </div>
                           </div>
                         </div>
 

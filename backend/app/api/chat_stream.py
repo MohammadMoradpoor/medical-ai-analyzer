@@ -153,6 +153,14 @@ CRITICAL RULES:
         if "recommendation" in full_response.lower():
             sources.append("Recommendations")
         
+        # Calculate token usage and cost
+        # Note: We'll estimate if not available from stream
+        # GPT-4o pricing: $2.50/1M input, $10.00/1M output
+        estimated_input_tokens = len(full_response.split()) * 1.3  # Rough estimate
+        estimated_output_tokens = len(full_response.split())
+        total_tokens = int(estimated_input_tokens + estimated_output_tokens)
+        cost_estimate = (estimated_input_tokens / 1_000_000 * 2.50) + (estimated_output_tokens / 1_000_000 * 10.00)
+        
         # Save complete message to database with metadata
         assistant_message = ChatMessage(
             report_id=report_id,
@@ -162,6 +170,8 @@ CRITICAL RULES:
             message_type="answer",
             conversation_id=conversation_id,
             model_used="gpt-4o",
+            tokens_used=total_tokens,
+            cost_estimate=cost_estimate,
             sources=sources if sources else None,
             created_at=datetime.utcnow()
         )
