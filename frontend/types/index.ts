@@ -59,3 +59,35 @@ export interface TestResult {
   clinical_significance?: string
 }
 
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  message_type?: string
+  confidence_score?: number
+  sources?: string[]
+  follow_up_suggestions?: string[]
+  medical_terms_explained?: Record<string, string>
+  tokens_used?: number
+  cost_estimate?: number
+  is_helpful?: boolean
+  user_rating?: number
+  conversation_id?: string
+  created_at: string
+}
+
+export interface SuggestedQuestions {
+  questions: string[]
+}
+
+export interface ChatStats {
+  total_messages: number
+  user_questions: number
+  ai_responses: number
+  conversations_count: number
+  total_tokens_used: number
+  total_cost_usd: number
+  average_confidence?: number
+  last_message_at?: string
+}
+

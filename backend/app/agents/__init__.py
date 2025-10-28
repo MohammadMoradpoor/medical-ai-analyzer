@@ -15,6 +15,7 @@ from .imaging_agent import MedicalImagingAgent
 from .document_extractor_agent import DocumentExtractorAgent
 from .medical_analyzer_agent import MedicalAnalyzerAgent
 from .file_classifier_agent import FileClassifierAgent
+from .report_chat_agent import ReportChatAgent
 from .tools import ToolsManager
 
 __all__ = [
@@ -25,5 +26,6 @@ __all__ = [
     "DocumentExtractorAgent",
     "MedicalAnalyzerAgent",
     "FileClassifierAgent",
+    "ReportChatAgent",
     "ToolsManager"
 ]

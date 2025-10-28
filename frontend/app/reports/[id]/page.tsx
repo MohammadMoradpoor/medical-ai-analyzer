@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { reportsApi } from '@/lib/api'
 import { ReportAnalysis } from '@/types'
-import { Activity, AlertCircle, CheckCircle, FileText, TrendingUp, Clock, ChevronDown, ChevronRight, ArrowRight, TestTube } from 'lucide-react'
+import { Activity, AlertCircle, CheckCircle, FileText, TrendingUp, Clock, ChevronDown, ChevronRight, ArrowRight, TestTube, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { AgentLogsViewer } from '@/components/reports/AgentLogsViewer'
 import { RawDataEditor } from '@/components/reports/RawDataEditor'
+import { ChatPanel } from '@/components/reports/ChatPanel'
+import { FloatingChatButton } from '@/components/reports/FloatingChatButton'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
@@ -23,6 +25,8 @@ export default function ReportDetailPage() {
   const [isLoadingLogs, setIsLoadingLogs] = useState(false)
   const [isRawDataExpanded, setIsRawDataExpanded] = useState(false)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['summary']))
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [chatMessageCount, setChatMessageCount] = useState(0)
 
   useEffect(() => {
     // Check authentication
@@ -62,6 +66,8 @@ export default function ReportDetailPage() {
       setReport(data)
       // Fetch agent logs too
       fetchAgentLogs()
+      // Fetch chat message count
+      fetchChatCount()
     } catch (error: any) {
       let errorMsg = 'Error loading report'
       if (error?.response?.data?.detail) {
@@ -74,6 +80,15 @@ export default function ReportDetailPage() {
       router.push('/dashboard')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchChatCount = async () => {
+    try {
+      const history = await reportsApi.getChatHistory(reportId)
+      setChatMessageCount(history.length)
+    } catch (error) {
+      console.error('Error loading chat count:', error)
     }
   }
 
@@ -314,8 +329,8 @@ export default function ReportDetailPage() {
         <div className="flex-1 overflow-y-auto">
           <div className="p-4 space-y-3">
             
-            {/* Warning: No Data Extracted */}
-            {(!report.extracted_data || !report.test_analysis || report.test_analysis.length === 0) && report.status === 'completed' && (
+            {/* Warning: No Data Extracted - Only for lab reports without data */}
+            {report.status === 'completed' && !report.extracted_data?.is_medical_imaging && (!report.test_analysis || report.test_analysis.length === 0) && !report.severity_level && (
               <div className="bg-gradient-to-r from-yellow-100 to-orange-100 border-l-4 border-orange-500 rounded-r-xl p-5 shadow-lg">
                 <div className="flex items-start gap-4">
                   <div className="bg-orange-500 p-3 rounded-xl flex-shrink-0">
@@ -339,6 +354,38 @@ export default function ReportDetailPage() {
                       <p className="text-sm font-bold text-gray-900 mb-1">💡 What you can do:</p>
                       <p className="text-xs text-gray-700">
                         Try uploading a clearer image or a different medical test report (PDF format recommended).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Info: Medical Imaging Analysis Failed */}
+            {report.status === 'completed' && report.extracted_data?.is_medical_imaging && !report.severity_level && (
+              <div className="bg-gradient-to-r from-red-100 to-rose-100 border-l-4 border-red-500 rounded-r-xl p-5 shadow-lg">
+                <div className="flex items-start gap-4">
+                  <div className="bg-red-500 p-3 rounded-xl flex-shrink-0">
+                    <AlertCircle className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-red-900 mb-2 flex items-center gap-2">
+                      <AlertCircle className="h-6 w-6" />
+                      Medical Imaging Analysis Failed
+                    </h3>
+                    <p className="text-sm text-red-800 mb-3 leading-relaxed">
+                      The AI attempted to analyze this medical image ({report.extracted_data.imaging_type}) but the analysis could not be completed. This could happen if:
+                    </p>
+                    <ul className="text-sm text-red-800 space-y-1.5 list-disc list-inside">
+                      <li>The image quality is too poor for analysis</li>
+                      <li>The imaging orientation or positioning is unclear</li>
+                      <li>The image file is corrupted or incomplete</li>
+                      <li>The AI service encountered a temporary error</li>
+                    </ul>
+                    <div className="mt-4 p-3 bg-white rounded-lg border-2 border-red-300">
+                      <p className="text-sm font-bold text-gray-900 mb-1">💡 What you can do:</p>
+                      <p className="text-xs text-gray-700">
+                        Try re-uploading a higher quality image, ensure proper positioning, or try uploading from a different source. For best results, use DICOM format or high-resolution images.
                       </p>
                     </div>
                   </div>
@@ -619,6 +666,21 @@ export default function ReportDetailPage() {
           </div>
         </div>
       </div>
+      
+      {/* Floating Chat Button */}
+      <FloatingChatButton 
+        onClick={() => setIsChatOpen(true)}
+        messageCount={chatMessageCount}
+        hasNewSuggestions={chatMessageCount === 0}
+      />
+      
+      {/* Chat Panel Modal */}
+      <ChatPanel 
+        reportId={reportId}
+        reportContext={report}
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+      />
     </div>
   )
 }

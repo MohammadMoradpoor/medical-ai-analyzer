@@ -156,3 +156,42 @@ class AgentLog(Base):
     def __repr__(self):
         return f"<AgentLog(id={self.id}, agent_type='{self.agent_type}', status='{self.status}')>"
 
+
+class ChatMessage(Base):
+    """Chat messages for interactive Q&A about medical reports"""
+    __tablename__ = "chat_messages"
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    report_id = Column(String(36), ForeignKey("medical_reports.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    
+    # Message content
+    role = Column(String(20), nullable=False)  # user, assistant, system
+    content = Column(Text, nullable=False)
+    
+    # Context and metadata
+    message_type = Column(String(50))  # question, answer, clarification, follow_up
+    context_used = Column(JSON)  # What context was used to generate this message
+    
+    # AI response metadata (for assistant messages)
+    model_used = Column(String(100))  # gpt-4o, etc.
+    tokens_used = Column(Integer)
+    cost_estimate = Column(Float)
+    confidence_score = Column(Float)  # AI confidence in response
+    sources = Column(JSON)  # References to specific parts of the report
+    
+    # Conversation tracking
+    conversation_id = Column(String(36), index=True)  # Group related messages
+    parent_message_id = Column(String(36), ForeignKey("chat_messages.id", ondelete="SET NULL"), nullable=True)  # For threaded conversations
+    
+    # Quality and feedback
+    user_rating = Column(Integer)  # 1-5 rating from user (optional)
+    is_helpful = Column(Boolean)  # User feedback on helpfulness
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<ChatMessage(id={self.id}, role='{self.role}', report_id='{self.report_id}')>"
+

@@ -7,7 +7,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from .api import auth, reports
+from .api import auth, reports, chat
 from .db.session import engine
 from .db.models import Base
 
@@ -59,10 +59,11 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify actual frontend URL
+    allow_origins=["http://localhost:3000", "http://localhost:3333", "*"],  # Allow frontend ports
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],  # Explicitly allow all methods
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 
@@ -106,6 +107,7 @@ async def root():
 # Include API routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
+app.include_router(chat.router, prefix="/api/v1/reports", tags=["chat"])
 
 
 if __name__ == "__main__":

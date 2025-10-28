@@ -130,6 +130,49 @@ export const reportsApi = {
     const response = await api.get('/reports/usage-stats')
     return response.data
   },
+
+  // Chat API
+  sendChatMessage: async (reportId: string, question: string, conversationId?: string) => {
+    const response = await api.post(`/reports/${reportId}/chat`, {
+      question,
+      conversation_id: conversationId
+    })
+    return response.data
+  },
+
+  getChatHistory: async (reportId: string, conversationId?: string) => {
+    const params = conversationId ? `?conversation_id=${conversationId}` : ''
+    const response = await api.get(`/reports/${reportId}/chat/history${params}`)
+    return response.data
+  },
+
+  getSuggestedQuestions: async (reportId: string) => {
+    const response = await api.get(`/reports/${reportId}/chat/suggested-questions`)
+    return response.data
+  },
+
+  clearChatHistory: async (reportId: string, conversationId?: string) => {
+    const params = conversationId ? `?conversation_id=${conversationId}` : ''
+    const response = await api.delete(`/reports/${reportId}/chat${params}`)
+    return response.data
+  },
+
+  getChatStats: async (reportId: string) => {
+    const response = await api.get(`/reports/${reportId}/chat/stats`)
+    return response.data
+  },
+
+  submitChatFeedback: async (reportId: string, messageId: string, isHelpful: boolean) => {
+    const response = await api.post(`/reports/${reportId}/chat/${messageId}/feedback`, {
+      is_helpful: isHelpful
+    })
+    return response.data
+  },
+
+  generateConversationTitle: async (reportId: string, conversationId: string) => {
+    const response = await api.post(`/reports/${reportId}/chat/${conversationId}/generate-title`)
+    return response.data
+  },
 }
 
 export default api
