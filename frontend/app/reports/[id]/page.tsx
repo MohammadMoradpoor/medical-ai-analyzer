@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { reportsApi } from '@/lib/api'
 import { ReportAnalysis } from '@/types'
-import { Activity, AlertCircle, CheckCircle, FileText, TrendingUp, Clock, ChevronDown, ChevronRight, ArrowRight, TestTube, MessageCircle, Copy, Check, Printer } from 'lucide-react'
+import { Activity, AlertCircle, CheckCircle, FileText, TrendingUp, Clock, ChevronDown, ChevronRight, ArrowRight, TestTube, MessageCircle, Copy, Check, Printer, Download } from 'lucide-react'
 import toast from '@/lib/toast'
 import { AgentLogsViewer } from '@/components/reports/AgentLogsViewer'
 import { RawDataEditor } from '@/components/reports/RawDataEditor'
@@ -28,6 +28,7 @@ export default function ReportDetailPage() {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [chatMessageCount, setChatMessageCount] = useState(0)
   const [reportIdCopied, setReportIdCopied] = useState(false)
+  const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
 
   useEffect(() => {
     // Check authentication
@@ -116,6 +117,18 @@ export default function ReportDetailPage() {
   const handleReprocess = async () => {
     await reportsApi.reprocess(reportId)
     // Redirect handled by RawDataEditor component
+  }
+
+  const handleDownloadPDF = async () => {
+    setIsDownloadingPDF(true)
+    try {
+      await reportsApi.downloadPDF(reportId)
+      toast.success('PDF report downloaded successfully', { icon: '✓' })
+    } catch (error) {
+      toast.error('Failed to download PDF report')
+    } finally {
+      setIsDownloadingPDF(false)
+    }
   }
 
   const getSeverityColor = (severity?: string) => {
@@ -341,6 +354,23 @@ export default function ReportDetailPage() {
               >
                 <Printer className="h-3.5 w-3.5" />
                 Print Report
+              </button>
+              <button
+                onClick={handleDownloadPDF}
+                disabled={isDownloadingPDF || report.status !== 'completed'}
+                className="w-full px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDownloadingPDF ? (
+                  <>
+                    <div className="h-3.5 w-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-3.5 w-3.5" />
+                    Download PDF
+                  </>
+                )}
               </button>
             </div>
           </div>

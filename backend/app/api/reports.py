@@ -15,6 +15,8 @@ from ..auth.dependencies import get_current_user
 from ..agents import DocumentExtractorAgent, MedicalAnalyzerAgent
 from ..agents.file_classifier_agent import FileClassifierAgent
 from ..services.file_service import FileService
+from ..services.pdf_generator import generate_medical_report_pdf
+from fastapi.responses import Response
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -797,6 +799,81 @@ async def reprocess_with_extracted_data(report_id: str, db: Session):
         if report:
             report.analysis_status = "failed"
             db.commit()
+
+
+@router.get("/{report_id}/download-pdf")
+async def download_report_pdf(
+    report_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate and download professional PDF report.
+    """
+    report = db.query(MedicalReport).filter(
+        MedicalReport.id == report_id,
+        MedicalReport.user_id == current_user.id
+    ).first()
+    
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Report not found"
+        )
+    
+    # Get test results
+    test_results = db.query(TestResult).filter(
+        TestResult.report_id == report_id
+    ).all()
+    
+    # Format test results for PDF
+    test_analysis = [
+        {
+            "test_name": tr.test_name,
+            "value": tr.value,
+            "unit": tr.unit,
+            "reference_range": tr.reference_range,
+            "is_normal": bool(tr.is_normal) if tr.is_normal is not None else True,
+            "severity": tr.severity
+        }
+        for tr in test_results
+    ]
+    
+    # Prepare report data for PDF
+    pdf_data = {
+        "report_id": str(report.id),
+        "report_type": report.report_type,
+        "upload_date": report.upload_date.isoformat() if report.upload_date else datetime.utcnow().isoformat(),
+        "status": report.analysis_status,
+        "severity_level": report.severity_level or "not_assessed",
+        "is_critical": report.is_critical or False,
+        "summary": report.summary or "Analysis completed.",
+        "test_analysis": test_analysis,
+        "abnormal_findings": report.abnormal_findings or [],
+        "recommendations": report.recommendations or [],
+        "extracted_data": report.extracted_data
+    }
+    
+    # Generate PDF
+    try:
+        pdf_bytes = generate_medical_report_pdf(pdf_data)
+        
+        # Create safe filename
+        filename = f"medical_report_{report.file_name.split('.')[0]}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        
+        return Response(
+            content=pdf_bytes,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename={filename}"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error generating PDF: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate PDF report: {str(e)}"
+        )
 
 
 @router.delete("/{report_id}")

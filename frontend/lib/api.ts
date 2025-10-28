@@ -111,6 +111,29 @@ export const reportsApi = {
     return response.data
   },
 
+  downloadPDF: async (reportId: string) => {
+    const token = localStorage.getItem('access_token')
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/reports/${reportId}/download-pdf`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to download PDF')
+    }
+    
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `medical_report_${reportId.substring(0, 8)}_${new Date().toISOString().split('T')[0]}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+  },
+
   getAgentLogs: async (reportId: string) => {
     const response = await api.get(`/reports/${reportId}/agent-logs`)
     return response.data
