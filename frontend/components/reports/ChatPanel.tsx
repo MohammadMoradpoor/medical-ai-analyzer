@@ -32,9 +32,10 @@ interface ChatPanelProps {
   reportContext?: any
   isOpen: boolean
   onClose: () => void
+  onMessageCountChange?: (count: number) => void
 }
 
-export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPanelProps) {
+export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageCountChange }: ChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [inputMessage, setInputMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -78,6 +79,13 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  useEffect(() => {
+    // Update message count badge on floating button
+    if (onMessageCountChange) {
+      onMessageCountChange(messages.length)
+    }
+  }, [messages, onMessageCountChange])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -263,13 +271,40 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
           }))
         },
         // onComplete: Replace temp message with final saved message
-        (messageId: string) => {
+        async (messageId: string) => {
           setIsLoading(false)
+          
+          // Update message with final ID
           setMessages(prev => prev.map(msg =>
             msg.id === streamingMessageId
               ? { ...msg, id: messageId }
               : msg
           ))
+          
+          // Fetch the complete message with metadata (sources, medical terms, etc.)
+          try {
+            const history = await reportsApi.getChatHistory(reportId, activeConversationId)
+            const completeMessage = history.find((m: ChatMessage) => m.id === messageId)
+            
+            if (completeMessage) {
+              // Update with complete data
+              setMessages(prev => prev.map(msg =>
+                msg.id === messageId
+                  ? completeMessage
+                  : msg
+              ))
+              
+              // Add medical terms to dictionary (only in fullscreen)
+              if (completeMessage.medical_terms_explained && isFullscreen) {
+                setShowMedicalTerms(prev => ({
+                  ...prev,
+                  ...completeMessage.medical_terms_explained
+                }))
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching complete message:', error)
+          }
           
           // Reload conversations to update sidebar (if in fullscreen)
           if (isFullscreen) {
@@ -663,7 +698,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
 
                 {/* Message Footer - Actions and Timestamp (hide while streaming) */}
                 {!message.id.startsWith('temp_') && (
-                <div className={`mt-2 pt-2 ${message.role === 'assistant' && !message.id.startsWith('temp_ai_') ? 'border-t border-purple-100' : ''} flex items-center justify-between`}>
+                <div className="mt-2 flex items-center justify-between">
                   {/* Actions */}
                   <div className="flex items-center gap-1.5">
                     <button
@@ -755,30 +790,35 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
         )}
         </div>
 
-        {/* Medical Terms Dictionary (if any) */}
-        {Object.keys(showMedicalTerms).length > 0 && (
-          <div className="px-4 py-2.5 bg-blue-50 border-t border-blue-200 flex-shrink-0">
-            <div className="flex items-center justify-between mb-2">
+        {/* Medical Terms Dictionary (only in fullscreen mode) */}
+        {isFullscreen && Object.keys(showMedicalTerms).length > 0 && (
+          <div className="px-4 py-3 bg-gradient-to-br from-blue-50 to-indigo-50 border-t-2 border-blue-200 flex-shrink-0">
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Brain className="h-3.5 w-3.5 text-blue-600" />
-                <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wide">
-                  Medical Terms
+                <div className="bg-blue-500 p-1.5 rounded-lg">
+                  <Brain className="h-4 w-4 text-white" />
+                </div>
+                <h4 className="text-sm font-bold text-blue-900">
+                  Medical Terms Dictionary
                 </h4>
+                <span className="px-2 py-0.5 bg-blue-500 text-white rounded-full text-xs font-bold">
+                  {Object.keys(showMedicalTerms).length}
+                </span>
               </div>
               <button
                 onClick={() => setShowMedicalTerms({})}
-                className="text-blue-600 hover:text-blue-800"
-                title="Clear"
+                className="p-1.5 hover:bg-blue-200 rounded-lg text-blue-700 transition-colors"
+                title="Clear all terms"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="space-y-1 max-h-32 overflow-y-auto">
+            <div className="space-y-2 max-h-48 overflow-y-auto">
               {Object.entries(showMedicalTerms).map(([term, definition]) => (
-                <div key={term} className="bg-white rounded-md p-2 border border-blue-200">
-                  <div className="text-xs">
-                    <span className="font-bold text-blue-900">{term}:</span>{' '}
-                    <span className="text-gray-700">{definition}</span>
+                <div key={term} className="bg-white rounded-lg p-3 border-2 border-blue-200 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="text-sm">
+                    <div className="font-bold text-blue-900 mb-1">{term}</div>
+                    <div className="text-gray-700 leading-relaxed">{definition}</div>
                   </div>
                 </div>
               ))}

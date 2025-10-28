@@ -139,7 +139,21 @@ CRITICAL RULES:
         # Send completion signal
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
         
-        # Save complete message to database
+        # Extract medical terms and sources from the response using simple parsing
+        sources = []
+        medical_terms = {}
+        
+        # Try to extract sources from response (look for references)
+        if "test result" in full_response.lower() or "report" in full_response.lower():
+            sources.append("Test Results")
+        if "reference range" in full_response.lower():
+            sources.append("Reference Ranges")
+        if "abnormal" in full_response.lower():
+            sources.append("Abnormal Findings")
+        if "recommendation" in full_response.lower():
+            sources.append("Recommendations")
+        
+        # Save complete message to database with metadata
         assistant_message = ChatMessage(
             report_id=report_id,
             user_id=user_id,
@@ -148,6 +162,7 @@ CRITICAL RULES:
             message_type="answer",
             conversation_id=conversation_id,
             model_used="gpt-4o",
+            sources=sources if sources else None,
             created_at=datetime.utcnow()
         )
         

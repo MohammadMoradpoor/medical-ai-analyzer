@@ -680,6 +680,7 @@ export default function ReportDetailPage() {
         reportContext={report}
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
+        onMessageCountChange={(count) => setChatMessageCount(count)}
       />
     </div>
   )
