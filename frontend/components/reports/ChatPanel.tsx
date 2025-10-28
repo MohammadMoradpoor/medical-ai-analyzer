@@ -379,18 +379,26 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
 
   const handleFeedback = async (messageId: string, isHelpful: boolean) => {
     try {
+      // Find current message
+      const currentMessage = messages.find(m => m.id === messageId)
+      
+      // Toggle: if clicking same button, cancel feedback
+      const newValue = currentMessage?.is_helpful === isHelpful ? undefined : isHelpful
+      
       await reportsApi.submitChatFeedback(reportId, messageId, isHelpful)
       
-      // Update local message state to show feedback was submitted
+      // Update local message state
       setMessages(prev => prev.map(msg => 
         msg.id === messageId 
-          ? { ...msg, is_helpful: isHelpful, user_rating: isHelpful ? 5 : 1 } 
+          ? { ...msg, is_helpful: newValue, user_rating: newValue === undefined ? undefined : (newValue ? 5 : 1) } 
           : msg
       ))
       
-      toast.success(isHelpful ? 'Marked as helpful' : 'Feedback recorded', {
-        icon: isHelpful ? '✓' : '✓'
-      })
+      if (newValue === undefined) {
+        toast.success('Feedback removed')
+      } else {
+        toast.success(isHelpful ? 'Marked as helpful' : 'Feedback recorded')
+      }
     } catch (error) {
       toast.error('Failed to submit feedback')
     }
