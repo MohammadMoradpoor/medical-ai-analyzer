@@ -729,8 +729,8 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                   </div>
                 )}
 
-                {/* Message Footer - Actions and Timestamp (hide while streaming) */}
-                {!message.id.startsWith('temp_') && (
+                {/* Message Footer - Different layout for user vs AI */}
+                {!message.id.startsWith('temp_') && message.role === 'assistant' && (
                 <div className="mt-2 flex items-center justify-between text-xs">
                   {/* Actions */}
                   <div className="flex items-center gap-1">
@@ -739,9 +739,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                       className={`p-1 rounded-md transition-all ${
                         copiedMessageId === message.id
                           ? 'bg-gray-200 text-gray-700'
-                          : message.role === 'user'
-                            ? 'text-blue-100 hover:bg-blue-500'
-                            : 'text-gray-500 hover:bg-gray-100'
+                          : 'text-gray-500 hover:bg-gray-100'
                       }`}
                       title={copiedMessageId === message.id ? "Copied!" : "Copy"}
                     >
@@ -751,50 +749,53 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                         <Copy className="h-3.5 w-3.5" />
                       )}
                     </button>
-                    {message.role === 'assistant' && (
-                      <>
-                        <button
-                          onClick={() => handleFeedback(message.id, true)}
-                          className={`p-1 rounded-md transition-all ${
-                            message.is_helpful === true
-                              ? 'bg-gray-200 text-gray-700'
-                              : 'text-gray-500 hover:bg-gray-100'
-                          }`}
-                          title={message.is_helpful === true ? "Marked as helpful" : "Helpful"}
-                        >
-                          <ThumbsUp className={`h-3.5 w-3.5 ${message.is_helpful === true ? 'fill-current' : ''}`} />
-                        </button>
-                        <button
-                          onClick={() => handleFeedback(message.id, false)}
-                          className={`p-1 rounded-md transition-all ${
-                            message.is_helpful === false
-                              ? 'bg-gray-200 text-gray-700'
-                              : 'text-gray-500 hover:bg-gray-100'
-                          }`}
-                          title={message.is_helpful === false ? "Marked as not helpful" : "Not helpful"}
-                        >
-                          <ThumbsDown className={`h-3.5 w-3.5 ${message.is_helpful === false ? 'fill-current' : ''}`} />
-                        </button>
-                      </>
-                    )}
+                    <button
+                      onClick={() => handleFeedback(message.id, true)}
+                      className={`p-1 rounded-md transition-all ${
+                        message.is_helpful === true
+                          ? 'bg-gray-200 text-gray-700'
+                          : 'text-gray-500 hover:bg-gray-100'
+                      }`}
+                      title={message.is_helpful === true ? "Marked as helpful" : "Helpful"}
+                    >
+                      <ThumbsUp className={`h-3.5 w-3.5 ${message.is_helpful === true ? 'fill-current' : ''}`} />
+                    </button>
+                    <button
+                      onClick={() => handleFeedback(message.id, false)}
+                      className={`p-1 rounded-md transition-all ${
+                        message.is_helpful === false
+                          ? 'bg-gray-200 text-gray-700'
+                          : 'text-gray-500 hover:bg-gray-100'
+                      }`}
+                      title={message.is_helpful === false ? "Marked as not helpful" : "Not helpful"}
+                    >
+                      <ThumbsDown className={`h-3.5 w-3.5 ${message.is_helpful === false ? 'fill-current' : ''}`} />
+                    </button>
                   </div>
                   
-                  {/* Timestamp - Always Show for Both User and AI */}
+                  {/* Timestamp for AI */}
                   <div className="flex items-center gap-2">
-                    {/* Token usage (only for AI, subtle) */}
-                    {message.role === 'assistant' && message.tokens_used && (
+                    {message.tokens_used && (
                       <span className="text-xs text-gray-400 font-mono">
                         {Math.floor(message.tokens_used / 100)}•• tokens
                       </span>
                     )}
-                    {/* Timestamp - Show for all messages */}
-                    <span className={`text-xs ${message.role === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
+                    <span className="text-xs text-gray-400">
                       {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 </div>
                 )}
               </div>
+              
+              {/* Timestamp for User Messages - Right aligned below bubble */}
+              {!message.id.startsWith('temp_') && message.role === 'user' && (
+                <div className="mt-1.5 text-right">
+                  <span className="text-xs text-gray-500">
+                    {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              )}
           </div>
         ))}
         </div>
