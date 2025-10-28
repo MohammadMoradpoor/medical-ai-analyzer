@@ -217,17 +217,18 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
     }
     setMessages(prev => [...prev, userMessage])
 
-    // Create streaming AI message placeholder
+    // Create streaming AI message with "AI is thinking..." placeholder
     const streamingMessageId = `temp_ai_${Date.now()}`
     const streamingMessage: ChatMessage = {
       id: streamingMessageId,
       role: 'assistant',
-      content: '',
+      content: '__THINKING__',  // Placeholder that will be replaced
       created_at: new Date().toISOString()
     }
     setMessages(prev => [...prev, streamingMessage])
 
     setIsLoading(true)
+    let isFirstChunk = true
 
     try {
       // Use streaming API
@@ -237,11 +238,18 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
         activeConversationId,
         // onChunk: Update streaming message with new content
         (chunk: string) => {
-          setMessages(prev => prev.map(msg =>
-            msg.id === streamingMessageId
-              ? { ...msg, content: msg.content + chunk }
-              : msg
-          ))
+          setMessages(prev => prev.map(msg => {
+            if (msg.id === streamingMessageId) {
+              // On first chunk, replace "AI is thinking..." with actual content
+              if (isFirstChunk || msg.content === '__THINKING__') {
+                isFirstChunk = false
+                return { ...msg, content: chunk }
+              }
+              // Subsequent chunks: append
+              return { ...msg, content: msg.content + chunk }
+            }
+            return msg
+          }))
         },
         // onComplete: Replace temp message with final saved message
         (messageId: string) => {
@@ -564,10 +572,20 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
                 <div className="text-sm leading-relaxed">
                   {message.role === 'assistant' ? (
                     <>
-                      <MarkdownText content={message.content} />
-                      {/* Streaming indicator - blinking cursor */}
-                      {message.id.startsWith('temp_ai_') && message.content && (
-                        <span className="inline-block w-0.5 h-4 bg-purple-600 ml-0.5 animate-pulse"></span>
+                      {message.content === '__THINKING__' ? (
+                        /* Show "AI is thinking..." while waiting for first chunk */
+                        <div className="flex items-center gap-2 text-purple-700 italic">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>AI is thinking...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <MarkdownText content={message.content} />
+                          {/* Streaming indicator - blinking cursor */}
+                          {message.id.startsWith('temp_ai_') && message.content && (
+                            <span className="inline-block w-0.5 h-4 bg-purple-600 ml-0.5 animate-pulse"></span>
+                          )}
+                        </>
                       )}
                     </>
                   ) : (
