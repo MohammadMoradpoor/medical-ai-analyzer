@@ -22,7 +22,8 @@ import {
   Maximize2,
   User2,
   Bot,
-  ChevronDown
+  ChevronDown,
+  Search
 } from 'lucide-react'
 import toast from '@/lib/toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -57,6 +58,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
   const [deleteConversationId, setDeleteConversationId] = useState<string | null>(null)
   const [hoveredConversationId, setHoveredConversationId] = useState<string | null>(null)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+  const [conversationSearch, setConversationSearch] = useState('')
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -343,6 +345,15 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
     // Shift+Enter allows new line (default textarea behavior)
   }
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputMessage(e.target.value)
+    
+    // Auto-resize textarea
+    const textarea = e.target
+    textarea.style.height = 'auto'
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 150)}px`
+  }
+
   const copyToClipboard = (text: string, messageId: string) => {
     navigator.clipboard.writeText(text)
     setCopiedMessageId(messageId)
@@ -411,7 +422,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
           {isFullscreen && (
             <div className="w-80 bg-gray-900 border-r border-gray-700 flex flex-col flex-shrink-0">
               {/* Sidebar Header */}
-              <div className="p-4 border-b border-gray-700">
+              <div className="p-4 border-b border-gray-700 space-y-3">
                 <button
                   onClick={startNewConversation}
                   className="w-full px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-sm flex items-center justify-center gap-2 transition-colors shadow-md"
@@ -419,11 +430,36 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                   <MessageCircle className="h-4 w-4" />
                   New Chat
                 </button>
+                
+                {/* Search Conversations - Professional Style */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <input
+                    type="text"
+                    placeholder="Search conversations..."
+                    value={conversationSearch}
+                    onChange={(e) => setConversationSearch(e.target.value)}
+                    className="w-full pl-10 pr-3 py-2 bg-gray-800 border border-gray-700 text-gray-300 text-sm rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:outline-none placeholder-gray-500 transition-all"
+                  />
+                  {conversationSearch && (
+                    <button
+                      onClick={() => setConversationSearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-700 rounded transition-colors"
+                    >
+                      <X className="h-3.5 w-3.5 text-gray-400" />
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Conversations List */}
               <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
-                {allConversations.map((conv) => (
+                {allConversations
+                  .filter(conv => 
+                    conversationSearch === '' || 
+                    (conv.firstQuestion && conv.firstQuestion.toLowerCase().includes(conversationSearch.toLowerCase()))
+                  )
+                  .map((conv) => (
                   <div
                     key={conv.id}
                     className="relative group"
@@ -468,10 +504,13 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                   </div>
                 ))}
                 
-                {allConversations.length === 0 && (
+                {allConversations.filter(conv => 
+                  conversationSearch === '' || 
+                  (conv.firstQuestion && conv.firstQuestion.toLowerCase().includes(conversationSearch.toLowerCase()))
+                ).length === 0 && (
                   <div className="text-center py-12 text-gray-500 text-sm">
                     <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>No previous conversations</p>
+                    <p>{conversationSearch ? 'No matching conversations' : 'No previous conversations'}</p>
                   </div>
                 )}
               </div>
@@ -524,39 +563,6 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
           </div>
         </div>
 
-        {/* Suggested Questions (shown when empty) */}
-        {messages.length === 0 && !isLoading && (
-          <div className="p-4 border-b border-purple-100 bg-gradient-to-br from-purple-50 to-white flex-shrink-0">
-            <div className="flex items-center gap-2 mb-3">
-              <Lightbulb className="h-4 w-4 text-purple-600" />
-              <h4 className="text-sm font-bold text-purple-900">Suggested Questions</h4>
-            </div>
-            
-            {loadingSuggestions ? (
-              <div className="flex items-center gap-2 text-purple-600">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Generating questions...</span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {suggestedQuestions.map((question, index) => (
-                  <button
-                    key={index}
-                    onClick={() => sendMessage(question)}
-                    className="w-full text-left px-3 py-2.5 bg-white hover:bg-purple-50 border-2 border-purple-200 hover:border-purple-400 rounded-lg transition-all group"
-                  >
-                    <div className="flex items-start gap-2">
-                      <Sparkles className="h-4 w-4 text-purple-500 flex-shrink-0 mt-0.5 group-hover:text-purple-600" />
-                      <span className="text-sm text-gray-800 group-hover:text-purple-900 font-medium leading-snug">
-                        {question}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Follow-up Suggestions (shown after AI response) */}
         {latestFollowUp.length > 0 && messages.length > 0 && !isLoading && (
@@ -580,47 +586,58 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         )}
 
         {/* Messages - Scrollable area */}
-        <div className={`flex-1 bg-gray-50 min-h-0 ${messages.length === 0 && !isLoading ? 'flex items-center justify-center' : 'overflow-y-auto px-6 py-4 space-y-4'}`}>
+        <div className={`flex-1 bg-gray-50 min-h-0 ${messages.length === 0 && !isLoading ? 'flex flex-col items-center justify-center' : 'overflow-y-auto px-6 py-4 space-y-4'}`}>
         {messages.length === 0 && !isLoading ? (
-          <div className="text-center px-8">
+          <div className="text-center px-8 w-full max-w-3xl">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
               <MessageCircle className="h-8 w-8 text-purple-600" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 mb-2">
               Start a Conversation
             </h3>
-            <p className="text-sm text-gray-600 leading-relaxed max-w-sm mx-auto">
+            <p className="text-sm text-gray-600 leading-relaxed max-w-xl mx-auto mb-6">
               Ask questions about your medical report. Get instant, context-aware answers with citations and explanations.
             </p>
+            
+            {/* Suggested Questions Below - Centered */}
+            {loadingSuggestions ? (
+              <div className="flex items-center justify-center gap-2 text-purple-600 mt-8">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Generating questions...</span>
+              </div>
+            ) : suggestedQuestions.length > 0 && (
+              <div className="mt-6 space-y-3 max-w-2xl mx-auto">
+                {suggestedQuestions.map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setInputMessage(question)
+                      inputRef.current?.focus()
+                    }}
+                    className="w-full text-left px-4 py-3.5 bg-white hover:bg-gray-50 border border-gray-200 hover:border-purple-300 rounded-xl transition-all shadow-sm hover:shadow-md"
+                  >
+                    <div className="flex items-start gap-3">
+                      <Sparkles className="h-4 w-4 text-purple-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-sm text-gray-700 leading-relaxed">{question}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <>
+          <div className="max-w-4xl mx-auto w-full">
         {messages.map((message, index) => (
           <div
             key={message.id}
-            className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
           >
-            {/* Avatar Icon */}
-            <div className="flex-shrink-0">
-              {message.role === 'user' ? (
-                // Professional user avatar (sleek modern design)
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg ring-2 ring-blue-200 ring-offset-1">
-                  <User2 className="h-5 w-5 text-white" strokeWidth={2.5} />
-                </div>
-              ) : (
-                // AI assistant avatar with bot icon
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg ring-2 ring-purple-200 ring-offset-1">
-                  <Bot className="h-5 w-5 text-white" strokeWidth={2.5} />
-                </div>
-              )}
-            </div>
-            
-            <div className={`flex-1 ${message.role === 'user' ? 'max-w-[75%]' : 'max-w-[80%]'}`}>
-              {/* Message Bubble */}
-              <div className={`rounded-xl px-3.5 py-2.5 ${
+            {/* Message Bubble - No Avatars */}
+            <div className={`max-w-[80%] ${
                 message.role === 'user'
-                  ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md'
-                  : 'bg-white border-2 border-purple-200 text-gray-900 shadow-sm'
+                  ? 'bg-blue-600 text-white rounded-2xl px-4 py-3 shadow-md'
+                  : 'bg-white border border-gray-200 text-gray-900 rounded-2xl px-4 py-3 shadow-sm'
               }`}>
                 {/* Message Content with Markdown */}
                 <div className="text-sm leading-relaxed">
@@ -706,19 +723,17 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
 
                 {/* Message Footer - Actions and Timestamp (hide while streaming) */}
                 {!message.id.startsWith('temp_') && (
-                <div className="mt-2 flex items-center justify-between">
+                <div className="mt-2 flex items-center justify-between text-xs">
                   {/* Actions */}
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <button
                       onClick={() => copyToClipboard(message.content, message.id)}
-                      className={`p-1 rounded transition-all ${
+                      className={`p-1 rounded-md transition-all ${
                         copiedMessageId === message.id
-                          ? message.role === 'user'
-                            ? 'bg-green-500 text-white'
-                            : 'bg-green-100 text-green-700'
+                          ? 'bg-gray-200 text-gray-700'
                           : message.role === 'user'
-                            ? 'hover:bg-blue-500 text-white opacity-70 hover:opacity-100'
-                            : 'hover:bg-purple-100 text-purple-600'
+                            ? 'text-blue-100 hover:bg-blue-500'
+                            : 'text-gray-500 hover:bg-gray-100'
                       }`}
                       title={copiedMessageId === message.id ? "Copied!" : "Copy"}
                     >
@@ -732,10 +747,10 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                       <>
                         <button
                           onClick={() => handleFeedback(message.id, true)}
-                          className={`p-1 rounded transition-all ${
+                          className={`p-1 rounded-md transition-all ${
                             message.is_helpful === true
-                              ? 'bg-green-500 text-white shadow-md'
-                              : 'hover:bg-green-100 text-green-600'
+                              ? 'bg-gray-200 text-gray-700'
+                              : 'text-gray-500 hover:bg-gray-100'
                           }`}
                           title={message.is_helpful === true ? "Marked as helpful" : "Helpful"}
                         >
@@ -743,10 +758,10 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                         </button>
                         <button
                           onClick={() => handleFeedback(message.id, false)}
-                          className={`p-1 rounded transition-all ${
+                          className={`p-1 rounded-md transition-all ${
                             message.is_helpful === false
-                              ? 'bg-red-500 text-white shadow-md'
-                              : 'hover:bg-red-100 text-red-600'
+                              ? 'bg-gray-200 text-gray-700'
+                              : 'text-gray-500 hover:bg-gray-100'
                           }`}
                           title={message.is_helpful === false ? "Marked as not helpful" : "Not helpful"}
                         >
@@ -756,54 +771,29 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                     )}
                   </div>
                   
-                  {/* Timestamp and Tokens */}
+                  {/* Timestamp - Always Show for Both User and AI */}
                   <div className="flex items-center gap-2">
-                    {/* Token usage (subtle, partially obfuscated) */}
+                    {/* Token usage (only for AI, subtle) */}
                     {message.role === 'assistant' && message.tokens_used && (
                       <span className="text-xs text-gray-400 font-mono">
                         {Math.floor(message.tokens_used / 100)}•• tokens
                       </span>
                     )}
-                    {/* Timestamp */}
-                    <span className={`text-xs ${message.role === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>
+                    {/* Timestamp - Show for all messages */}
+                    <span className={`text-xs ${message.role === 'user' ? 'text-blue-200' : 'text-gray-400'}`}>
                       {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 </div>
                 )}
               </div>
-
-              {/* Follow-up Suggestions (only on latest AI message) */}
-              {message.role === 'assistant' && 
-               index === messages.length - 1 && 
-               message.follow_up_suggestions && 
-               message.follow_up_suggestions.length > 0 && (
-                <div className="mt-2 space-y-1.5">
-                  <div className="text-xs font-bold text-purple-700 flex items-center gap-1">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    You might also want to ask:
-                  </div>
-                  {message.follow_up_suggestions.map((suggestion, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => sendMessage(suggestion)}
-                      disabled={isLoading}
-                      className="w-full text-left px-3 py-2 bg-purple-50 hover:bg-purple-100 border border-purple-200 hover:border-purple-400 rounded-lg text-xs text-purple-900 font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      → {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         ))}
-
-        {/* Loading indicator removed - streaming message shows blinking cursor instead */}
-
+        </div>
         <div ref={messagesEndRef} />
         </>
-        )}
+        )
+        }
         </div>
 
         {/* Medical Terms Dictionary (only in fullscreen mode) */}
@@ -843,38 +833,36 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         )}
 
         {/* Input Area */}
-        <div className="px-4 py-3 bg-white border-t-2 border-purple-200 flex-shrink-0">
-          <div className="flex items-start gap-2">
+        <div className="px-6 py-4 bg-white flex-shrink-0">
+          <div className="flex items-start gap-3 max-w-4xl mx-auto">
             <textarea
               ref={inputRef as any}
               value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Ask a question about your report..."
               disabled={isLoading}
               rows={1}
-              className="flex-1 px-3 py-2.5 border-2 border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm text-gray-900 font-medium placeholder:text-gray-400 placeholder:font-normal bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all resize-none max-h-32 overflow-y-auto"
-              style={{ minHeight: '42px' }}
+              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all resize-none overflow-hidden shadow-sm"
+              style={{ minHeight: '52px', maxHeight: '150px' }}
             />
             <button
               onClick={() => sendMessage()}
               disabled={!inputMessage.trim() || isLoading}
-              className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2 flex-shrink-0"
+              className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2 flex-shrink-0"
             >
               {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
-                <Send className="h-4 w-4" />
+                <Send className="h-5 w-5" />
               )}
             </button>
           </div>
 
-          {/* Helper Text */}
-          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-gray-500">
-            <AlertCircle className="h-3 w-3" />
-            <span>
-              <kbd className="px-1 py-0.5 bg-gray-200 rounded text-xs font-mono">Enter</kbd> to send, 
-              <kbd className="px-1 py-0.5 bg-gray-200 rounded text-xs font-mono ml-1">Shift+Enter</kbd> for new line
+          {/* Helper Text - Centered Below Input */}
+          <div className="mt-2 text-center max-w-4xl mx-auto">
+            <span className="text-xs text-gray-500">
+              Press <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Shift+Enter</kbd> for new line
             </span>
           </div>
         </div>
