@@ -201,8 +201,8 @@ async def process_medical_report(
                 quality_data = quality_result["data"]
                 
                 if not quality_data.get("is_acceptable_for_analysis", True):
-                    # Image quality too low - reject with specific feedback
-                    report.analysis_status = "failed"
+                    # Image quality too low - mark as needs retake (not failed/error)
+                    report.analysis_status = "quality_issue"
                     report.extracted_data = {
                         "quality_check_failed": True,
                         "quality_assessment": quality_data,
@@ -213,7 +213,7 @@ async def process_medical_report(
                         })
                     }
                     db.commit()
-                    logger.info(f"[QUALITY CHECK] Image rejected - quality score: {quality_data.get('quality_score')}")
+                    logger.info(f"[QUALITY CHECK] Image needs retake - quality score: {quality_data.get('quality_score')}")
                     return
                 
                 # Quality acceptable - store assessment data

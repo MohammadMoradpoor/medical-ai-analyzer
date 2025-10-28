@@ -341,9 +341,20 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
+              <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-orange-50 to-white rounded-lg border border-orange-100">
+                <div className="p-2 bg-orange-500 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Quality Issues</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {reports.filter(r => r.analysis_status === 'quality_issue').length}
+                  </div>
+                </div>
+              </div>
               <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-red-50 to-white rounded-lg border border-red-100">
                 <div className="p-2 bg-red-500 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-white" />
+                  <XCircle className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Errors</div>
@@ -509,8 +520,8 @@ export default function DashboardPage() {
                               onClick={() => {
                                 if (report.analysis_status === 'completed') {
                                   router.push(`/reports/${report.id}`)
-                                } else if (report.analysis_status === 'failed') {
-                                  router.push(`/reports/${report.id}?tab=agent-logs`)
+                                } else if (report.analysis_status === 'failed' || report.analysis_status === 'quality_issue') {
+                                  router.push(`/reports/${report.id}`)
                                 }
                               }}
                               className={`hover:bg-blue-50 transition-all ${
@@ -577,14 +588,16 @@ export default function DashboardPage() {
                                 <div className="flex items-center gap-1.5">
                                   {report.analysis_status === 'completed' && <CheckCircle className="h-4 w-4 text-green-600" />}
                                   {report.analysis_status === 'processing' && <Clock className="h-4 w-4 text-blue-600 animate-spin" />}
+                                  {report.analysis_status === 'quality_issue' && <AlertCircle className="h-4 w-4 text-orange-600" />}
                                   {report.analysis_status === 'failed' && <XCircle className="h-4 w-4 text-red-600" />}
                                   <span className={`px-2 py-1 rounded-md text-xs font-bold ${
                                     report.analysis_status === 'completed' ? 'bg-green-100 text-green-800' :
                                     report.analysis_status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                    report.analysis_status === 'quality_issue' ? 'bg-orange-100 text-orange-800' :
                                     report.analysis_status === 'failed' ? 'bg-red-100 text-red-800' :
                                     'bg-gray-100 text-gray-800'
                                   }`}>
-                                    {getStatusText(report.analysis_status)}
+                                    {report.analysis_status === 'quality_issue' ? 'Quality Issue' : getStatusText(report.analysis_status)}
                                   </span>
                                 </div>
                               </td>

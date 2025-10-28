@@ -383,8 +383,8 @@ export default function ReportDetailPage() {
               </div>
             )}
             
-            {/* Image Quality Check Failed - Professional Feedback */}
-            {report.status === 'failed' && report.extracted_data?.quality_check_failed && (
+            {/* Image Quality Issue - Professional Feedback (Not an Error, Needs Retake) */}
+            {(report.status === 'quality_issue' || (report.status === 'failed' && report.extracted_data?.quality_check_failed)) && (
               <div className="bg-gradient-to-r from-orange-100 to-red-100 border-l-4 border-orange-500 rounded-r-xl p-6 shadow-lg">
                 <div className="flex items-start gap-4">
                   <div className="bg-orange-500 p-3 rounded-xl flex-shrink-0">
