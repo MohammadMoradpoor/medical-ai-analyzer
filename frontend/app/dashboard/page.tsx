@@ -12,6 +12,7 @@ import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { UploadModal } from '@/components/ui/UploadModal'
 import { Loading } from '@/components/ui/Loading'
+import { ProfessionalSelect } from '@/components/ui/ProfessionalSelect'
 
 type TabType = 'overview'
 
@@ -399,38 +400,31 @@ export default function DashboardPage() {
                           )}
                         </div>
 
-                        {/* Status */}
-                        <select
+                        {/* Status Filter - Professional Custom Dropdown */}
+                        <ProfessionalSelect
                           value={statusFilter}
-                          onChange={(e) => setStatusFilter(e.target.value)}
-                          className={`px-2.5 py-1.5 text-xs font-semibold text-gray-900 border rounded-md focus:ring-1 focus:ring-blue-500 ${
-                            statusFilter === 'all' 
-                              ? 'border-gray-300 bg-white' 
-                              : 'border-blue-400 bg-blue-50'
-                          }`}
-                        >
-                          <option value="all">All Status</option>
-                          <option value="completed">Completed</option>
-                          <option value="processing">Processing</option>
-                          <option value="failed">Failed</option>
-                        </select>
+                          onChange={setStatusFilter}
+                          options={[
+                            { value: 'all', label: 'All Status' },
+                            { value: 'pending', label: 'Pending' },
+                            { value: 'processing', label: 'Processing' },
+                            { value: 'completed', label: 'Completed' },
+                            { value: 'failed', label: 'Failed' }
+                          ]}
+                        />
 
-                        {/* Severity */}
-                        <select
+                        {/* Severity Filter - Professional Custom Dropdown */}
+                        <ProfessionalSelect
                           value={severityFilter}
-                          onChange={(e) => setSeverityFilter(e.target.value)}
-                          className={`px-2.5 py-1.5 text-xs font-semibold text-gray-900 border rounded-md focus:ring-1 focus:ring-blue-500 ${
-                            severityFilter === 'all' 
-                              ? 'border-gray-300 bg-white' 
-                              : 'border-purple-400 bg-purple-50'
-                          }`}
-                        >
-                          <option value="all">All Severity</option>
-                          <option value="normal">Normal</option>
-                          <option value="attention_needed">Attention</option>
-                          <option value="urgent">Urgent</option>
-                          <option value="critical">Critical</option>
-                        </select>
+                          onChange={setSeverityFilter}
+                          options={[
+                            { value: 'all', label: 'All Severity' },
+                            { value: 'normal', label: 'Normal' },
+                            { value: 'attention_needed', label: 'Attention Needed' },
+                            { value: 'urgent', label: 'Urgent' },
+                            { value: 'critical', label: 'Critical' }
+                          ]}
+                        />
 
                         {/* Per Page */}
                         <select
