@@ -374,28 +374,23 @@ export default function DashboardPage() {
 
                       {/* Right: Compact Filters */}
                       <div className="flex items-center gap-2">
-                        {/* Search */}
+                        {/* Search - Professional Style Matching Dropdowns */}
                         <div className="relative">
-                          <Search className={`absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 ${
-                            searchQuery ? 'text-green-600' : 'text-gray-400'
-                          }`} />
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-500" />
                           <input
                             type="text"
-                            placeholder="Search..."
+                            placeholder="Search reports..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className={`w-44 pl-8 pr-8 py-1.5 text-xs border rounded-md focus:ring-1 focus:ring-blue-500 ${
-                              searchQuery 
-                                ? 'border-green-400 bg-green-50 text-green-900 font-semibold' 
-                                : 'border-gray-300 bg-white text-gray-700 focus:border-blue-500'
-                            }`}
+                            className="min-w-[180px] pl-9 pr-9 px-3 py-2 text-xs font-semibold border-2 border-gray-300 bg-white text-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all hover:border-gray-400"
                           />
                           {searchQuery && (
                             <button
                               onClick={() => setSearchQuery('')}
-                              className="absolute right-2 top-1/2 -translate-y-1/2 text-green-600 hover:text-green-700 bg-green-100 hover:bg-green-200 rounded-full p-0.5"
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-lg transition-colors"
+                              title="Clear search"
                             >
-                              <X className="h-3 w-3" />
+                              <X className="h-3.5 w-3.5 text-gray-500" />
                             </button>
                           )}
                         </div>
