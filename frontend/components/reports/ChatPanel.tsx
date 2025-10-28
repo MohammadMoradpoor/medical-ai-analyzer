@@ -11,6 +11,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Copy,
+  Check,
   Trash2,
   AlertCircle,
   CheckCircle,
@@ -55,6 +56,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
   const [activeConversationId, setActiveConversationId] = useState<string>(conversationId)
   const [deleteConversationId, setDeleteConversationId] = useState<string | null>(null)
   const [hoveredConversationId, setHoveredConversationId] = useState<string | null>(null)
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -341,9 +343,15 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
     // Shift+Enter allows new line (default textarea behavior)
   }
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, messageId: string) => {
     navigator.clipboard.writeText(text)
+    setCopiedMessageId(messageId)
     toast.success('Copied to clipboard')
+    
+    // Reset copied state after 2 seconds
+    setTimeout(() => {
+      setCopiedMessageId(null)
+    }, 2000)
   }
 
   const handleClearConfirm = async () => {
@@ -702,39 +710,47 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                   {/* Actions */}
                   <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => copyToClipboard(message.content)}
-                      className={`p-1 rounded transition-colors ${
-                        message.role === 'user' 
-                          ? 'hover:bg-blue-500 text-white opacity-70 hover:opacity-100' 
-                          : 'hover:bg-purple-100 text-purple-600'
+                      onClick={() => copyToClipboard(message.content, message.id)}
+                      className={`p-1 rounded transition-all ${
+                        copiedMessageId === message.id
+                          ? message.role === 'user'
+                            ? 'bg-green-500 text-white'
+                            : 'bg-green-100 text-green-700'
+                          : message.role === 'user'
+                            ? 'hover:bg-blue-500 text-white opacity-70 hover:opacity-100'
+                            : 'hover:bg-purple-100 text-purple-600'
                       }`}
-                      title="Copy"
+                      title={copiedMessageId === message.id ? "Copied!" : "Copy"}
                     >
-                      <Copy className="h-3.5 w-3.5" />
+                      {copiedMessageId === message.id ? (
+                        <Check className="h-3.5 w-3.5" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
                     </button>
                     {message.role === 'assistant' && (
                       <>
                         <button
                           onClick={() => handleFeedback(message.id, true)}
-                          className={`p-1 rounded transition-colors ${
+                          className={`p-1 rounded transition-all ${
                             message.is_helpful === true
-                              ? 'bg-green-100 text-green-700'
+                              ? 'bg-green-500 text-white shadow-md'
                               : 'hover:bg-green-100 text-green-600'
                           }`}
-                          title="Helpful"
+                          title={message.is_helpful === true ? "Marked as helpful" : "Helpful"}
                         >
-                          <ThumbsUp className="h-3.5 w-3.5" />
+                          <ThumbsUp className={`h-3.5 w-3.5 ${message.is_helpful === true ? 'fill-current' : ''}`} />
                         </button>
                         <button
                           onClick={() => handleFeedback(message.id, false)}
-                          className={`p-1 rounded transition-colors ${
+                          className={`p-1 rounded transition-all ${
                             message.is_helpful === false
-                              ? 'bg-red-100 text-red-700'
+                              ? 'bg-red-500 text-white shadow-md'
                               : 'hover:bg-red-100 text-red-600'
                           }`}
-                          title="Not helpful"
+                          title={message.is_helpful === false ? "Marked as not helpful" : "Not helpful"}
                         >
-                          <ThumbsDown className="h-3.5 w-3.5" />
+                          <ThumbsDown className={`h-3.5 w-3.5 ${message.is_helpful === false ? 'fill-current' : ''}`} />
                         </button>
                       </>
                     )}
