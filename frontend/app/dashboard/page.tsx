@@ -341,25 +341,14 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-orange-50 to-white rounded-lg border border-orange-100">
-                <div className="p-2 bg-orange-500 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Quality Issues</div>
-                  <div className="text-2xl font-bold text-orange-600">
-                    {reports.filter(r => r.analysis_status === 'quality_issue').length}
-                  </div>
-                </div>
-              </div>
               <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-red-50 to-white rounded-lg border border-red-100">
                 <div className="p-2 bg-red-500 rounded-lg">
-                  <XCircle className="h-5 w-5 text-white" />
+                  <AlertCircle className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Errors</div>
                   <div className="text-2xl font-bold text-red-600">
-                    {reports.filter(r => r.analysis_status === 'failed').length}
+                    {reports.filter(r => r.analysis_status === 'failed' || r.analysis_status === 'quality_issue').length}
                   </div>
                 </div>
               </div>
