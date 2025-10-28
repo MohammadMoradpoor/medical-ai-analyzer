@@ -64,6 +64,20 @@
   background: #1f2937;
 }
 
+/* Light Scrollbar for Chat Messages Area */
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.scrollbar-thumb-gray-300::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

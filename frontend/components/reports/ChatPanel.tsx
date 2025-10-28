@@ -624,8 +624,8 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
           </div>
         )}
 
-        {/* Messages - Scrollable area */}
-        <div className={`flex-1 bg-gray-50 min-h-0 ${messages.length === 0 && !isLoading ? 'flex flex-col items-center justify-center' : 'overflow-y-auto px-6 py-4 space-y-4'}`}>
+        {/* Messages - Scrollable area with professional scrollbar */}
+        <div className={`flex-1 bg-gray-50 min-h-0 ${messages.length === 0 && !isLoading ? 'flex flex-col items-center justify-center' : 'overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent'}`}>
         {messages.length === 0 && !isLoading ? (
           <div className="text-center px-8 w-full max-w-3xl">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
@@ -702,6 +702,15 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                     <div className="whitespace-pre-wrap break-words">{message.content}</div>
                   )}
                 </div>
+                
+                {/* User Message Timestamp - Inside bubble, bottom right */}
+                {message.role === 'user' && !message.id.startsWith('temp_') && (
+                  <div className="mt-2 text-right">
+                    <span className="text-xs text-blue-200 opacity-80">
+                      {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                )}
 
                 {/* AI Response Metadata - Only show for completed messages */}
                 {message.role === 'assistant' && !message.id.startsWith('temp_ai_') && (
@@ -818,15 +827,6 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                 </div>
                 )}
               </div>
-              
-              {/* Timestamp for User Messages - Same format as AI */}
-              {!message.id.startsWith('temp_') && message.role === 'user' && (
-                <div className="mt-1.5 text-right">
-                  <span className="text-xs text-gray-400">
-                    {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                </div>
-              )}
           </div>
         ))}
         </div>
