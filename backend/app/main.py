@@ -8,6 +8,7 @@ import os
 from contextlib import asynccontextmanager
 
 from .api import auth, reports, chat
+from .api import chat_stream
 from .db.session import engine
 from .db.models import Base
 
@@ -108,6 +109,7 @@ async def root():
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["authentication"])
 app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
 app.include_router(chat.router, prefix="/api/v1/reports", tags=["chat"])
+app.include_router(chat_stream.router, prefix="/api/v1/reports", tags=["chat-streaming"])
 
 
 if __name__ == "__main__":

@@ -168,6 +168,70 @@ export const reportsApi = {
     })
     return response.data
   },
+
+  // Streaming chat (ChatGPT-style)
+  sendChatMessageStreaming: async (
+    reportId: string, 
+    question: string, 
+    conversationId?: string,
+    onChunk?: (chunk: string) => void,
+    onComplete?: (messageId: string) => void,
+    onError?: (error: string) => void
+  ) => {
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${API_BASE_URL}/reports/${reportId}/chat/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          question,
+          conversation_id: conversationId
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+
+      if (!reader) {
+        throw new Error('No reader available')
+      }
+
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.substring(6))
+            
+            if (data.type === 'content' && onChunk) {
+              onChunk(data.content)
+            } else if (data.type === 'message_id' && onComplete) {
+              onComplete(data.message_id)
+            } else if (data.type === 'error' && onError) {
+              onError(data.error)
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      if (onError) {
+        onError(error.message || 'Streaming failed')
+      }
+      throw error
+    }
+  },
 }
 
 export default api

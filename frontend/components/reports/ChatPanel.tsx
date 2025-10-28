@@ -61,6 +61,10 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
     if (isOpen) {
       loadChatHistory()
       loadSuggestedQuestions()
+      // Also load conversations if opening in fullscreen
+      if (isFullscreen) {
+        loadAllConversations()
+      }
     }
   }, [reportId, isOpen])
 
@@ -172,6 +176,9 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
     setMessages([])
     setLatestFollowUp([])
     setShowMedicalTerms({})
+    
+    // Reload suggested questions for new conversation
+    loadSuggestedQuestions()
   }
 
   const loadSuggestedQuestions = async () => {
@@ -202,53 +209,72 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
 
     // Add user message to UI immediately
     const userMessage: ChatMessage = {
-      id: `temp_${Date.now()}`,
+      id: `temp_user_${Date.now()}`,
       role: 'user',
       content: question,
       created_at: new Date().toISOString()
     }
     setMessages(prev => [...prev, userMessage])
 
+    // Create streaming AI message placeholder
+    const streamingMessageId = `temp_ai_${Date.now()}`
+    const streamingMessage: ChatMessage = {
+      id: streamingMessageId,
+      role: 'assistant',
+      content: '',
+      created_at: new Date().toISOString()
+    }
+    setMessages(prev => [...prev, streamingMessage])
+
     setIsLoading(true)
 
     try {
-      const response = await reportsApi.sendChatMessage(reportId, question, activeConversationId)
-      
-      // Replace temp message with actual saved message and add AI response
-      setMessages(prev => {
-        // Remove temp user message
-        const filtered = prev.filter(m => m.id !== userMessage.id)
-        
-        // Add actual user message (if API returns it separately) and AI response
-        return [
-          ...filtered,
-          userMessage, // Keep user message
-          response // AI response
-        ]
-      })
-
-      // Update medical terms if provided
-      if (response.medical_terms_explained) {
-        setShowMedicalTerms(prev => ({
-          ...prev,
-          ...response.medical_terms_explained
-        }))
-      }
-
-      // Update follow-up suggestions
-      if (response.follow_up_suggestions) {
-        setLatestFollowUp(response.follow_up_suggestions)
-      }
-
-      // Focus back on input
-      inputRef.current?.focus()
+      // Use streaming API
+      await reportsApi.sendChatMessageStreaming(
+        reportId,
+        question,
+        activeConversationId,
+        // onChunk: Update streaming message with new content
+        (chunk: string) => {
+          setMessages(prev => prev.map(msg =>
+            msg.id === streamingMessageId
+              ? { ...msg, content: msg.content + chunk }
+              : msg
+          ))
+        },
+        // onComplete: Replace temp message with final saved message
+        (messageId: string) => {
+          setIsLoading(false)
+          setMessages(prev => prev.map(msg =>
+            msg.id === streamingMessageId
+              ? { ...msg, id: messageId }
+              : msg
+          ))
+          
+          // Reload conversations to update sidebar (if in fullscreen)
+          if (isFullscreen) {
+            setTimeout(() => {
+              loadAllConversations()
+            }, 500)
+          }
+          
+          // Focus back on input
+          inputRef.current?.focus()
+        },
+        // onError: Handle errors
+        (error: string) => {
+          setIsLoading(false)
+          toast.error(error || 'Failed to send message')
+          // Remove streaming message on error
+          setMessages(prev => prev.filter(m => m.id !== streamingMessageId))
+        }
+      )
 
     } catch (error: any) {
-      toast.error(error?.response?.data?.detail || 'Failed to send message')
-      // Remove temp message on error
-      setMessages(prev => prev.filter(m => m.id !== userMessage.id))
-    } finally {
       setIsLoading(false)
+      toast.error(error?.response?.data?.detail || error?.message || 'Failed to send message')
+      // Remove both temp messages on error
+      setMessages(prev => prev.filter(m => m.id !== userMessage.id && m.id !== streamingMessageId))
     }
   }
 
@@ -536,6 +562,10 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
                 {/* Message Content */}
                 <div className="text-sm leading-relaxed whitespace-pre-wrap break-words">
                   {message.content}
+                  {/* Streaming indicator - blinking cursor */}
+                  {message.role === 'assistant' && message.id.startsWith('temp_ai_') && (
+                    <span className="inline-block w-0.5 h-4 bg-purple-600 ml-0.5 animate-pulse"></span>
+                  )}
                 </div>
 
                 {/* AI Response Metadata */}
