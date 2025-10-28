@@ -310,7 +310,7 @@ export default function DashboardPage() {
                 <div>
                   <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Completed</div>
                   <div className="text-2xl font-bold text-green-600">
-                    {reports.filter(r => r.analysis_status === 'completed').length}
+                    {reports.filter(r => r.analysis_status === 'completed' || r.analysis_status === 'quality_issue').length}
                   </div>
                 </div>
               </div>
@@ -348,7 +348,7 @@ export default function DashboardPage() {
                 <div>
                   <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Errors</div>
                   <div className="text-2xl font-bold text-red-600">
-                    {reports.filter(r => r.analysis_status === 'failed' || r.analysis_status === 'quality_issue').length}
+                    {reports.filter(r => r.analysis_status === 'failed').length}
                   </div>
                 </div>
               </div>
