@@ -168,11 +168,6 @@ export const reportsApi = {
     })
     return response.data
   },
-
-  generateConversationTitle: async (reportId: string, conversationId: string) => {
-    const response = await api.post(`/reports/${reportId}/chat/${conversationId}/generate-title`)
-    return response.data
-  },
 }
 
 export default api

@@ -101,8 +101,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
             id: convId,
             messages: [],
             lastMessage: msg.created_at,
-            firstQuestion: '',
-            generatedTitle: null
+            firstQuestion: ''
           })
         }
         const conv = conversationsMap.get(convId)!
@@ -110,7 +109,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
         if (new Date(msg.created_at) > new Date(conv.lastMessage)) {
           conv.lastMessage = msg.created_at
         }
-        // Get first user question as temporary title
+        // Get first user question as title
         if (msg.role === 'user' && !conv.firstQuestion) {
           conv.firstQuestion = msg.content
         }
@@ -122,40 +121,9 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
       
       setAllConversations(conversations)
       
-      // Generate titles for conversations asynchronously
-      conversations.forEach(async (conv) => {
-        if (!conv.generatedTitle && conv.messages.length > 0) {
-          try {
-            const title = await generateConversationTitle(conv.messages, conv.id)
-            setAllConversations(prev => prev.map(c => 
-              c.id === conv.id ? { ...c, generatedTitle: title } : c
-            ))
-          } catch (error) {
-            console.error('Error generating title:', error)
-          }
-        }
-      })
+      // Titles already set from firstQuestion - no LLM generation needed
     } catch (error) {
       console.error('Error loading conversations:', error)
-    }
-  }
-
-  const generateConversationTitle = async (messages: ChatMessage[], convId: string): Promise<string> => {
-    try {
-      // Try to generate title using LLM via API
-      const result = await reportsApi.generateConversationTitle(reportId, convId)
-      return result.title
-    } catch (error) {
-      // Fallback: Create title from first question
-      const firstUserMessage = messages.find(m => m.role === 'user')
-      if (firstUserMessage) {
-        const title = firstUserMessage.content
-          .split('\n')[0]
-          .substring(0, 45)
-          .trim()
-        return title + (firstUserMessage.content.length > 45 ? '...' : '')
-      }
-      return 'Medical Report Discussion'
     }
   }
 
@@ -272,23 +240,6 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
         setLatestFollowUp(response.follow_up_suggestions)
       }
 
-      // Generate title after first message in new conversation
-      const isNewConversation = messages.length === 0 || (messages.length === 1 && messages[0].id === userMessage.id)
-      if (isNewConversation) {
-        setTimeout(async () => {
-          try {
-            const title = await generateConversationTitle([userMessage, response], activeConversationId)
-            console.log('Generated title for new conversation:', title)
-            // Update conversations list if in fullscreen
-            if (isFullscreen) {
-              loadAllConversations()
-            }
-          } catch (error) {
-            console.error('Error generating title for new conversation:', error)
-          }
-        }, 1000)
-      }
-
       // Focus back on input
       inputRef.current?.focus()
 
@@ -401,7 +352,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose }: ChatPane
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium line-clamp-2 mb-1">
-                            {conv.generatedTitle || conv.firstQuestion || 'New conversation'}
+                            {conv.firstQuestion || 'New conversation'}
                           </div>
                           <div className="text-xs opacity-70 flex items-center gap-1.5">
                             <span>{conv.messages.length} msgs</span>
