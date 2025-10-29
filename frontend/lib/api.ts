@@ -101,6 +101,11 @@ export const reportsApi = {
     return response.data
   },
 
+  getProcessingStatus: async (reportId: string) => {
+    const response = await api.get(`/reports/${reportId}/processing-status`)
+    return response.data
+  },
+
   get: async (reportId: string) => {
     const response = await api.get(`/reports/${reportId}`)
     return response.data

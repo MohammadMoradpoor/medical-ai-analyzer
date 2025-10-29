@@ -470,6 +470,84 @@ async def upload_report(
     }
 
 
+@router.get("/{report_id}/processing-status")
+async def get_processing_status(
+    report_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get detailed processing status for a report.
+    Returns current processing step based on latest agent log.
+    """
+    report = db.query(MedicalReport).filter(
+        MedicalReport.id == report_id,
+        MedicalReport.user_id == current_user.id
+    ).first()
+    
+    if not report:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Report not found"
+        )
+    
+    # If not processing, return final status
+    if report.analysis_status != "processing":
+        return {
+            "status": report.analysis_status,
+            "current_step": None,
+            "step_description": None
+        }
+    
+    # Get latest agent log
+    latest_log = db.query(AgentLog).filter(
+        AgentLog.report_id == report_id
+    ).order_by(AgentLog.created_at.desc()).first()
+    
+    # Determine current step
+    current_step = None
+    step_description = None
+    
+    if latest_log:
+        if latest_log.status == "processing" or latest_log.status == "success":
+            agent_type = latest_log.agent_type
+            
+            # Map agent types to descriptions with progress percentage
+            if agent_type == "file_classifier":
+                current_step = "classifying"
+                step_description = "CLASSIFYING"
+                progress = 10
+            elif agent_type == "document_extractor":
+                current_step = "extracting"
+                step_description = "EXTRACTING DATA"
+                progress = 40
+            elif agent_type == "medical_analyzer":
+                current_step = "analyzing"
+                step_description = "ANALYZING"
+                progress = 75
+            elif agent_type == "medical_imaging":
+                current_step = "analyzing_imaging"
+                step_description = "ANALYZING IMAGING"
+                progress = 75
+            else:
+                current_step = "processing"
+                step_description = "PROCESSING"
+                progress = 5
+    
+    # Fallback if no log found
+    if not current_step:
+        current_step = "processing"
+        step_description = "PROCESSING"
+        progress = 5
+    
+    return {
+        "status": "processing",
+        "current_step": current_step,
+        "step_description": step_description,
+        "progress_percentage": progress
+    }
+
+
 @router.get("/list", response_model=List[ReportListResponse])
 async def list_reports(
     current_user: User = Depends(get_current_user),

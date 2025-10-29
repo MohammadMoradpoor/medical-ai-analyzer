@@ -39,6 +39,7 @@ export default function DashboardPage() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [chatCounts, setChatCounts] = useState<Record<string, {conversations: number, messages: number}>>({})
   const [autoRefresh, setAutoRefresh] = useState(true)
+  const [processingStatuses, setProcessingStatuses] = useState<Record<string, {description: string, progress: number}>>({})
 
   useEffect(() => {
     // Check authentication
@@ -69,10 +70,38 @@ export default function DashboardPage() {
     // Auto-refresh every 3 seconds when there are processing reports
     const interval = setInterval(() => {
       fetchReports()
+      fetchProcessingStatuses()
     }, 3000)
     
     return () => clearInterval(interval)
   }, [reports, autoRefresh])
+
+  const fetchProcessingStatuses = async () => {
+    const processingReports = reports.filter(r => r.analysis_status === 'processing')
+    
+    if (processingReports.length === 0) {
+      setProcessingStatuses({})
+      return
+    }
+    
+    const newStatuses: Record<string, {description: string, progress: number}> = {}
+    
+    for (const report of processingReports) {
+      try {
+        const status = await reportsApi.getProcessingStatus(report.id)
+        if (status.step_description && status.progress_percentage) {
+          newStatuses[report.id] = {
+            description: status.step_description,
+            progress: status.progress_percentage
+          }
+        }
+      } catch (error) {
+        // Silently fail - will show generic "Processing"
+      }
+    }
+    
+    setProcessingStatuses(newStatuses)
+  }
 
   const fetchReports = async () => {
     try {
@@ -175,31 +204,65 @@ export default function DashboardPage() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'Pending'
+        return 'PENDING'
       case 'processing':
-        return 'Processing'
+        return 'PROCESSING'
       case 'completed':
-        return 'Completed'
+        return 'COMPLETED'
       case 'failed':
-        return 'Failed'
+        return 'FAILED'
       default:
-        return status
+        return status.toUpperCase()
     }
   }
 
   const getSeverityLabel = (severity?: string) => {
     switch (severity) {
       case 'critical':
-        return 'Critical'
+        return 'CRITICAL'
       case 'urgent':
-        return 'Urgent'
+        return 'URGENT'
       case 'attention_needed':
-        return 'Attention Needed'
+        return 'ATTENTION NEEDED'
       case 'normal':
-        return 'Normal'
+        return 'NORMAL'
       default:
-        return severity
+        return severity?.toUpperCase() || 'UNKNOWN'
     }
+  }
+
+  const formatReportType = (reportType?: string) => {
+    if (!reportType) return 'Unknown'
+    
+    // Special cases for proper medical terminology
+    const specialCases: Record<string, string> = {
+      'chest_xray': 'Chest X-ray',
+      'chest_x_ray': 'Chest X-ray',
+      'xray': 'X-ray',
+      'x_ray': 'X-ray',
+      'clinical_photograph': 'Clinical Photograph',
+      'blood_test': 'Blood Test',
+      'lab_report': 'Lab Report',
+      'medical_examination_report': 'Medical Examination Report',
+      'ct_scan': 'CT Scan',
+      'mri_scan': 'MRI Scan',
+      'ultrasound': 'Ultrasound',
+      'dental_xray': 'Dental X-ray',
+      'dental_x_ray': 'Dental X-ray'
+    }
+    
+    // Check if it's a special case
+    const normalized = reportType.toLowerCase().replace(/\s+/g, '_')
+    if (specialCases[normalized]) {
+      return specialCases[normalized]
+    }
+    
+    // Default: Replace underscores with spaces and title case
+    return reportType
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ')
   }
 
   const formatDuration = (seconds?: number) => {
@@ -269,7 +332,7 @@ export default function DashboardPage() {
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm shadow-sm transition-all hover:shadow-md"
             >
               <Upload className="h-4 w-4" />
-              New Analysis
+              Upload Report
             </button>
             
             {/* Auto-refresh indicator & toggle */}
@@ -490,18 +553,18 @@ export default function DashboardPage() {
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <table className="w-full">
+                      <table className="w-full table-fixed">
                         <thead className="bg-gray-50 border-b-2 border-gray-200">
                           <tr>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Name</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Report Type</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Severity</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Upload Date</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">Duration</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Type</th>
-                            <th className="px-3 py-2 text-right text-[11px] font-bold text-gray-700 uppercase tracking-wider">File Size</th>
-                            <th className="px-3 py-2 text-center text-[11px] font-bold text-gray-700 uppercase tracking-wider">Actions</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '22%' }}>File Name</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '14%' }}>Report Type</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '12%' }}>Severity</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '14%' }}>Status</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '10%' }}>Upload Date</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '9%' }}>Duration</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '7%' }}>File Type</th>
+                            <th className="px-3 py-2 text-right text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '7%' }}>File Size</th>
+                            <th className="px-3 py-2 text-center text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '5%' }}>Actions</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 bg-white">
@@ -546,7 +609,7 @@ export default function DashboardPage() {
                               <td className="px-3 py-2.5">
                                 {report.report_type ? (
                                   <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                                    {String(report.report_type)}
+                                    {formatReportType(report.report_type)}
                                   </span>
                                 ) : report.analysis_status === 'completed' ? (
                                   <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs font-bold flex items-center gap-1">
@@ -570,21 +633,39 @@ export default function DashboardPage() {
                                 )}
                               </td>
                               
-                              {/* 4. Status */}
+                              {/* 4. Status - Advanced mode with progress bar */}
                               <td className="px-3 py-2.5">
-                                <div className="flex items-center gap-1.5">
-                                  {report.analysis_status === 'completed' && <CheckCircle className="h-4 w-4 text-green-600" />}
-                                  {report.analysis_status === 'processing' && <Clock className="h-4 w-4 text-blue-600 animate-spin" />}
-                                  {report.analysis_status === 'failed' && <XCircle className="h-4 w-4 text-red-600" />}
-                                  <span className={`px-2 py-1 rounded-md text-xs font-bold ${
-                                    report.analysis_status === 'completed' ? 'bg-green-100 text-green-800' :
-                                    report.analysis_status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                                    report.analysis_status === 'failed' ? 'bg-red-100 text-red-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {getStatusText(report.analysis_status)}
-                                  </span>
-                                </div>
+                                {report.analysis_status === 'processing' && processingStatuses[report.id] ? (
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <Clock className="h-4 w-4 text-blue-600 animate-spin" />
+                                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-bold">
+                                        {processingStatuses[report.id].description}
+                                      </span>
+                                    </div>
+                                    {/* Progress Bar */}
+                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                                      <div 
+                                        className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
+                                        style={{ width: `${processingStatuses[report.id].progress}%` }}
+                                      />
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5">
+                                    {report.analysis_status === 'completed' && <CheckCircle className="h-4 w-4 text-green-600" />}
+                                    {report.analysis_status === 'processing' && <Clock className="h-4 w-4 text-blue-600 animate-spin" />}
+                                    {report.analysis_status === 'failed' && <XCircle className="h-4 w-4 text-red-600" />}
+                                    <span className={`px-2 py-1 rounded-md text-xs font-bold ${
+                                      report.analysis_status === 'completed' ? 'bg-green-100 text-green-800' :
+                                      report.analysis_status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                      report.analysis_status === 'failed' ? 'bg-red-100 text-red-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {getStatusText(report.analysis_status)}
+                                    </span>
+                                  </div>
+                                )}
                               </td>
                               
                               {/* 5. Upload Date */}
