@@ -342,7 +342,7 @@ export default function DashboardPage() {
         <div className="w-full">
           
           {/* Stats Overview */}
-          <div className="grid grid-cols-5 gap-4 px-6 py-4 bg-white border-b border-gray-200">
+          <div className="grid grid-cols-6 gap-4 px-6 py-4 bg-white border-b border-gray-200">
               <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-100">
                 <div className="p-2 bg-blue-500 rounded-lg">
                   <FileText className="h-5 w-5 text-white" />
@@ -360,6 +360,17 @@ export default function DashboardPage() {
                   <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Completed</div>
                   <div className="text-2xl font-bold text-green-600">
                     {reports.filter(r => r.analysis_status === 'completed').length}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-red-50 to-white rounded-lg border border-red-100">
+                <div className="p-2 bg-red-500 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Critical</div>
+                  <div className="text-2xl font-bold text-red-600">
+                    {reports.filter(r => r.is_critical === true).length}
                   </div>
                 </div>
               </div>
