@@ -37,7 +37,7 @@ export default function DashboardPage() {
     fileName: ''
   })
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
-  const [chatCounts, setChatCounts] = useState<Record<string, number>>({})
+  const [chatCounts, setChatCounts] = useState<Record<string, {conversations: number, messages: number}>>({})
   const [autoRefresh, setAutoRefresh] = useState(true)
 
   useEffect(() => {
@@ -524,14 +524,20 @@ export default function DashboardPage() {
                                 <div className="flex items-center gap-2">
                                   <FileText className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                   <span className="font-semibold text-gray-900 text-sm">{report.file_name}</span>
-                                  {chatCounts[report.id] && chatCounts[report.id] > 0 && (
-                                    <span 
-                                      className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold flex-shrink-0"
-                                      title={`${chatCounts[report.id]} conversation${chatCounts[report.id] !== 1 ? 's' : ''}`}
-                                    >
-                                      <MessageCircle className="h-3 w-3" />
-                                      {chatCounts[report.id]}
-                                    </span>
+                                  {chatCounts[report.id] && chatCounts[report.id].conversations > 0 && (
+                                    <div className="relative group flex-shrink-0">
+                                      <span 
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold cursor-pointer"
+                                      >
+                                        <MessageCircle className="h-3 w-3" />
+                                        {chatCounts[report.id].conversations}
+                                      </span>
+                                      {/* Professional Hover Tooltip - Matches Screenshot */}
+                                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
+                                        <div className="font-semibold">{chatCounts[report.id].conversations} conversation{chatCounts[report.id].conversations !== 1 ? 's' : ''}</div>
+                                        <div className="text-gray-300 text-[11px] mt-0.5">{chatCounts[report.id].messages} message{chatCounts[report.id].messages !== 1 ? 's' : ''}</div>
+                                      </div>
+                                    </div>
                                   )}
                                 </div>
                               </td>

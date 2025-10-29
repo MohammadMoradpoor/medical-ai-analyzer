@@ -703,8 +703,8 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                   )}
                 </div>
                 
-                {/* User Message Timestamp - Inside bubble, bottom right */}
-                {message.role === 'user' && !message.id.startsWith('temp_') && (
+                {/* User Message Timestamp - Inside bubble, bottom right (shows immediately) */}
+                {message.role === 'user' && message.created_at && (
                   <div className="mt-2 text-right">
                     <span className="text-xs text-blue-200 opacity-80">
                       {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

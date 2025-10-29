@@ -620,27 +620,34 @@ async def get_all_chat_counts(
     db: Session = Depends(get_db)
 ):
     """
-    Get conversation counts for all reports.
-    Returns a map of report_id -> conversation_count.
+    Get conversation and message counts for all reports.
+    Returns a map of report_id -> {conversations, messages}.
     """
     # Get all messages for user
     messages = db.query(ChatMessage).filter(
         ChatMessage.user_id == current_user.id
     ).all()
     
-    # Group by report and count unique conversations
-    report_counts = {}
+    # Group by report
+    report_data = {}
     for message in messages:
         report_id = str(message.report_id)
-        if report_id not in report_counts:
-            report_counts[report_id] = set()
+        if report_id not in report_data:
+            report_data[report_id] = {
+                'conversations': set(),
+                'message_count': 0
+            }
         if message.conversation_id:
-            report_counts[report_id].add(message.conversation_id)
+            report_data[report_id]['conversations'].add(message.conversation_id)
+        report_data[report_id]['message_count'] += 1
     
-    # Convert sets to counts
+    # Convert to final format
     return {
-        report_id: len(conv_set)
-        for report_id, conv_set in report_counts.items()
+        report_id: {
+            'conversations': len(data['conversations']),
+            'messages': data['message_count']
+        }
+        for report_id, data in report_data.items()
     }
 
 
