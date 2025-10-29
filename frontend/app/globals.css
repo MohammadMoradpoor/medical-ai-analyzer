@@ -2,6 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global Professional Scrollbar - Entire Application */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+html, body {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f9fafb;
+}
+
+html::-webkit-scrollbar {
+  width: 10px;
+}
+
+html::-webkit-scrollbar-track {
+  background: #f9fafb;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 5px;
+  border: 2px solid #f9fafb;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
 @keyframes slide-down {
   from {
     opacity: 0;

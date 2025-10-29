@@ -39,7 +39,6 @@ export default function DashboardPage() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [chatCounts, setChatCounts] = useState<Record<string, {conversations: number, messages: number}>>({})
   const [autoRefresh, setAutoRefresh] = useState(true)
-  const [processingStatuses, setProcessingStatuses] = useState<Record<string, {description: string, progress: number}>>({})
 
   useEffect(() => {
     // Check authentication
@@ -70,38 +69,10 @@ export default function DashboardPage() {
     // Auto-refresh every 3 seconds when there are processing reports
     const interval = setInterval(() => {
       fetchReports()
-      fetchProcessingStatuses()
     }, 3000)
     
     return () => clearInterval(interval)
   }, [reports, autoRefresh])
-
-  const fetchProcessingStatuses = async () => {
-    const processingReports = reports.filter(r => r.analysis_status === 'processing')
-    
-    if (processingReports.length === 0) {
-      setProcessingStatuses({})
-      return
-    }
-    
-    const newStatuses: Record<string, {description: string, progress: number}> = {}
-    
-    for (const report of processingReports) {
-      try {
-        const status = await reportsApi.getProcessingStatus(report.id)
-        if (status.step_description && status.progress_percentage) {
-          newStatuses[report.id] = {
-            description: status.step_description,
-            progress: status.progress_percentage
-          }
-        }
-      } catch (error) {
-        // Silently fail - will show generic "Processing"
-      }
-    }
-    
-    setProcessingStatuses(newStatuses)
-  }
 
   const fetchReports = async () => {
     try {
@@ -366,8 +337,8 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-auto bg-gray-50">
+      {/* Main Content - Professional Scrollbar */}
+      <div className="flex-1 overflow-auto bg-gray-50 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         <div className="w-full">
           
           {/* Stats Overview */}
@@ -556,19 +527,20 @@ export default function DashboardPage() {
                       <table className="w-full table-fixed">
                         <thead className="bg-gray-50 border-b-2 border-gray-200">
                           <tr>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '22%' }}>File Name</th>
+                            <th className="px-3 py-2 text-center text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '3%' }}>#</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '25%' }}>File Name</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '14%' }}>Report Type</th>
                             <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '12%' }}>Severity</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '14%' }}>Status</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '10%' }}>Upload Date</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '9%' }}>Duration</th>
-                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '7%' }}>File Type</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '13%' }}>Status</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '9%' }}>Upload Date</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '7%' }}>Duration</th>
+                            <th className="px-3 py-2 text-left text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '5%' }}>File Type</th>
                             <th className="px-3 py-2 text-right text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '7%' }}>File Size</th>
-                            <th className="px-3 py-2 text-center text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '5%' }}>Actions</th>
+                            <th className="px-3 py-2 text-center text-[11px] font-bold text-gray-700 uppercase tracking-wider" style={{ width: '4%' }}>Actions</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 bg-white">
-                          {paginatedReports.map((report) => (
+                          {paginatedReports.map((report, index) => (
                             <tr 
                               key={report.id} 
                               onClick={() => {
@@ -582,6 +554,13 @@ export default function DashboardPage() {
                                 report.analysis_status !== 'processing' ? 'cursor-pointer' : ''
                               }`}
                             >
+                              {/* 0. Row Number */}
+                              <td className="px-3 py-2.5 text-center">
+                                <span className="text-xs font-semibold text-gray-500">
+                                  {(currentPage - 1) * itemsPerPage + index + 1}
+                                </span>
+                              </td>
+                              
                               {/* 1. File Name (with conversation badge) */}
                               <td className="px-3 py-2.5">
                                 <div className="flex items-center gap-2">
@@ -633,39 +612,21 @@ export default function DashboardPage() {
                                 )}
                               </td>
                               
-                              {/* 4. Status - Advanced mode with progress bar */}
+                              {/* 4. Status - Simple and clean */}
                               <td className="px-3 py-2.5">
-                                {report.analysis_status === 'processing' && processingStatuses[report.id] ? (
-                                  <div className="space-y-1">
-                                    <div className="flex items-center gap-1.5">
-                                      <Clock className="h-4 w-4 text-blue-600 animate-spin" />
-                                      <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs font-bold">
-                                        {processingStatuses[report.id].description}
-                                      </span>
-                                    </div>
-                                    {/* Progress Bar */}
-                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                      <div 
-                                        className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
-                                        style={{ width: `${processingStatuses[report.id].progress}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1.5">
-                                    {report.analysis_status === 'completed' && <CheckCircle className="h-4 w-4 text-green-600" />}
-                                    {report.analysis_status === 'processing' && <Clock className="h-4 w-4 text-blue-600 animate-spin" />}
-                                    {report.analysis_status === 'failed' && <XCircle className="h-4 w-4 text-red-600" />}
-                                    <span className={`px-2 py-1 rounded-md text-xs font-bold ${
-                                      report.analysis_status === 'completed' ? 'bg-green-100 text-green-800' :
-                                      report.analysis_status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                                      report.analysis_status === 'failed' ? 'bg-red-100 text-red-800' :
-                                      'bg-gray-100 text-gray-800'
-                                    }`}>
-                                      {getStatusText(report.analysis_status)}
-                                    </span>
-                                  </div>
-                                )}
+                                <div className="flex items-center gap-1.5">
+                                  {report.analysis_status === 'completed' && <CheckCircle className="h-4 w-4 text-green-600" />}
+                                  {report.analysis_status === 'processing' && <Clock className="h-4 w-4 text-blue-600 animate-spin" />}
+                                  {report.analysis_status === 'failed' && <XCircle className="h-4 w-4 text-red-600" />}
+                                  <span className={`px-2 py-1 rounded-md text-xs font-bold ${
+                                    report.analysis_status === 'completed' ? 'bg-green-100 text-green-800' :
+                                    report.analysis_status === 'processing' ? 'bg-blue-100 text-blue-800' :
+                                    report.analysis_status === 'failed' ? 'bg-red-100 text-red-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {getStatusText(report.analysis_status)}
+                                  </span>
+                                </div>
                               </td>
                               
                               {/* 5. Upload Date */}
