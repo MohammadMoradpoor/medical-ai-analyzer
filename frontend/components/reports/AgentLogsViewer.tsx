@@ -205,112 +205,186 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
   }
 
   return (
-    <div className="space-y-1">
-      {logs.map((log) => {
+    <div className="space-y-3">
+      {logs.map((log, index) => {
         const isExpanded = expandedLogs.has(log.id)
         
         return (
-          <div key={log.id} className="border border-gray-300 rounded bg-white overflow-hidden">
-            {/* Log Header - Clickable */}
+          <div 
+            key={log.id} 
+            className="group relative bg-white rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200 overflow-hidden hover:shadow-lg"
+          >
+            {/* PARENT: Agent Card - Premium Design */}
             <div
               onClick={() => toggleLog(log.id)}
-              className="px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors"
+              className="relative cursor-pointer transition-all duration-200"
             >
-              <div className="flex items-center space-x-3">
-                {/* Expand/Collapse Icon */}
-                <div className="flex-shrink-0">
-                  {isExpanded ? (
-                    <ChevronDown className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4 text-gray-400" />
-                  )}
-                </div>
-
-                {/* Status Icon */}
-                <div className="flex-shrink-0">
-                  {getStatusIcon(log.status)}
-                </div>
-
-                {/* Agent Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2">
-                    {getAgentTypeIcon(log.agent_type)}
-                    <span className="font-semibold text-gray-900 text-sm">
-                      {getAgentTypeLabel(log.agent_type)}
-                    </span>
-                    <span className="text-xs text-gray-500">•</span>
-                    <span className="text-xs text-gray-600">
-                      {log.operation}
-                    </span>
+              {/* Status Indicator Strip */}
+              <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                log.status === 'success' ? 'bg-emerald-500' :
+                log.status === 'error' ? 'bg-red-500' :
+                'bg-blue-500'
+              }`} />
+              
+              <div className="pl-5 pr-4 py-3 hover:bg-gray-50 transition-colors duration-150">
+                <div className="flex items-center gap-3">
+                  {/* Step Number Badge */}
+                  <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg border border-gray-300 shadow-sm">
+                    <span className="text-xs font-bold text-gray-700">{index + 1}</span>
                   </div>
-                </div>
 
-                {/* Status Badge */}
-                <div className="flex-shrink-0">
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                    log.status === 'success' ? 'bg-green-100 text-green-800' :
-                    log.status === 'error' ? 'bg-red-100 text-red-800' :
-                    'bg-blue-100 text-blue-800'
-                  }`}>
-                    {log.status}
-                  </span>
-                </div>
+                  {/* Status Icon with subtle animation */}
+                  <div className="flex-shrink-0">
+                    {log.status === 'success' ? (
+                      <div className="w-8 h-8 flex items-center justify-center bg-emerald-50 rounded-lg">
+                        <CheckCircle className="h-5 w-5 text-emerald-600" strokeWidth={2} />
+                      </div>
+                    ) : log.status === 'error' ? (
+                      <div className="w-8 h-8 flex items-center justify-center bg-red-50 rounded-lg">
+                        <AlertCircle className="h-5 w-5 text-red-600" strokeWidth={2} />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 flex items-center justify-center bg-blue-50 rounded-lg animate-pulse">
+                        <Clock className="h-5 w-5 text-blue-600" strokeWidth={2} />
+                      </div>
+                    )}
+                  </div>
 
-                {/* Duration */}
-                <div className="flex-shrink-0 flex items-center space-x-1 text-xs text-gray-500">
-                  <Clock className="h-3 w-3" />
-                  <span>{formatDuration(log.duration_ms)}</span>
+                  {/* Agent Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-semibold text-gray-900">
+                        {getAgentTypeLabel(log.agent_type)}
+                      </span>
+                      <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md font-medium">
+                        {log.operation}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {formatDuration(log.duration_ms)}
+                      </span>
+                      {log.tokens_used && (
+                        <span className="flex items-center gap-1">
+                          <Zap className="h-3 w-3" />
+                          {log.tokens_used.toLocaleString()} tokens
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Status Badge - Elegant */}
+                  <div className="flex-shrink-0 flex items-center gap-2">
+                    <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm ${
+                      log.status === 'success' 
+                        ? 'bg-emerald-500 text-white' 
+                        : log.status === 'error' 
+                        ? 'bg-red-500 text-white' 
+                        : 'bg-blue-500 text-white'
+                    }`}>
+                      {log.status.toUpperCase()}
+                    </span>
+                    
+                    {/* Expand Indicator */}
+                    <div className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-200 ${
+                      isExpanded ? 'bg-gray-900 rotate-0' : 'bg-gray-100 rotate-0'
+                    }`}>
+                      {isExpanded ? (
+                        <ChevronDown className="h-4 w-4 text-white" strokeWidth={2.5} />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-gray-600" strokeWidth={2.5} />
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Expanded Details */}
+            {/* Expanded Content - Smooth Slide Animation */}
             {isExpanded && (
-              <div className="border-t border-gray-200">
-                {/* Execution Timeline - Compact */}
-                <div className="px-3 py-1 border-b border-gray-200 bg-gray-50">
-                  <div className="text-xs text-gray-700 flex items-center gap-4">
-                    <span><b>Started:</b> {formatTimestamp(log.started_at)}</span>
-                    <span><b>Duration:</b> {formatDuration(log.duration_ms)}</span>
-                    <span><b>Tokens:</b> {log.tokens_used?.toLocaleString() || 'N/A'}</span>
+              <div className="animate-slideDown">
+                {/* Info Bar - Sleek */}
+                <div className="px-4 py-2.5 bg-gradient-to-r from-gray-50 to-gray-100 border-y border-gray-200">
+                  <div className="flex items-center gap-6 text-xs text-gray-600">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                      <span className="font-medium">Started:</span>
+                      <span className="font-mono text-gray-900">{formatTimestamp(log.started_at)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-400" />
+                      <span className="font-medium">Tokens:</span>
+                      <span className="font-mono text-gray-900">{log.tokens_used?.toLocaleString() || 'N/A'}</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* COMPLETE OUTPUT DATA - Full Transparency */}
+                {/* CHILD: Agent Output - Modern Nested Design */}
                 {log.output_data && Object.keys(log.output_data).length > 0 && (
-                  <div className="border-t border-gray-200">
-                    <div
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        toggleSection(log.id, 'complete_output')
-                      }}
-                      className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-3 py-1 bg-gray-50"
+                  <div className="p-4">
+                    <div 
+                      className={`relative rounded-xl border-2 overflow-hidden transition-all duration-300 ${
+                        isSectionExpanded(log.id, 'complete_output')
+                          ? 'border-blue-500 shadow-md'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
                     >
-                      <span className="text-xs font-bold text-gray-900">AGENT OUTPUT ({Object.keys(log.output_data).length})</span>
-                      {isSectionExpanded(log.id, 'complete_output') ? (
-                        <ChevronDown className="h-3.5 w-3.5 text-gray-600" />
-                      ) : (
-                        <ChevronRight className="h-3.5 w-3.5 text-gray-600" />
+                      {/* Accent Bar */}
+                      <div className={`absolute left-0 top-0 bottom-0 w-1 transition-all duration-300 ${
+                        isSectionExpanded(log.id, 'complete_output') ? 'bg-blue-500' : 'bg-gray-300'
+                      }`} />
+                      
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleSection(log.id, 'complete_output')
+                        }}
+                        className="cursor-pointer hover:bg-gray-50 transition-colors duration-150 px-4 py-3"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex items-center justify-center w-6 h-6 rounded-lg transition-all duration-200 ${
+                              isSectionExpanded(log.id, 'complete_output')
+                                ? 'bg-blue-500'
+                                : 'bg-gray-200'
+                            }`}>
+                              {isSectionExpanded(log.id, 'complete_output') ? (
+                                <ChevronDown className="h-4 w-4 text-white" strokeWidth={2.5} />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 text-gray-600" strokeWidth={2.5} />
+                              )}
+                            </div>
+                            <Brain className={`h-4 w-4 transition-colors duration-200 ${
+                              isSectionExpanded(log.id, 'complete_output') ? 'text-blue-600' : 'text-gray-500'
+                            }`} />
+                            <span className="text-sm font-semibold text-gray-900">Agent Output</span>
+                            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-xs font-medium">
+                              {Object.keys(log.output_data).length} fields
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {isSectionExpanded(log.id, 'complete_output') && (
+                        <div className="border-t-2 border-gray-100 bg-gray-50 px-4 py-3">
+                          <table className="w-full text-xs">
+                            <tbody className="divide-y divide-gray-200">
+                              {Object.entries(log.output_data).map(([key, value]) => (
+                                <tr key={key} className="hover:bg-white transition-colors">
+                                  <td className="py-2 pr-4 font-semibold text-gray-700 align-top w-1/3">
+                                    {key.replace(/_/g, ' ').toUpperCase()}
+                                  </td>
+                                  <td className="py-2 text-gray-900">
+                                    {renderValue(value)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       )}
                     </div>
-                    {isSectionExpanded(log.id, 'complete_output') && (
-                      <div className="px-3 py-1">
-                        <table className="w-full text-xs">
-                          <tbody>
-                            {Object.entries(log.output_data).map(([key, value]) => (
-                              <tr key={key} className="border-b border-gray-100 last:border-0">
-                                <td className="py-0.5 pr-2 font-semibold text-gray-700 align-top w-1/3">
-                                  {key.replace(/_/g, ' ').toUpperCase()}
-                                </td>
-                                <td className="py-0.5 text-gray-900">
-                                  {renderValue(value)}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
                   </div>
                 )}
 
