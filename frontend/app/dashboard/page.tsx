@@ -202,6 +202,7 @@ export default function DashboardPage() {
     }
   }
 
+
   const formatReportType = (reportType?: string) => {
     if (!reportType) return 'Unknown'
     

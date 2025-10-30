@@ -232,8 +232,67 @@ Return ONLY the category name (e.g., "LAB_REPORT" or "XRAY")."""
             detected_type = detection_response.choices[0].message.content.strip().upper()
             logger.info(f"[DOCUMENT EXTRACTOR] Detected image type: {detected_type}")
             
+            # Generate execution ID for this operation
+            from uuid import uuid4
+            execution_id = uuid4()
+            
+            # Route to specialized agents based on type
+            if detected_type in ["ECG", "EKG"]:
+                logger.info(f"[DOCUMENT EXTRACTOR] Routing to CardiacSignalAgent for ECG analysis")
+                
+                from .cardiac_signal_agent import CardiacSignalAgent
+                signal_agent = CardiacSignalAgent(api_key=self.api_key)
+                
+                signal_start = datetime.utcnow()
+                signal_result = await signal_agent.process({
+                    "image_data": base64_image,
+                    "ecg_type": "12_lead"
+                })
+                signal_execution_time = (datetime.utcnow() - signal_start).total_seconds() * 1000
+                
+                if signal_result["status"] == "success":
+                    return {
+                        "status": "success",
+                        "agent_type": self.get_agent_type(),
+                        "execution_id": str(execution_id),
+                        "data": signal_result["data"],
+                        "metadata": {
+                            "extraction_method": "cardiac_signal_analysis",
+                            "model_used": self.model,
+                            "signal_analysis_time_ms": signal_execution_time,
+                            **signal_result.get("metadata", {})
+                        }
+                    }
+            
+            elif detected_type in ["EEG"]:
+                logger.info(f"[DOCUMENT EXTRACTOR] Routing to NeurologicalSignalAgent for EEG analysis")
+                
+                from .neurological_signal_agent import NeurologicalSignalAgent
+                neuro_agent = NeurologicalSignalAgent(api_key=self.api_key)
+                
+                neuro_start = datetime.utcnow()
+                neuro_result = await neuro_agent.process({
+                    "image_data": base64_image,
+                    "eeg_type": "routine"
+                })
+                neuro_execution_time = (datetime.utcnow() - neuro_start).total_seconds() * 1000
+                
+                if neuro_result["status"] == "success":
+                    return {
+                        "status": "success",
+                        "agent_type": self.get_agent_type(),
+                        "execution_id": str(execution_id),
+                        "data": neuro_result["data"],
+                        "metadata": {
+                            "extraction_method": "neurological_signal_analysis",
+                            "model_used": self.model,
+                            "eeg_analysis_time_ms": neuro_execution_time,
+                            **neuro_result.get("metadata", {})
+                        }
+                    }
+            
             # If it's medical imaging (not lab report), use specialized imaging agent
-            if detected_type in ["XRAY", "MRI", "CT_SCAN", "DENTAL", "ULTRASOUND"]:
+            elif detected_type in ["XRAY", "MRI", "CT_SCAN", "DENTAL", "ULTRASOUND"]:
                 logger.info(f"[DOCUMENT EXTRACTOR] Routing to MedicalImagingAgent for {detected_type}")
                 
                 # Map detected type to imaging agent type

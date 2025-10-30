@@ -41,7 +41,7 @@ RETURN JSON with:
 {
   "is_medical": true/false,
   "file_type": "pdf/image/unknown",
-  "document_type": "blood_test/urine_test/x_ray/mri/ct_scan/ultrasound/dental_xray/dental_imaging/pathology/prescription/ecg/ekg/other",
+  "document_type": "blood_test/urine_test/x_ray/mri/ct_scan/ultrasound/dental_xray/dental_imaging/pathology/prescription/ecg/ekg/eeg/other",
   "imaging_type": "chest_xray/dental_xray/brain_mri/spine_ct/abdominal_ultrasound/etc" (if medical imaging),
   "body_part": "chest/head/spine/abdomen/dental/etc" (if imaging),
   "language": "english/spanish/french/arabic/etc",
@@ -58,7 +58,11 @@ RETURN JSON with:
   "recommendations": ["suggestions for user if needed"]
 }
 
-IMPORTANT: For medical imaging (X-Ray, MRI, CT, Dental), mark as processable and medical!
+IMPORTANT: For medical imaging (X-Ray, MRI, CT, Dental) AND cardiac/neurological signals (ECG/EKG, EEG), mark as processable and medical!
+
+SIGNAL IDENTIFICATION:
+- ECG/EKG: Look for cardiac rhythm tracings, 12-lead ECG, rhythm strips, P-QRS-T waves
+- EEG: Look for brain wave patterns, multiple channel recordings, electrode montages
 
 VALIDATION RULES:
 - Reject non-medical content (recipes, invoices, personal photos, etc.)
