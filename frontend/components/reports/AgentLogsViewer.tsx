@@ -64,8 +64,15 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
       const newSet = new Set(prev)
       if (newSet.has(logId)) {
         newSet.delete(logId)
+        // Also collapse all child sections when closing parent
+        setExpandedSections(prevSections => {
+          const newMap = new Map(prevSections)
+          newMap.delete(logId)
+          return newMap
+        })
       } else {
         newSet.add(logId)
+        // Don't auto-expand any child sections - let user click them
       }
       return newSet
     })
