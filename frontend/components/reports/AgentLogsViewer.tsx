@@ -10,7 +10,8 @@ import {
   Activity,
   FileText,
   Brain,
-  Zap
+  Zap,
+  ArrowRight
 } from 'lucide-react'
 
 interface AgentLog {
@@ -73,19 +74,22 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
   const toggleSection = (logId: string, sectionId: string) => {
     setExpandedSections(prev => {
       const newMap = new Map(prev)
-      const logSections = newMap.get(logId) || new Set()
+      const logSections = new Set(newMap.get(logId) || new Set())
+      
       if (logSections.has(sectionId)) {
         logSections.delete(sectionId)
       } else {
         logSections.add(sectionId)
       }
+      
       newMap.set(logId, logSections)
       return newMap
     })
   }
 
   const isSectionExpanded = (logId: string, sectionId: string) => {
-    return expandedSections.get(logId)?.has(sectionId) || false
+    const sections = expandedSections.get(logId)
+    return sections ? sections.has(sectionId) : false
   }
 
   const getStatusIcon = (status: string) => {
@@ -144,17 +148,73 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
     return new Date(timestamp).toLocaleString()
   }
 
+  const renderValue = (value: any, depth: number = 0): JSX.Element => {
+    if (value === null || value === undefined) {
+      return <span className="text-gray-500">—</span>
+    }
+
+    if (typeof value === 'boolean') {
+      return <span className="font-semibold">{value ? '✓' : '✗'}</span>
+    }
+
+    if (typeof value === 'number') {
+      return <span className="font-mono">{value}</span>
+    }
+
+    if (typeof value === 'string') {
+      // Don't show base64 images
+      if (value.length > 100 && (value.startsWith('data:image') || /^[A-Za-z0-9+/=]{100,}$/.test(value))) {
+        return <span className="text-gray-500 italic">[Image hidden]</span>
+      }
+      return <span className="text-gray-900">{value}</span>
+    }
+
+    if (Array.isArray(value)) {
+      if (value.length === 0) return <span className="text-gray-500">—</span>
+      
+      return (
+        <div>
+          {value.map((item, idx) => (
+            <div key={idx} className="pl-2 border-l border-gray-300">
+              <span className="text-gray-600 mr-1">{idx + 1}.</span>
+              {renderValue(item, depth + 1)}
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    if (typeof value === 'object') {
+      return (
+        <table className="w-full">
+          <tbody>
+            {Object.entries(value).map(([k, v]) => (
+              <tr key={k} className="border-b border-gray-100 last:border-0">
+                <td className="py-0.5 pr-2 font-semibold text-gray-600 align-top text-xs w-1/3">
+                  {k.replace(/_/g, ' ')}:
+                </td>
+                <td className="py-0.5 text-xs">{renderValue(v, depth + 1)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )
+    }
+
+    return <span>{String(value)}</span>
+  }
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       {logs.map((log) => {
         const isExpanded = expandedLogs.has(log.id)
         
         return (
-          <div key={log.id} className="border border-gray-200 rounded-lg bg-white overflow-hidden">
+          <div key={log.id} className="border border-gray-300 rounded bg-white overflow-hidden">
             {/* Log Header - Clickable */}
             <div
               onClick={() => toggleLog(log.id)}
-              className="px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
+              className="px-3 py-2 cursor-pointer hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center space-x-3">
                 {/* Expand/Collapse Icon */}
@@ -206,51 +266,49 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
 
             {/* Expanded Details */}
             {isExpanded && (
-              <div className="px-4 pb-4 space-y-3 bg-gray-50 border-t border-gray-200">
-                {/* Execution Timeline */}
-                <div className="mt-3 bg-white rounded-lg border border-gray-200 p-3">
-                  <h4 className="text-xs font-semibold text-gray-700 mb-2">Execution Timeline</h4>
-                  <div className="space-y-1 text-xs text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Started:</span>
-                      <span className="font-mono">{formatTimestamp(log.started_at)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Completed:</span>
-                      <span className="font-mono">{formatTimestamp(log.completed_at)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Duration:</span>
-                      <span className="font-semibold">{formatDuration(log.duration_ms)}</span>
-                    </div>
+              <div className="border-t border-gray-200">
+                {/* Execution Timeline - Compact */}
+                <div className="px-3 py-1 border-b border-gray-200 bg-gray-50">
+                  <div className="text-xs text-gray-700 flex items-center gap-4">
+                    <span><b>Started:</b> {formatTimestamp(log.started_at)}</span>
+                    <span><b>Duration:</b> {formatDuration(log.duration_ms)}</span>
+                    <span><b>Tokens:</b> {log.tokens_used?.toLocaleString() || 'N/A'}</span>
                   </div>
                 </div>
 
-                {/* AI Reasoning/Thoughts */}
-                {log.output_data && (log.output_data.reasoning || log.output_data.summary || log.output_data.overall_assessment) && (
-                  <div className="bg-white rounded-lg border border-blue-200 p-3">
+                {/* COMPLETE OUTPUT DATA - Full Transparency */}
+                {log.output_data && Object.keys(log.output_data).length > 0 && (
+                  <div className="border-t border-gray-200">
                     <div
-                      onClick={() => toggleSection(log.id, 'thoughts')}
-                      className="flex items-center justify-between cursor-pointer hover:bg-blue-50 -m-3 p-3 rounded-t-lg transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleSection(log.id, 'complete_output')
+                      }}
+                      className="flex items-center justify-between cursor-pointer hover:bg-gray-100 px-3 py-1 bg-gray-50"
                     >
-                      <div className="flex items-center space-x-2">
-                        <Brain className="h-4 w-4 text-blue-600" />
-                        <h4 className="text-xs font-semibold text-gray-900">AI Thoughts & Reasoning</h4>
-                      </div>
-                      {isSectionExpanded(log.id, 'thoughts') ? (
-                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                      <span className="text-xs font-bold text-gray-900">AGENT OUTPUT ({Object.keys(log.output_data).length})</span>
+                      {isSectionExpanded(log.id, 'complete_output') ? (
+                        <ChevronDown className="h-3.5 w-3.5 text-gray-600" />
                       ) : (
-                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                        <ChevronRight className="h-3.5 w-3.5 text-gray-600" />
                       )}
                     </div>
-                    {isSectionExpanded(log.id, 'thoughts') && (
-                      <div className="mt-3 pt-3 border-t border-blue-100">
-                        <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-                          {log.output_data.reasoning || 
-                           log.output_data.summary ||
-                           log.output_data.overall_assessment?.summary ||
-                           'No reasoning provided'}
-                        </div>
+                    {isSectionExpanded(log.id, 'complete_output') && (
+                      <div className="px-3 py-1">
+                        <table className="w-full text-xs">
+                          <tbody>
+                            {Object.entries(log.output_data).map(([key, value]) => (
+                              <tr key={key} className="border-b border-gray-100 last:border-0">
+                                <td className="py-0.5 pr-2 font-semibold text-gray-700 align-top w-1/3">
+                                  {key.replace(/_/g, ' ').toUpperCase()}
+                                </td>
+                                <td className="py-0.5 text-gray-900">
+                                  {renderValue(value)}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     )}
                   </div>
@@ -432,47 +490,7 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
                   </div>
                 )}
 
-                {/* Technical Details */}
-                <div className="bg-white rounded-lg border border-gray-200 p-3">
-                  <div
-                    onClick={() => toggleSection(log.id, 'technical')}
-                    className="flex items-center justify-between cursor-pointer hover:bg-gray-50 -m-3 p-3 rounded-t-lg transition-colors"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Activity className="h-4 w-4 text-gray-600" />
-                      <h4 className="text-xs font-semibold text-gray-900">Technical Details</h4>
-                    </div>
-                    {isSectionExpanded(log.id, 'technical') ? (
-                      <ChevronDown className="h-4 w-4 text-gray-400" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
-                    )}
-                  </div>
-                  {isSectionExpanded(log.id, 'technical') && (
-                    <div className="mt-3 pt-3 border-t border-gray-100 space-y-1 text-xs text-gray-600">
-                      <div className="flex justify-between">
-                        <span className="font-medium">Log ID:</span>
-                        <span className="font-mono text-[10px]">{log.id}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium">Model:</span>
-                        <span>Artificial Intelligence Model</span>
-                      </div>
-                      {log.tokens_used && (
-                        <div className="flex justify-between">
-                          <span className="font-medium">Tokens Used:</span>
-                          <span>{log.tokens_used.toLocaleString()}</span>
-                        </div>
-                      )}
-                      {log.cost_estimate && (
-                        <div className="flex justify-between">
-                          <span className="font-medium">Estimated Cost:</span>
-                          <span>${log.cost_estimate.toFixed(4)}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+
               </div>
             )}
           </div>

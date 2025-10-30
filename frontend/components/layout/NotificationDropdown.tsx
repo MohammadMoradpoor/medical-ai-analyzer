@@ -100,7 +100,7 @@ export function NotificationDropdown() {
     if (type === 'quality_issue') {
       return <AlertCircle className="h-5 w-5 text-orange-500" />
     }
-    return <Info className="h-5 w-5 text-blue-500" />
+        return <Info className="h-5 w-5 text-blue-500" />
   }
 
   return (
@@ -123,7 +123,7 @@ export function NotificationDropdown() {
             <h3 className="font-bold text-gray-900">Notifications</h3>
             <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-gray-100 rounded">
               <X className="h-4 w-4 text-gray-500" />
-            </button>
+                  </button>
           </div>
 
           <div className="max-h-[500px] overflow-y-auto">
