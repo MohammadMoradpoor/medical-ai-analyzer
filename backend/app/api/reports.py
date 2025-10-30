@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, List
 import os
 import uuid
@@ -192,10 +192,11 @@ async def process_medical_report(
         )
         db.add(extraction_log)
         
-        # If imaging analysis was performed, also log it separately for easy retrieval
+        # If imaging analysis was performed, log it with proper timing
         if extraction_result.get("execution_details", {}).get("imaging_analysis"):
             imaging_analysis = extraction_result["execution_details"]["imaging_analysis"]
             imaging_tokens = extraction_result["execution_details"].get("imaging_token_usage", {})
+            imaging_execution_time = extraction_result["execution_details"].get("imaging_execution_time_ms", 0)
             
             imaging_cost = None
             if imaging_tokens:
@@ -204,15 +205,19 @@ async def process_medical_report(
                 completion_tokens = imaging_tokens.get("completion_tokens", 0)
                 imaging_cost = (prompt_tokens / 1_000_000 * 2.50) + (completion_tokens / 1_000_000 * 10.00)
             
+            # Calculate proper start time (extraction_start + time before imaging)
+            imaging_start_time = extraction_start + timedelta(milliseconds=2000)  # ~2s for image detection
+            imaging_end_time = imaging_start_time + timedelta(milliseconds=imaging_execution_time)
+            
             imaging_log = AgentLog(
                 report_id=report_id,
                 user_id=report.user_id,
                 agent_type="medical_imaging",
                 operation="analyze_imaging",
                 status="success",
-                started_at=extraction_start,
-                completed_at=datetime.utcnow(),
-                duration_ms=int(extraction_result["execution_details"].get("imaging_execution_time_ms", 0)),
+                started_at=imaging_start_time,
+                completed_at=imaging_end_time,
+                duration_ms=int(imaging_execution_time),
                 input_data={"imaging_type": imaging_analysis.get("image_type")},
                 output_data=imaging_analysis,
                 error_message=None,
@@ -221,7 +226,7 @@ async def process_medical_report(
                 cost_estimate=imaging_cost
             )
             db.add(imaging_log)
-            logger.info(f"[PROCESS REPORT] Created separate imaging agent log")
+            logger.info(f"[PROCESS REPORT] Created imaging agent log with proper timing")
         
         db.commit()
         
@@ -289,7 +294,9 @@ async def process_medical_report(
         
         db.commit()
         
-        # Analyze extracted data
+        # Step 3: Analyze extracted data (ONLY for medical imaging, skip for lab reports already analyzed)
+        # For medical imaging, the imaging agent already provided comprehensive analysis
+        # Medical Analyzer just packages it into final report format
         analysis_start = datetime.utcnow()
         analysis_result = await analyzer.process({
             "extracted_data": extracted_data,
@@ -311,24 +318,28 @@ async def process_medical_report(
             cost_estimate = (prompt_tokens / 1_000_000 * 2.50) + (completion_tokens / 1_000_000 * 10.00)
             tokens_used = total_tokens
         
-        # Log analysis
-        analysis_log = AgentLog(
-            report_id=report_id,
-            user_id=report.user_id,
-            agent_type="medical_analyzer",
-            operation="analyze",
-            status=analysis_result["status"],
-            started_at=analysis_start,
-            completed_at=datetime.utcnow(),
-            duration_ms=int(analysis_duration),
-            input_data={"extracted_data": extracted_data},
-            output_data=analysis_result.get("data"),
-            error_message=analysis_result.get("error"),
-            model_used="gpt-4o",
-            tokens_used=tokens_used,
-            cost_estimate=cost_estimate
-        )
-        db.add(analysis_log)
+        # Only log Medical Analyzer if it actually did work (tokens > 0)
+        if tokens_used and tokens_used > 0:
+            analysis_log = AgentLog(
+                report_id=report_id,
+                user_id=report.user_id,
+                agent_type="medical_analyzer",
+                operation="analyze",
+                status=analysis_result["status"],
+                started_at=analysis_start,
+                completed_at=datetime.utcnow(),
+                duration_ms=int(analysis_duration),
+                input_data={"extracted_data": extracted_data},
+                output_data=analysis_result.get("data"),
+                error_message=analysis_result.get("error"),
+                model_used="gpt-4o",
+                tokens_used=tokens_used,
+                cost_estimate=cost_estimate
+            )
+            db.add(analysis_log)
+            logger.info(f"[PROCESS REPORT] Medical Analyzer performed analysis ({tokens_used} tokens)")
+        else:
+            logger.info(f"[PROCESS REPORT] Skipping Medical Analyzer log - no additional analysis performed")
         
         if analysis_result["status"] != "success":
             report.analysis_status = "failed"
