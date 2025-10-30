@@ -119,9 +119,18 @@ Return a JSON object with:
             
             if file_type == "pdf":
                 text = self._extract_text_from_pdf(file_content)
+                ocr_token_usage = {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
             else:
-                # For images, we'll use OCR or direct vision API
-                text, ocr_token_usage = await self._extract_text_from_image(file_content)
+                # For images, check if it's signal analysis (ECG/EEG) first
+                image_result = await self._extract_text_from_image(file_content)
+                
+                # Check if this was routed to a signal agent (returns full result instead of text)
+                if isinstance(image_result, dict) and image_result.get("status") == "success":
+                    # Signal agent handled it completely - return directly
+                    return image_result
+                
+                # Otherwise it's a tuple (text, token_usage) for normal image processing
+                text, ocr_token_usage = image_result
             
             if not text:
                 return {
@@ -211,9 +220,11 @@ Return a JSON object with:
 4. CT_SCAN - CT/CAT scan image
 5. DENTAL - Dental X-ray or imaging
 6. ULTRASOUND - Ultrasound image
-7. OTHER_MEDICAL - Other medical document
+7. ECG or EKG - Electrocardiogram (cardiac rhythm tracing with P-QRS-T waves)
+8. EEG - Electroencephalogram (brain wave recording, multiple channels)
+9. OTHER_MEDICAL - Other medical document
 
-Return ONLY the category name (e.g., "LAB_REPORT" or "XRAY")."""
+Return ONLY the category name (e.g., "LAB_REPORT" or "XRAY" or "ECG" or "EEG")."""
                             },
                             {
                                 "type": "image_url",

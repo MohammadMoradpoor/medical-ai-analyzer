@@ -233,8 +233,32 @@ async def process_medical_report(
         
         extracted_data = extraction_result["data"]
         
-        # Check if this is medical imaging (X-ray, MRI, CT, Dental)
+        # Check if this is medical imaging or signal analysis (X-ray, MRI, CT, Dental, ECG, EEG)
         is_medical_imaging = extracted_data.get("is_medical_imaging", False)
+        analysis_type = extracted_data.get("analysis_type")  # cardiac_signal, neurological_signal, etc.
+        
+        # For signal analysis (ECG/EEG), the specialized agent already did full analysis
+        if analysis_type in ["cardiac_signal", "neurological_signal"]:
+            logger.info(f"[PROCESS REPORT] Signal analysis detected: {analysis_type}")
+            
+            # Store the complete signal analysis as both extracted_data and analysis_result
+            report.extracted_data = extracted_data
+            report.analysis_result = extracted_data
+            report.report_type = extracted_data.get("imaging_type", analysis_type)
+            
+            # Extract severity and summary from signal analysis
+            report.severity_level = extracted_data.get("severity_level", "attention_needed")
+            report.is_critical = extracted_data.get("is_critical", False)
+            report.summary = extracted_data.get("clinical_impression", "Signal analysis completed")
+            report.recommendations = extracted_data.get("recommendations", [])
+            
+            # Mark as completed - no need for further analysis
+            report.analysis_status = "completed"
+            report.analysis_completed_at = datetime.utcnow()
+            db.commit()
+            
+            logger.info(f"[PROCESS REPORT] {analysis_type} analysis completed directly")
+            return  # Exit - analysis complete!
         
         if is_medical_imaging:
             # For medical imaging, store minimal extracted data

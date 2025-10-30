@@ -690,20 +690,25 @@ export default function DashboardPage() {
                               {/* 9. Actions */}
                               <td className="px-3 py-2.5">
                                 <div className="flex items-center justify-center">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      setDeleteModal({
-                                        isOpen: true,
-                                        reportId: report.id,
-                                        fileName: report.file_name
-                                      })
-                                    }}
-                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                    title="Delete report"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
+                                  <div className="relative group">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setDeleteModal({
+                                          isOpen: true,
+                                          reportId: report.id,
+                                          fileName: report.file_name
+                                        })
+                                      }}
+                                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                    {/* Professional Hover Tooltip - Positioned to avoid scroll */}
+                                    <div className="absolute right-0 top-1/2 -translate-y-1/2 mr-8 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-xl">
+                                      Delete report
+                                    </div>
+                                  </div>
                                 </div>
                               </td>
                             </tr>
