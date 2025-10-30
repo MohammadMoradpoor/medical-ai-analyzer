@@ -370,7 +370,7 @@ export default function DashboardPage() {
                 <div>
                   <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Critical</div>
                   <div className="text-2xl font-bold text-red-600">
-                    {reports.filter(r => r.is_critical === true).length}
+                    {reports.filter(r => r.severity_level === 'critical').length}
                   </div>
                 </div>
               </div>
