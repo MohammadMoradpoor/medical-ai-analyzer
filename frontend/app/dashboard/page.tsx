@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { reportsApi, authApi } from '@/lib/api'
 import { MedicalReport } from '@/types'
-import { Activity, Upload, FileText, AlertCircle, CheckCircle, Clock, XCircle, X, Trash2, ArrowRight, Search, ChevronLeft, ChevronRight, RefreshCw, MessageCircle } from 'lucide-react'
+import { Activity, Upload, FileText, AlertCircle, CheckCircle, Clock, XCircle, X, Trash2, ArrowRight, Search, ChevronLeft, ChevronRight, RefreshCw, MessageCircle, Zap } from 'lucide-react'
 import toast from '@/lib/toast'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
@@ -365,7 +365,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-red-50 to-white rounded-lg border border-red-100">
                 <div className="p-2 bg-red-500 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-white" />
+                  <Zap className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Critical</div>
