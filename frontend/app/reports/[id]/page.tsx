@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { reportsApi } from '@/lib/api'
 import { ReportAnalysis } from '@/types'
-import { Activity, AlertCircle, CheckCircle, FileText, TrendingUp, Clock, ChevronDown, ChevronRight, ArrowRight, TestTube, MessageCircle, Copy, Check, Printer, Download } from 'lucide-react'
+import { Activity, AlertCircle, CheckCircle, FileText, TrendingUp, Clock, ChevronDown, ChevronRight, ArrowRight, TestTube, MessageCircle, Copy, Check, Printer, Download, Settings } from 'lucide-react'
 import toast from '@/lib/toast'
 import { AgentLogsViewer } from '@/components/reports/AgentLogsViewer'
 import { RawDataEditor } from '@/components/reports/RawDataEditor'
@@ -635,85 +635,97 @@ export default function ReportDetailPage() {
               </div>
             )}
 
-            {/* 5. Processing Steps - Collapsible, Collapsed by Default */}
-            <div className="bg-white rounded-xl border-2 border-purple-200 overflow-hidden shadow-md">
-                <button
-                  onClick={() => toggleSection('processing')}
-                  className="w-full px-4 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center gap-2 hover:from-purple-600 hover:to-indigo-700 transition-colors"
-                >
-                  <Activity className="h-4 w-4 text-white" />
-                  <h3 className="text-sm font-bold text-white">Processing Steps</h3>
-                  {agentLogs.length > 0 && (
-                    <span className="px-2 py-0.5 bg-white text-purple-600 text-xs font-bold rounded-full">
-                      {agentLogs.length}
-                    </span>
+            {/* 5. Advanced Details - Technical Section (Collapsed by Default) */}
+            <div className="bg-white rounded-xl border-2 border-gray-400 overflow-hidden shadow-md">
+              <button
+                onClick={() => toggleSection('advanced')}
+                className="w-full px-4 py-3 bg-gradient-to-r from-gray-100 to-slate-100 hover:from-gray-200 hover:to-slate-200 flex items-center gap-3 border-b-2 border-gray-300 transition-colors"
+              >
+                <div className="w-8 h-8 flex items-center justify-center bg-gray-600 rounded-lg">
+                  <Settings className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex-1 text-left">
+                  <h3 className="text-sm font-bold text-gray-900">Advanced Details</h3>
+                  <p className="text-xs text-gray-600">For technical users and verification</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded-md text-xs font-semibold">
+                    Optional
+                  </span>
+                  <ChevronDown className={`h-5 w-5 text-gray-600 transition-transform duration-300 ${
+                    expandedSections.has('advanced') ? '' : '-rotate-90'
+                  }`} />
+                </div>
+              </button>
+
+              {expandedSections.has('advanced') && (
+                <div className="p-4 bg-gray-50 space-y-3">
+                  
+                  {/* AI Processing Log - Nested */}
+                  <div className="bg-white rounded-lg border-2 border-purple-300 overflow-hidden shadow-sm">
+                    <button
+                      onClick={() => toggleSection('processing')}
+                      className="w-full px-3 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center gap-2 hover:from-purple-600 hover:to-indigo-700 transition-colors"
+                    >
+                      <Activity className="h-4 w-4 text-white" />
+                      <h4 className="text-xs font-bold text-white">AI Processing Log</h4>
+                      {agentLogs.length > 0 && (
+                        <span className="px-2 py-0.5 bg-white text-purple-600 text-xs font-bold rounded-full">
+                          {agentLogs.length} steps
+                        </span>
+                      )}
+                      <div className="ml-auto">
+                        <ChevronRight className={`h-3.5 w-3.5 text-white transition-transform ${
+                          expandedSections.has('processing') ? 'rotate-90' : ''
+                        }`} />
+                      </div>
+                    </button>
+                    {expandedSections.has('processing') && (
+                      <div className="p-3">
+                        {isLoadingLogs ? (
+                          <div className="text-center py-6">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+                            <p className="text-gray-600 text-xs font-medium">Loading logs...</p>
+                          </div>
+                        ) : (
+                          <AgentLogsViewer logs={agentLogs} />
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Raw Data View - Nested (Only for Lab Reports) */}
+                  {report.extracted_data && !report.extracted_data.is_medical_imaging && (
+                    <div className="bg-white rounded-lg border-2 border-gray-400 overflow-hidden shadow-sm">
+                      <button
+                        onClick={() => toggleSection('raw_data')}
+                        className="w-full px-3 py-2 bg-gradient-to-r from-gray-600 to-slate-600 hover:from-gray-700 hover:to-slate-700 flex items-center gap-2 transition-colors"
+                      >
+                        <FileText className="h-4 w-4 text-white" />
+                        <h4 className="text-xs font-bold text-white">Raw Data View</h4>
+                        <span className="text-xs text-gray-300">(Editable)</span>
+                        <div className="ml-auto">
+                          <ChevronRight className={`h-3.5 w-3.5 text-white transition-transform ${
+                            expandedSections.has('raw_data') ? 'rotate-90' : ''
+                          }`} />
+                        </div>
+                      </button>
+                      {expandedSections.has('raw_data') && (
+                        <div className="p-3 bg-gray-50">
+                          <RawDataEditor
+                            data={report.extracted_data}
+                            reportId={reportId}
+                            onSave={handleSaveExtractedData}
+                            onReprocess={handleReprocess}
+                          />
+                        </div>
+                      )}
+                    </div>
                   )}
-                  <div className="ml-auto">
-                    {expandedSections.has('processing') ? (
-                      <ChevronDown className="h-4 w-4 text-white" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-white" />
-                    )}
-                  </div>
-                </button>
-                {expandedSections.has('processing') && (
-                  <div className="p-3">
-                    {isLoadingLogs ? (
-                      <div className="text-center py-6">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
-                        <p className="text-gray-600 text-xs font-medium">Loading logs...</p>
-                      </div>
-                    ) : (
-                      <AgentLogsViewer logs={agentLogs} />
-                    )}
-                  </div>
-                )}
-              </div>
-
-            {/* 6. Raw Extracted Data - Collapsible Section (Only for Lab Reports) */}
-            {report.extracted_data && !report.extracted_data.is_medical_imaging && (
-              <div className="bg-white rounded-xl border-2 border-gray-300 overflow-hidden shadow-md">
-                {/* Collapsed Header - Clickable */}
-                <button
-                  onClick={() => setIsRawDataExpanded(!isRawDataExpanded)}
-                  className="w-full px-5 py-3.5 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-gray-200 hover:to-gray-100 border-b-2 border-gray-300 transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-gray-700 p-2 rounded-lg">
-                        <FileText className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <h3 className="text-sm font-bold text-gray-900">Extracted Data (Editable)</h3>
-                        <p className="text-xs text-gray-600 font-medium">Click to view and edit raw extracted data</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        isRawDataExpanded ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-700'
-                      }`}>
-                        {isRawDataExpanded ? 'Expanded' : 'Collapsed'}
-                      </span>
-                      <ChevronDown className={`h-5 w-5 text-gray-600 transition-transform duration-300 ${
-                        isRawDataExpanded ? 'rotate-180' : ''
-                      }`} />
-                    </div>
-                  </div>
-                </button>
-
-                {/* Expanded Content */}
-                {isRawDataExpanded && (
-                  <div className="animate-slideDown">
-                    <RawDataEditor
-                      data={report.extracted_data}
-                      reportId={reportId}
-                      onSave={handleSaveExtractedData}
-                      onReprocess={handleReprocess}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
+                  
+                </div>
+              )}
+            </div>
             
             {/* Medical Imaging Note - Show instead of raw data for imaging */}
             {report.extracted_data && report.extracted_data.is_medical_imaging && (
