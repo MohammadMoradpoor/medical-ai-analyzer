@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Shield, User as UserIcon, Bell, Database, Activity, ChevronRight, FileText, Clock, Settings as SettingsIcon } from 'lucide-react'
+import { Shield, User as UserIcon, Bell, Database, Activity, ChevronRight, FileText, Clock, Settings as SettingsIcon, Lock, X } from 'lucide-react'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
@@ -20,6 +20,11 @@ export default function SettingsPage() {
   const [usageStats, setUsageStats] = useState<any>(null)
   const [isLoadingUsage, setIsLoadingUsage] = useState(false)
   const [showClearAllConversations, setShowClearAllConversations] = useState(false)
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -95,6 +100,40 @@ export default function SettingsPage() {
     } catch (error) {
       console.error('Error deleting all conversations:', error)
       toast.error('Failed to delete all conversations')
+    }
+  }
+
+  const handleChangePassword = async () => {
+    // Validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error('Please fill in all password fields')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters long')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('New password and confirmation do not match')
+      return
+    }
+
+    setIsChangingPassword(true)
+
+    try {
+      await authApi.changePassword(currentPassword, newPassword)
+      toast.success('Password changed successfully!')
+      setShowChangePassword(false)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.detail || error?.message || 'Failed to change password'
+      toast.error(errorMessage)
+    } finally {
+      setIsChangingPassword(false)
     }
   }
 
@@ -243,8 +282,8 @@ export default function SettingsPage() {
                     </div>
                     <div className="pt-4 border-t border-gray-200">
                       <button
-                        onClick={() => toast('Password change functionality coming soon')}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
+                        onClick={() => setShowChangePassword(true)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors"
                       >
                         Change Password
                       </button>
@@ -735,6 +774,107 @@ export default function SettingsPage() {
         cancelText="Cancel"
         type="danger"
       />
+
+      {/* Change Password Modal - Settings Card Style */}
+      {showChangePassword && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm max-w-lg w-full">
+            {/* Header - Same as Settings sections */}
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Change Password</h3>
+                <p className="text-sm text-gray-600 mt-1">Update your account password</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowChangePassword(false)
+                  setCurrentPassword('')
+                  setNewPassword('')
+                  setConfirmPassword('')
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            {/* Form - Settings card style */}
+            <div className="px-6 py-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Current Password
+                  </label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="Enter current password"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="Minimum 6 characters"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    placeholder="Re-enter new password"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer - Settings button style */}
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowChangePassword(false)
+                  setCurrentPassword('')
+                  setNewPassword('')
+                  setConfirmPassword('')
+                }}
+                disabled={isChangingPassword}
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleChangePassword}
+                disabled={isChangingPassword}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {isChangingPassword ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  'Update Password'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
