@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { Activity, Mail, Lock, User } from 'lucide-react'
+import { Activity, Mail, Lock, User, ArrowLeft } from 'lucide-react'
 import toast from '@/lib/toast'
 
 export default function RegisterPage() {
@@ -66,6 +66,15 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
+        {/* Back Button */}
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors group"
+        >
+          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+          Back to Home
+        </button>
+
         <div>
           <div className="flex justify-center">
             <Activity className="h-12 w-12 text-blue-600" />

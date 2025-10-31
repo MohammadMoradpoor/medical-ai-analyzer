@@ -186,8 +186,8 @@ export default function LandingPage() {
                 </div>
                 
                 {/* Floating Elements */}
-                <div className="absolute -top-4 -right-4 bg-purple-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-bounce">
-                  ⚡ 15s
+                <div className="absolute -top-4 -right-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-xl shadow-purple-500/50 animate-bounce">
+                  ⚡ 30s
                 </div>
               </div>
             </div>
@@ -359,7 +359,7 @@ export default function LandingPage() {
               <div className="w-16 h-16 bg-gradient-to-br from-slate-700 via-indigo-600 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-indigo-600/40 group-hover:scale-110 group-hover:shadow-indigo-500/60 transition-all duration-300 group-hover:rotate-6">
                 <Zap className="h-8 w-8 text-white group-hover:scale-110 transition-transform duration-300" strokeWidth={2.5} />
               </div>
-              <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-2">15 Second Analysis</h3>
+              <h3 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-2">30 Second Analysis</h3>
               <p className="text-slate-500 group-hover:text-indigo-600 transition-colors">Rapid insights without compromise</p>
             </div>
             

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import { Activity, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
+import { Activity, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
 import toast from '@/lib/toast'
 
 export default function LoginPage() {
@@ -114,6 +114,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-white to-green-50">
       <div className={`max-w-md w-full space-y-8 ${shakeError ? 'animate-shake' : ''}`}>
+        {/* Back Button */}
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors group"
+        >
+          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+          Back to Home
+        </button>
+
         {/* Header */}
         <div className="text-center">
           <div className="flex justify-center">
