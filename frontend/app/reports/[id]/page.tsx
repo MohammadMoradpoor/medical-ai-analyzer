@@ -24,7 +24,7 @@ export default function ReportDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingLogs, setIsLoadingLogs] = useState(false)
   const [isRawDataExpanded, setIsRawDataExpanded] = useState(false)
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['summary']))
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(['summary', 'abnormal', 'recommendations', 'tests']))
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [chatMessageCount, setChatMessageCount] = useState(0)
   const [reportIdCopied, setReportIdCopied] = useState(false)
@@ -444,70 +444,97 @@ export default function ReportDetailPage() {
               </div>
             )}
             
-            {/* 1. Summary Card - Compact */}
+            {/* 1. Summary Card - Expanded by Default */}
             {report.summary && (
-                <div className="bg-gradient-to-br from-blue-50 to-white rounded-xl border-2 border-blue-200 overflow-hidden shadow-md">
-                  <div className="px-4 py-2.5 bg-blue-600 flex items-center gap-2">
+                <div className="bg-gradient-to-br from-blue-50 via-sky-25 to-white rounded-xl border-2 border-blue-300 overflow-hidden shadow-md">
+                  <button
+                    onClick={() => toggleSection('summary')}
+                    className="w-full px-4 py-2.5 bg-gradient-to-r from-blue-500 to-sky-600 flex items-center gap-2 hover:from-blue-600 hover:to-sky-700 transition-colors"
+                  >
                     <FileText className="h-4 w-4 text-white" />
                     <h3 className="text-sm font-bold text-white">AI Analysis Summary</h3>
-                  </div>
-                  <div className="px-4 py-3">
-                    <p className="text-sm text-gray-800 leading-snug font-medium">{report.summary}</p>
-                    
-                    {/* Quick Findings Summary */}
-                    <div className="mt-3 pt-3 border-t border-blue-200 grid grid-cols-2 gap-2">
-                      <div className="text-center">
-                        <div className="text-xs text-gray-500 font-medium">Abnormalities</div>
-                        <div className={`text-lg font-bold ${report.has_abnormalities ? 'text-red-600' : 'text-green-600'}`}>
-                          {report.abnormal_findings?.length || 0}
+                    <div className="ml-auto">
+                      {expandedSections.has('summary') ? (
+                        <ChevronDown className="h-4 w-4 text-white" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-white" />
+                      )}
+                    </div>
+                  </button>
+                  {expandedSections.has('summary') && (
+                    <div className="px-4 py-3">
+                      <p className="text-sm text-gray-800 leading-snug font-medium">{report.summary}</p>
+                      
+                      {/* Quick Findings Summary */}
+                      <div className="mt-3 pt-3 border-t border-blue-200 grid grid-cols-2 gap-2">
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 font-medium">Abnormalities</div>
+                          <div className={`text-lg font-bold ${report.has_abnormalities ? 'text-red-600' : 'text-emerald-600'}`}>
+                            {report.abnormal_findings?.length || 0}
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-gray-500 font-medium">Critical Issues</div>
-                        <div className={`text-lg font-bold ${report.is_critical ? 'text-red-600' : 'text-green-600'}`}>
-                          {report.is_critical ? 'Yes' : 'No'}
+                        <div className="text-center">
+                          <div className="text-xs text-gray-500 font-medium">Critical Issues</div>
+                          <div className={`text-lg font-bold ${report.is_critical ? 'text-red-600' : 'text-emerald-600'}`}>
+                            {report.is_critical ? 'Yes' : 'No'}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               )}
 
-              {/* 2. Abnormal Findings - موارد مهم اول */}
+              {/* 2. Abnormal Findings - Always Expanded (Critical) */}
               {report.abnormal_findings && report.abnormal_findings.length > 0 && (
-                <div className="bg-gradient-to-br from-red-50 to-white rounded-xl border-2 border-red-200 overflow-hidden shadow-md">
-                  <div className="px-4 py-2.5 bg-red-600 flex items-center gap-2">
+                <div className="bg-gradient-to-br from-red-50 via-red-25 to-white rounded-xl border-2 border-red-300 overflow-hidden shadow-md">
+                  <button
+                    onClick={() => toggleSection('abnormal')}
+                    className="w-full px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 flex items-center gap-2 hover:from-red-600 hover:to-red-700 transition-colors"
+                  >
                     <AlertCircle className="h-4 w-4 text-white" />
                     <h3 className="text-sm font-bold text-white">Abnormal Findings</h3>
                     <span className="px-2 py-0.5 bg-white text-red-600 text-xs font-bold rounded-full">
                       {report.abnormal_findings.length}
                     </span>
-                  </div>
-                  <div className="p-3 space-y-2">
-                    {report.abnormal_findings.map((finding, index) => (
-                      <div key={index} className="bg-white rounded-lg border-2 border-red-200 p-3">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-                        <div className="flex-1">
-                            <h4 className="font-bold text-red-900 text-sm mb-1">{finding.finding}</h4>
-                            <p className="text-xs text-gray-700 leading-snug mb-2">{finding.explanation}</p>
-                            {finding.action_needed && (
-                              <div className="bg-red-100 rounded px-2 py-1.5 mt-2">
-                                <p className="text-xs text-red-800 font-bold">→ {finding.action_needed}</p>
-                              </div>
-                            )}
+                    <div className="ml-auto">
+                      {expandedSections.has('abnormal') ? (
+                        <ChevronDown className="h-4 w-4 text-white" />
+                      ) : (
+                        <ChevronRight className="h-4 w-4 text-white" />
+                      )}
+                    </div>
+                  </button>
+                  {expandedSections.has('abnormal') && (
+                    <div className="p-3 space-y-2">
+                      {report.abnormal_findings.map((finding, index) => (
+                        <div key={index} className="bg-white rounded-lg border-2 border-red-200 p-3 hover:border-red-300 transition-colors">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
+                          <div className="flex-1">
+                              <h4 className="font-bold text-red-900 text-sm mb-1">{finding.finding}</h4>
+                              <p className="text-xs text-gray-700 leading-snug mb-2">{finding.explanation}</p>
+                              {finding.action_needed && (
+                                <div className="bg-red-100 rounded px-2 py-1.5 mt-2">
+                                  <p className="text-xs text-red-800 font-bold">→ {finding.action_needed}</p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* 3. Test Results - Compact Table */}
+              {/* 3. Test Results - Collapsible */}
               {report.test_analysis && report.test_analysis.length > 0 && (
-                <div className="bg-white rounded-xl border-2 border-purple-200 overflow-hidden shadow-md">
-                  <div className="px-4 py-2.5 bg-purple-600 flex items-center justify-between">
+                <div className="bg-white rounded-xl border-2 border-purple-300 overflow-hidden shadow-md">
+                  <button
+                    onClick={() => toggleSection('tests')}
+                    className="w-full px-4 py-2.5 bg-gradient-to-r from-purple-500 to-violet-600 flex items-center justify-between hover:from-purple-600 hover:to-violet-700 transition-colors"
+                  >
                     <div className="flex items-center gap-2">
                       <TestTube className="h-4 w-4 text-white" />
                       <h3 className="text-sm font-bold text-white">Test Results</h3>
@@ -515,19 +542,23 @@ export default function ReportDetailPage() {
                         {report.test_analysis.length}
                       </span>
                     </div>
-                    <div className="flex gap-2 text-xs">
-                      <span className="px-2 py-0.5 bg-green-500 text-white rounded font-bold flex items-center gap-1">
-                        <CheckCircle className="h-3 w-3" />
-                        {report.test_analysis.filter(t => t.is_normal).length}
-                      </span>
-                      <span className="px-2 py-0.5 bg-red-500 text-white rounded font-bold flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        {report.test_analysis.filter(t => !t.is_normal).length}
-                      </span>
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-2 text-xs">
+                        <span className="px-2 py-0.5 bg-emerald-500 text-white rounded font-bold flex items-center gap-1">
+                          <CheckCircle className="h-3 w-3" />
+                          {report.test_analysis.filter(t => t.is_normal).length}
+                        </span>
+                        <span className="px-2 py-0.5 bg-red-500 text-white rounded font-bold flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {report.test_analysis.filter(t => !t.is_normal).length}
+                        </span>
+                      </div>
+                      <ChevronDown className={`h-4 w-4 text-white ${expandedSections.has('tests') ? '' : 'rotate-180'}`} />
                     </div>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
+                  </button>
+                  {expandedSections.has('tests') && (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
                       <thead className="bg-purple-50 border-b-2 border-purple-200">
                         <tr>
                           <th className="px-3 py-2 text-left text-xs font-bold text-purple-900">Test Name</th>
@@ -566,52 +597,77 @@ export default function ReportDetailPage() {
                         ))}
                       </tbody>
                     </table>
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-            {/* 4. Recommendations - Compact Checklist */}
+            {/* 4. Recommendations - Collapsible, Expanded by Default */}
             {report.recommendations && report.recommendations.length > 0 && (
-              <div className="bg-gradient-to-br from-green-50 to-white rounded-xl border-2 border-green-200 overflow-hidden shadow-md">
-                <div className="px-4 py-2.5 bg-green-600 flex items-center gap-2">
+              <div className="bg-gradient-to-br from-emerald-50 via-green-25 to-white rounded-xl border-2 border-emerald-200 overflow-hidden shadow-md">
+                <button
+                  onClick={() => toggleSection('recommendations')}
+                  className="w-full px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 flex items-center gap-2 hover:from-emerald-600 hover:to-green-700 transition-colors"
+                >
                   <CheckCircle className="h-4 w-4 text-white" />
                   <h3 className="text-sm font-bold text-white">Medical Recommendations</h3>
-                  <span className="px-2 py-0.5 bg-white text-green-600 text-xs font-bold rounded-full">
+                  <span className="px-2 py-0.5 bg-white text-emerald-600 text-xs font-bold rounded-full">
                     {report.recommendations.length}
                   </span>
-                </div>
-                <div className="p-3 space-y-1.5">
-                  {report.recommendations.map((recommendation, index) => (
-                    <div key={index} className="flex items-start gap-2 p-2.5 bg-white rounded-lg border border-green-200 hover:bg-green-50 transition-colors">
-                      <span className="text-green-600 font-bold flex-shrink-0">{index + 1}.</span>
-                      <span className="text-sm text-gray-800 font-medium leading-snug">{recommendation}</span>
-                    </div>
-                  ))}
-                </div>
+                  <div className="ml-auto">
+                    {expandedSections.has('recommendations') ? (
+                      <ChevronDown className="h-4 w-4 text-white" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-white" />
+                    )}
+                  </div>
+                </button>
+                {expandedSections.has('recommendations') && (
+                  <div className="p-3 space-y-1.5">
+                    {report.recommendations.map((recommendation, index) => (
+                      <div key={index} className="flex items-start gap-2 p-2.5 bg-white rounded-lg border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50 transition-colors">
+                        <span className="text-emerald-600 font-bold flex-shrink-0">{index + 1}.</span>
+                        <span className="text-sm text-gray-800 font-medium leading-snug">{recommendation}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* 5. Processing Steps - جزئیات فنی */}
-            <div className="bg-white rounded-xl border-2 border-indigo-200 overflow-hidden shadow-md">
-                <div className="px-4 py-2.5 bg-indigo-600 flex items-center gap-2">
+            {/* 5. Processing Steps - Collapsible, Collapsed by Default */}
+            <div className="bg-white rounded-xl border-2 border-purple-200 overflow-hidden shadow-md">
+                <button
+                  onClick={() => toggleSection('processing')}
+                  className="w-full px-4 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center gap-2 hover:from-purple-600 hover:to-indigo-700 transition-colors"
+                >
                   <Activity className="h-4 w-4 text-white" />
                   <h3 className="text-sm font-bold text-white">Processing Steps</h3>
                   {agentLogs.length > 0 && (
-                    <span className="px-2 py-0.5 bg-white text-indigo-600 text-xs font-bold rounded-full">
+                    <span className="px-2 py-0.5 bg-white text-purple-600 text-xs font-bold rounded-full">
                       {agentLogs.length}
                     </span>
                   )}
-                </div>
-                <div className="p-3">
-                  {isLoadingLogs ? (
-                    <div className="text-center py-6">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
-                      <p className="text-gray-600 text-xs font-medium">Loading logs...</p>
-                    </div>
-                  ) : (
-                    <AgentLogsViewer logs={agentLogs} />
-                  )}
-                </div>
+                  <div className="ml-auto">
+                    {expandedSections.has('processing') ? (
+                      <ChevronDown className="h-4 w-4 text-white" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4 text-white" />
+                    )}
+                  </div>
+                </button>
+                {expandedSections.has('processing') && (
+                  <div className="p-3">
+                    {isLoadingLogs ? (
+                      <div className="text-center py-6">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-2"></div>
+                        <p className="text-gray-600 text-xs font-medium">Loading logs...</p>
+                      </div>
+                    ) : (
+                      <AgentLogsViewer logs={agentLogs} />
+                    )}
+                  </div>
+                )}
               </div>
 
             {/* 6. Raw Extracted Data - Collapsible Section (Only for Lab Reports) */}
