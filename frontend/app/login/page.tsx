@@ -229,20 +229,21 @@ export default function LoginPage() {
                     errors.password 
                       ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                       : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                  } placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 focus:z-10 sm:text-sm transition-all disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                  } placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-2 sm:text-sm transition-all disabled:bg-gray-100 disabled:cursor-not-allowed`}
                   placeholder="Enter your password"
+                  style={{ position: 'relative', zIndex: 1 }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-50 rounded-r-lg transition-colors disabled:cursor-not-allowed"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center z-10 hover:opacity-70 transition-opacity disabled:cursor-not-allowed"
                   tabIndex={-1}
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <EyeOff className="h-5 w-5 text-gray-500" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                    <Eye className="h-5 w-5 text-gray-500" />
                   )}
                 </button>
               </div>
