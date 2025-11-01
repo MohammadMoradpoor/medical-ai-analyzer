@@ -921,20 +921,6 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
           </div>
           
           <div className="flex items-center gap-1 flex-shrink-0">
-            {messages.length > 0 && (
-              <>
-                <span className="text-xs text-purple-100 font-medium px-2">
-                  {messages.length}
-                </span>
-                <button
-                  onClick={() => setShowClearConfirm(true)}
-                  className="p-1.5 hover:bg-purple-500 rounded-lg text-white transition-colors"
-                  title="Clear chat"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </>
-            )}
             <button
               onClick={() => setIsFullscreen(!isFullscreen)}
               className="p-1.5 hover:bg-purple-500 rounded-lg text-white transition-colors"

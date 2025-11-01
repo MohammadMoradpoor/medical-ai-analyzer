@@ -13,18 +13,18 @@ export function usePublicNavigation() {
 
     try {
       // Simulate progress (smooth animation on current page)
-      const progressInterval = setInterval(() => {
+    const progressInterval = setInterval(() => {
         setProgress(prev => {
           if (prev >= 90) {
-            clearInterval(progressInterval)
+        clearInterval(progressInterval)
             return 90
-          }
+      }
           return prev + 10
         })
       }, 50)
 
       // Prefetch the route (Next.js optimization)
-      router.prefetch(path)
+    router.prefetch(path)
 
       // Wait for minimum display time (smooth UX)
       await new Promise(resolve => setTimeout(resolve, 500))
@@ -32,17 +32,17 @@ export function usePublicNavigation() {
       // Complete progress
       clearInterval(progressInterval)
       setProgress(100)
-
+      
       // Small delay to show 100% completion
       await new Promise(resolve => setTimeout(resolve, 100))
 
       // Instant navigation (no loading screen)
-      router.push(path)
-
+        router.push(path)
+        
       // Reset after navigation
-      setTimeout(() => {
-        setIsNavigating(false)
-        setProgress(0)
+        setTimeout(() => {
+          setIsNavigating(false)
+          setProgress(0)
       }, 200)
 
     } catch (error) {
