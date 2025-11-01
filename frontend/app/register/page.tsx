@@ -5,8 +5,11 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Activity, Mail, Lock, User, ArrowLeft } from 'lucide-react'
 import toast from '@/lib/toast'
+import { usePublicNavigation } from '@/hooks/usePublicNavigation'
+import { PublicLoadingBar } from '@/components/ui/PublicLoadingBar'
 
 export default function RegisterPage() {
+  const { navigateTo, isNavigating, progress } = usePublicNavigation()
   const [formData, setFormData] = useState({
     email: '',
     username: '',
@@ -48,7 +51,7 @@ export default function RegisterPage() {
         full_name: formData.full_name || undefined,
       })
       toast.success('Registration successful! Please log in.')
-      router.push('/login')
+      navigateTo('/login')
     } catch (error: any) {
       let errorMsg = 'Registration failed. Please try again.'
       if (error?.response?.data?.detail) {
@@ -65,10 +68,13 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Loading Bar */}
+      <PublicLoadingBar progress={progress} isNavigating={isNavigating} />
+      
       <div className="max-w-md w-full space-y-8">
         {/* Back Button */}
         <button
-          onClick={() => router.push('/')}
+          onClick={() => navigateTo('/')}
           className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors group"
         >
           <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
@@ -85,7 +91,7 @@ export default function RegisterPage() {
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{' '}
             <button
-              onClick={() => router.push('/login')}
+              onClick={() => navigateTo('/login')}
               className="font-medium text-blue-600 hover:text-blue-500"
             >
               sign in to existing account

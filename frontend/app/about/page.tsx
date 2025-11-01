@@ -3,10 +3,12 @@
 import { useRouter } from 'next/navigation'
 import { Activity, Target, Users, Heart, Brain, Zap, Shield, Star, Award, TrendingUp } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { LoadingBar } from '@/components/ui/LoadingBar'
+import { usePublicNavigation } from '@/hooks/usePublicNavigation'
+import { PublicLoadingBar } from '@/components/ui/PublicLoadingBar'
 
 export default function AboutPage() {
   const router = useRouter()
+  const { navigateTo, isNavigating, progress } = usePublicNavigation()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
@@ -80,7 +82,7 @@ export default function AboutPage() {
       <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <button onClick={() => router.push('/')} className="flex items-center gap-3 group">
+            <button onClick={() => navigateTo('/')} className="flex items-center gap-3 group">
               <div className="bg-gradient-to-br from-slate-800 via-indigo-600 to-blue-600 p-2.5 rounded-xl shadow-lg shadow-indigo-600/30 group-hover:shadow-xl group-hover:shadow-indigo-500/40 transition-all duration-300">
                 <Activity className="h-7 w-7 text-white" strokeWidth={3} />
               </div>
@@ -93,37 +95,37 @@ export default function AboutPage() {
             {/* Navigation Links - Desktop */}
             <div className="hidden lg:flex items-center gap-1">
               <button
-                onClick={() => router.push('/#features')}
+                onClick={() => navigateTo('/#features')}
                 className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
               >
                 Features
               </button>
               <button
-                onClick={() => router.push('/#how-it-works')}
+                onClick={() => navigateTo('/#how-it-works')}
                 className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
               >
                 How It Works
               </button>
               <button
-                onClick={() => router.push('/pricing')}
+                onClick={() => navigateTo('/pricing')}
                 className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
               >
                 Pricing
               </button>
               <button
-                onClick={() => router.push('/security')}
+                onClick={() => navigateTo('/security')}
                 className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
               >
                 Security
               </button>
               <button
-                onClick={() => router.push('/about')}
+                onClick={() => navigateTo('/about')}
                 className="px-4 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50 rounded-lg transition-all duration-200"
               >
                 About
               </button>
               <button
-                onClick={() => router.push('/contact')}
+                onClick={() => navigateTo('/contact')}
                 className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
               >
                 Contact
@@ -133,7 +135,7 @@ export default function AboutPage() {
             <div className="flex items-center gap-3">
               {isAuthenticated ? (
                 <button
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => navigateTo('/dashboard')}
                   className="px-5 py-2.5 bg-gradient-to-r from-slate-800 via-indigo-600 to-blue-600 hover:from-slate-700 hover:via-indigo-500 hover:to-blue-500 text-white rounded-lg font-semibold text-sm shadow-lg shadow-indigo-600/40 hover:shadow-xl hover:shadow-indigo-500/50 transition-all duration-300 hover:-translate-y-0.5"
                 >
                   Go to Dashboard
@@ -141,13 +143,13 @@ export default function AboutPage() {
               ) : (
                 <>
                   <button
-                    onClick={() => router.push('/login')}
+                    onClick={() => navigateTo('/login')}
                     className="hidden sm:block px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-all duration-200"
                   >
                     Sign In
                   </button>
                   <button
-                    onClick={() => router.push('/register')}
+                    onClick={() => navigateTo('/register')}
                     className="px-5 py-2.5 bg-gradient-to-r from-slate-800 via-indigo-600 to-blue-600 hover:from-slate-700 hover:via-indigo-500 hover:to-blue-500 text-white rounded-lg font-semibold text-sm shadow-lg shadow-indigo-600/40 hover:shadow-xl hover:shadow-indigo-500/50 transition-all duration-300 hover:-translate-y-0.5"
                   >
                     Get Started
@@ -160,7 +162,7 @@ export default function AboutPage() {
       </nav>
 
       {/* Loading Bar */}
-      <LoadingBar />
+      <PublicLoadingBar progress={progress} isNavigating={isNavigating} />
 
       {/* Hero Section */}
       <div className="py-20 bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
@@ -344,7 +346,7 @@ export default function AboutPage() {
             Be part of the healthcare revolution. Start understanding your medical reports today.
           </p>
           <button
-            onClick={() => router.push(isAuthenticated ? '/dashboard' : '/register')}
+            onClick={() => navigateTo(isAuthenticated ? '/dashboard' : '/register')}
             className="px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold text-lg shadow-2xl hover:shadow-indigo-500/30 transition-all hover:-translate-y-1"
           >
             {isAuthenticated ? 'Go to Dashboard' : 'Get Started Free'}
@@ -371,20 +373,20 @@ export default function AboutPage() {
             <div>
               <h4 className="font-bold mb-4">Product</h4>
               <ul className="space-y-3 text-sm text-gray-400">
-                <li><button onClick={() => router.push('/')} className="hover:text-white transition-colors">Features</button></li>
-                <li><button onClick={() => router.push('/')} className="hover:text-white transition-colors">How It Works</button></li>
-                <li><button onClick={() => router.push('/pricing')} className="hover:text-white transition-colors">Pricing</button></li>
-                <li><button onClick={() => router.push('/security')} className="hover:text-white transition-colors">Security</button></li>
+                <li><button onClick={() => navigateTo('/')} className="hover:text-white transition-colors">Features</button></li>
+                <li><button onClick={() => navigateTo('/')} className="hover:text-white transition-colors">How It Works</button></li>
+                <li><button onClick={() => navigateTo('/pricing')} className="hover:text-white transition-colors">Pricing</button></li>
+                <li><button onClick={() => navigateTo('/security')} className="hover:text-white transition-colors">Security</button></li>
               </ul>
             </div>
             
             <div>
               <h4 className="font-bold mb-4">Company</h4>
               <ul className="space-y-3 text-sm text-gray-400">
-                <li><button onClick={() => router.push('/about')} className="hover:text-white transition-colors">About Us</button></li>
-                <li><button onClick={() => router.push('/contact')} className="hover:text-white transition-colors">Contact</button></li>
-                <li><button onClick={() => router.push('/privacy')} className="hover:text-white transition-colors">Privacy Policy</button></li>
-                <li><button onClick={() => router.push('/terms')} className="hover:text-white transition-colors">Terms of Service</button></li>
+                <li><button onClick={() => navigateTo('/about')} className="hover:text-white transition-colors">About Us</button></li>
+                <li><button onClick={() => navigateTo('/contact')} className="hover:text-white transition-colors">Contact</button></li>
+                <li><button onClick={() => navigateTo('/privacy')} className="hover:text-white transition-colors">Privacy Policy</button></li>
+                <li><button onClick={() => navigateTo('/terms')} className="hover:text-white transition-colors">Terms of Service</button></li>
               </ul>
             </div>
           </div>

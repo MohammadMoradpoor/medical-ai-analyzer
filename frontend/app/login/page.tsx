@@ -5,8 +5,11 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { Activity, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
 import toast from '@/lib/toast'
+import { usePublicNavigation } from '@/hooks/usePublicNavigation'
+import { PublicLoadingBar } from '@/components/ui/PublicLoadingBar'
 
 export default function LoginPage() {
+  const { navigateTo, isNavigating, progress } = usePublicNavigation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -82,7 +85,7 @@ export default function LoginPage() {
         icon: '🎉',
         duration: 2000
       })
-      router.push('/dashboard')
+      navigateTo('/dashboard')
     } catch (error: any) {
       let errorMsg = 'Login failed. Please check your credentials.'
       
@@ -113,10 +116,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-white to-green-50">
+      {/* Loading Bar */}
+      <PublicLoadingBar progress={progress} isNavigating={isNavigating} />
+      
       <div className={`max-w-md w-full space-y-8 ${shakeError ? 'animate-shake' : ''}`}>
         {/* Back Button */}
         <button
-          onClick={() => router.push('/')}
+          onClick={() => navigateTo('/')}
           className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-indigo-600 transition-colors group"
         >
           <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
@@ -137,7 +143,7 @@ export default function LoginPage() {
             Or{' '}
             <button
               type="button"
-              onClick={() => router.push('/register')}
+              onClick={() => navigateTo('/register')}
               className="font-semibold text-blue-600 hover:text-blue-500 transition-colors"
             >
               create a new account
