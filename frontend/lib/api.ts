@@ -202,7 +202,7 @@ export const reportsApi = {
     return { count: 0 }
   },
 
-  submitChatFeedback: async (reportId: string, messageId: string, isHelpful: boolean) => {
+  submitChatFeedback: async (reportId: string, messageId: string, isHelpful: boolean | null) => {
     const response = await api.post(`/reports/${reportId}/chat/${messageId}/feedback`, {
       is_helpful: isHelpful
     })

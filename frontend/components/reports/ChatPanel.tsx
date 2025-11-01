@@ -121,10 +121,14 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
 
   const loadChatHistory = async () => {
     try {
+      // Force fresh fetch - no cache
       const history = await reportsApi.getChatHistory(reportId, activeConversationId)
-      setMessages(history)
+      // Completely replace messages (don't merge)
+      setMessages(history || [])
+      console.log('[Chat] Loaded messages:', history.length)
     } catch (error) {
       console.error('Error loading chat history:', error)
+      setMessages([])
     }
   }
 
@@ -715,20 +719,23 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
       const currentMessage = messages.find(m => m.id === messageId)
       
       // Toggle: if clicking same button, cancel feedback
-      const newValue = currentMessage?.is_helpful === isHelpful ? undefined : isHelpful
+      const isCanceling = currentMessage?.is_helpful === isHelpful
       
-      await reportsApi.submitChatFeedback(reportId, messageId, isHelpful)
-      
-      // Update local message state
-      setMessages(prev => prev.map(msg => 
-        msg.id === messageId 
-          ? { ...msg, is_helpful: newValue, user_rating: newValue === undefined ? undefined : (newValue ? 5 : 1) } 
-          : msg
-      ))
-      
-      if (newValue === undefined) {
+      if (isCanceling) {
+        // Remove feedback - send null to backend
+        await reportsApi.submitChatFeedback(reportId, messageId, null)
+        
+        // Reload messages from database to get fresh state
+        await loadChatHistory()
+        
         toast.success('Feedback removed')
       } else {
+        // Set new feedback
+        await reportsApi.submitChatFeedback(reportId, messageId, isHelpful)
+        
+        // Reload messages from database to get fresh state
+        await loadChatHistory()
+        
         toast.success(isHelpful ? 'Marked as helpful' : 'Feedback recorded')
       }
     } catch (error) {

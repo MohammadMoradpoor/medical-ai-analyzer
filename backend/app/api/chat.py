@@ -466,7 +466,7 @@ async def generate_conversation_title(
 async def submit_chat_feedback(
     report_id: str,
     message_id: str,
-    feedback: Dict[str, bool],
+    feedback: Dict[str, Optional[bool]],
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -504,19 +504,29 @@ async def submit_chat_feedback(
             detail="Feedback can only be provided for AI responses"
         )
     
-    # Update feedback
-    is_helpful = feedback.get("is_helpful", True)
-    message.is_helpful = is_helpful
-    message.user_rating = 5 if is_helpful else 1
-    message.updated_at = datetime.utcnow()
+    # Update feedback (support null to remove feedback)
+    is_helpful = feedback.get("is_helpful")
+    
+    if is_helpful is None:
+        # Remove feedback
+        message.is_helpful = None
+        message.user_rating = None
+        message.updated_at = datetime.utcnow()
+        logger.info(f"[CHAT FEEDBACK] User {current_user.id} removed feedback from message {message_id}")
+        feedback_msg = "Feedback removed successfully"
+    else:
+        # Set feedback
+        message.is_helpful = is_helpful
+        message.user_rating = 5 if is_helpful else 1
+        message.updated_at = datetime.utcnow()
+        logger.info(f"[CHAT FEEDBACK] User {current_user.id} marked message {message_id} as {'helpful' if is_helpful else 'not helpful'}")
+        feedback_msg = "Feedback recorded successfully"
     
     db.commit()
     db.refresh(message)
     
-    logger.info(f"[CHAT FEEDBACK] User {current_user.id} marked message {message_id} as {'helpful' if is_helpful else 'not helpful'}")
-    
     return {
-        "message": "Feedback recorded successfully",
+        "message": feedback_msg,
         "is_helpful": message.is_helpful,
         "user_rating": message.user_rating
     }
