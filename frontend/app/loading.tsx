@@ -1,9 +1,12 @@
 export default function Loading() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading...</p>
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="text-center max-w-sm">
+        {/* Pulsing gradient bar - No spinner */}
+        <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
+          <div className="h-full bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-500 animate-pulse" style={{ width: '60%' }}></div>
+        </div>
+        <p className="text-slate-600 font-medium">Loading...</p>
       </div>
     </div>
   )

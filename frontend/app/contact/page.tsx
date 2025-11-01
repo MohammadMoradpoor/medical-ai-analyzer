@@ -262,14 +262,17 @@ export default function ContactPage() {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                    className="w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                    style={{
+                      color: formData.subject ? '#0f172a' : '#64748b'
+                    }}
                   >
-                    <option value="">Select a subject</option>
-                    <option value="general">General Inquiry</option>
-                    <option value="support">Technical Support</option>
-                    <option value="billing">Billing Question</option>
-                    <option value="partnership">Partnership Opportunity</option>
-                    <option value="feedback">Feedback</option>
+                    <option value="" className="text-slate-500">Select a subject</option>
+                    <option value="general" className="text-slate-900">General Inquiry</option>
+                    <option value="support" className="text-slate-900">Technical Support</option>
+                    <option value="billing" className="text-slate-900">Billing Question</option>
+                    <option value="partnership" className="text-slate-900">Partnership Opportunity</option>
+                    <option value="feedback" className="text-slate-900">Feedback</option>
                   </select>
                 </div>
 
@@ -293,7 +296,7 @@ export default function ContactPage() {
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <Send className="h-5 w-5 opacity-70" />
                       Sending...
                     </>
                   ) : (

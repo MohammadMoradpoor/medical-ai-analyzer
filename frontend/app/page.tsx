@@ -278,7 +278,7 @@ export default function LandingPage() {
                 </div>
                 
                 {/* Floating Elements */}
-                <div className="absolute -top-4 -right-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-xl shadow-purple-500/50 animate-bounce">
+                <div className="absolute -top-4 -right-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-xl shadow-purple-500/50">
                   ⚡ 30s
                 </div>
               </div>
