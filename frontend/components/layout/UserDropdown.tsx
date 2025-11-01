@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, LogOut, Settings as SettingsIcon, ChevronDown, Activity } from 'lucide-react'
+import { User, LogOut, Settings as SettingsIcon, ChevronDown, Activity, Loader2 } from 'lucide-react'
 import toast from '@/lib/toast'
 
 export function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
+  const [loadingRoute, setLoadingRoute] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -22,6 +24,23 @@ export function UserDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  const navigateTo = async (path: string) => {
+    setLoadingRoute(path)
+    setIsNavigating(true)
+    setIsOpen(false)
+    
+    // Show loading for minimum 300ms for smooth UX
+    await new Promise(resolve => setTimeout(resolve, 300))
+    
+    router.push(path)
+    
+    // Reset after navigation
+    setTimeout(() => {
+      setIsNavigating(false)
+      setLoadingRoute(null)
+    }, 500)
+  }
+
   const handleLogout = () => {
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
@@ -31,9 +50,15 @@ export function UserDropdown() {
   }
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      {/* Trigger Button */}
-      <button
+    <>
+      {/* Global Loading Bar for Navigation */}
+      {isNavigating && (
+        <div className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 z-50 animate-pulse" />
+      )}
+      
+      <div className="relative" ref={dropdownRef}>
+        {/* Trigger Button */}
+        <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
@@ -79,36 +104,39 @@ export function UserDropdown() {
           {/* Menu Items */}
           <div className="py-1">
             <button
-              onClick={() => {
-                router.push('/profile')
-                setIsOpen(false)
-              }}
-              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors"
+              onClick={() => navigateTo('/profile')}
+              disabled={isNavigating}
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between transition-colors disabled:opacity-50"
             >
-              <User className="w-4 h-4" />
-              <span>Profile</span>
+              <div className="flex items-center space-x-3">
+                <User className="w-4 h-4" />
+                <span>Profile</span>
+              </div>
+              {loadingRoute === '/profile' && <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />}
             </button>
 
             <button
-              onClick={() => {
-                router.push('/settings')
-                setIsOpen(false)
-              }}
-              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors"
+              onClick={() => navigateTo('/settings')}
+              disabled={isNavigating}
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between transition-colors disabled:opacity-50"
             >
-              <SettingsIcon className="w-4 h-4" />
-              <span>Settings</span>
+              <div className="flex items-center space-x-3">
+                <SettingsIcon className="w-4 h-4" />
+                <span>Settings</span>
+              </div>
+              {loadingRoute === '/settings' && <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />}
             </button>
 
             <button
-              onClick={() => {
-                router.push('/dashboard')
-                setIsOpen(false)
-              }}
-              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors"
+              onClick={() => navigateTo('/dashboard')}
+              disabled={isNavigating}
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between transition-colors disabled:opacity-50"
             >
-              <Activity className="w-4 h-4" />
-              <span>Dashboard</span>
+              <div className="flex items-center space-x-3">
+                <Activity className="w-4 h-4" />
+                <span>Dashboard</span>
+              </div>
+              {loadingRoute === '/dashboard' && <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />}
             </button>
           </div>
 
@@ -138,7 +166,8 @@ export function UserDropdown() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   )
 }
 
