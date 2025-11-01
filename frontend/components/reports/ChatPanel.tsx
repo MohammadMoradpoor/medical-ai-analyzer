@@ -1325,13 +1325,13 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                     onKeyDown={handleKeyDown}
                     placeholder="Ask a question about your report..."
                     disabled={isLoading}
-                    className="flex-1 bg-transparent text-base text-gray-900 placeholder-gray-400 focus:outline-none resize-none overflow-hidden disabled:opacity-50 py-2"
+                    className="flex-1 bg-transparent text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none resize-none overflow-hidden disabled:opacity-50 leading-6"
                     style={{ 
-                      lineHeight: '24px',
                       minHeight: '24px',
                       maxHeight: '200px',
                       height: '24px',
-                      overflowY: 'hidden'
+                      overflowY: 'hidden',
+                      padding: '2px 0'
                     }}
                   />
                   
