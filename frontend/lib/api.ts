@@ -197,6 +197,11 @@ export const reportsApi = {
     return response.data
   },
 
+  getUnreadCount: async () => {
+    // Placeholder - returns 0 unread notifications
+    return { count: 0 }
+  },
+
   submitChatFeedback: async (reportId: string, messageId: string, isHelpful: boolean) => {
     const response = await api.post(`/reports/${reportId}/chat/${messageId}/feedback`, {
       is_helpful: isHelpful

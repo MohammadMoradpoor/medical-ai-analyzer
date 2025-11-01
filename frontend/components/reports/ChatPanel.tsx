@@ -26,7 +26,12 @@ import {
   Search,
   Menu,
   PanelLeft,
-  Sidebar
+  Sidebar,
+  Mic,
+  Play,
+  Pause,
+  StopCircle,
+  Volume2
 } from 'lucide-react'
 import toast from '@/lib/toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -63,9 +68,19 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
   const [conversationSearch, setConversationSearch] = useState('')
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isRecording, setIsRecording] = useState(false)
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const [playingAudio, setPlayingAudio] = useState<string | null>(null)
+  const [loadingAudio, setLoadingAudio] = useState<string | null>(null)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null)
+  const audioCacheRef = useRef<Map<string, string>>(new Map()) // Cache: messageId -> audio URL
 
   useEffect(() => {
     if (isOpen) {
@@ -367,6 +382,226 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
     setTimeout(() => {
       setCopiedMessageId(null)
     }, 2000)
+  }
+
+  // Voice Recording Functions
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        setAudioBlob(audioBlob)
+        stream.getTracks().forEach(track => track.stop())
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+      setRecordingTime(0)
+      
+      recordingIntervalRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1)
+      }, 1000)
+    } catch (err) {
+      console.error('Microphone error:', err)
+      toast.error('Microphone access denied')
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+      if (recordingIntervalRef.current) {
+        clearInterval(recordingIntervalRef.current)
+      }
+    }
+  }
+
+  const cancelRecording = () => {
+    stopRecording()
+    setAudioBlob(null)
+    setRecordingTime(0)
+  }
+
+  const formatRecordingTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+
+  const stopAllAudio = () => {
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause()
+      audioPlayerRef.current.currentTime = 0
+      audioPlayerRef.current = null
+    }
+    setPlayingAudio(null)
+    setLoadingAudio(null)
+  }
+
+  const playMessageAudio = async (messageId: string, text: string) => {
+    try {
+      // If clicking the same message that's playing, stop it
+      if (playingAudio === messageId) {
+        stopAllAudio()
+        return
+      }
+
+      // If clicking while loading the same audio, cancel it
+      if (loadingAudio === messageId) {
+        stopAllAudio()
+        return
+      }
+
+      // Stop any other playing/loading audio
+      stopAllAudio()
+
+      let audioUrl: string
+
+      // Check cache first (professional optimization)
+      if (audioCacheRef.current.has(messageId)) {
+        // Use cached audio - instant playback!
+        audioUrl = audioCacheRef.current.get(messageId)!
+        console.log('[TTS] Using cached audio for message', messageId)
+      } else {
+        // Set loading state (only if not cached)
+        setLoadingAudio(messageId)
+
+        // Request TTS from backend
+        const response = await fetch(`http://localhost:5000/api/v1/reports/${reportId}/chat/text-to-speech`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text: text.substring(0, 4000) }) // Limit to 4000 chars
+        })
+
+        if (!response.ok) {
+          throw new Error('TTS failed')
+        }
+
+        const audioBlob = await response.blob()
+        audioUrl = URL.createObjectURL(audioBlob)
+        
+        // Cache the audio URL for instant replay
+        audioCacheRef.current.set(messageId, audioUrl)
+        console.log('[TTS] Cached audio for message', messageId)
+        
+        // Clear loading state
+        setLoadingAudio(null)
+      }
+
+      // Create and play audio
+      const audio = new Audio(audioUrl)
+      audioPlayerRef.current = audio
+      setPlayingAudio(messageId)
+
+      audio.onended = () => {
+        setPlayingAudio(null)
+        audioPlayerRef.current = null
+      }
+
+      audio.onerror = () => {
+        setPlayingAudio(null)
+        setLoadingAudio(null)
+        toast.error('Audio playback failed')
+        audioPlayerRef.current = null
+      }
+
+      await audio.play()
+    } catch (error) {
+      console.error('TTS error:', error)
+      toast.error('Failed to play audio')
+      setPlayingAudio(null)
+      setLoadingAudio(null)
+      audioPlayerRef.current = null
+    }
+  }
+
+  // Cleanup audio and cache on unmount
+  useEffect(() => {
+    return () => {
+      stopAllAudio()
+      // Revoke all cached audio URLs to prevent memory leaks
+      audioCacheRef.current.forEach(url => URL.revokeObjectURL(url))
+      audioCacheRef.current.clear()
+    }
+  }, [])
+
+  // Stop audio when conversation changes
+  useEffect(() => {
+    stopAllAudio()
+  }, [activeConversationId])
+
+  // Stop audio when chat closes
+  useEffect(() => {
+    if (!isOpen) {
+      stopAllAudio()
+    }
+  }, [isOpen])
+
+  // Clear cache when conversation changes (new messages, different context)
+  useEffect(() => {
+    // Revoke old cache URLs
+    audioCacheRef.current.forEach(url => URL.revokeObjectURL(url))
+    audioCacheRef.current.clear()
+  }, [activeConversationId, messages.length])
+
+  const sendVoiceMessage = async () => {
+    if (!audioBlob) return
+
+    setIsLoading(true)
+    
+    try {
+      // Create form data with audio
+      const formData = new FormData()
+      formData.append('audio', audioBlob, 'voice-message.webm')
+
+      // Upload and transcribe (use base URL without /api/v1 since it's in the path)
+      const response = await fetch(`http://localhost:5000/api/v1/reports/${reportId}/chat/voice`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('Transcription failed')
+      }
+
+      const data = await response.json()
+      
+      // Clear audio first
+      setAudioBlob(null)
+      setRecordingTime(0)
+      
+      // Send the transcribed text as a message
+      if (data.transcription && data.transcription.trim()) {
+        toast.success(`Transcribed (${data.duration?.toFixed(1)}s)`)
+        await sendMessage(data.transcription)
+      } else {
+        toast.error('No speech detected in audio')
+      }
+    } catch (error) {
+      console.error('Voice message error:', error)
+      toast.error('Failed to transcribe voice message')
+      setAudioBlob(null)
+      setRecordingTime(0)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleClearConfirm = async () => {
@@ -774,6 +1009,33 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                 <div className="mt-2 flex items-center justify-between text-xs">
                   {/* Actions */}
                   <div className="flex items-center gap-1">
+                    {/* Play/Stop Audio Button */}
+                    <button
+                      onClick={() => playMessageAudio(message.id, message.content)}
+                      disabled={loadingAudio === message.id}
+                      className={`p-1 rounded-md transition-all ${
+                        playingAudio === message.id
+                          ? 'bg-purple-200 text-purple-700'
+                          : loadingAudio === message.id
+                          ? 'bg-purple-100 text-purple-600'
+                          : 'text-gray-500 hover:bg-gray-100 hover:text-purple-600'
+                      }`}
+                      title={
+                        loadingAudio === message.id 
+                          ? "Loading audio..." 
+                          : playingAudio === message.id 
+                          ? "Stop audio" 
+                          : "Play audio"
+                      }
+                    >
+                      {loadingAudio === message.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : playingAudio === message.id ? (
+                        <StopCircle className="h-3.5 w-3.5" />
+                      ) : (
+                        <Volume2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
                     <button
                       onClick={() => copyToClipboard(message.content, message.id)}
                       className={`p-1 rounded-md transition-all ${
@@ -872,39 +1134,137 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
           </div>
         )}
 
-        {/* Input Area */}
-        <div className="px-6 py-4 bg-white flex-shrink-0">
-          <div className="flex items-start gap-3 max-w-4xl mx-auto">
-            <textarea
-              ref={inputRef as any}
-              value={inputMessage}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask a question about your report..."
-              disabled={isLoading}
-              rows={1}
-              className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all resize-none overflow-hidden shadow-sm"
-              style={{ minHeight: '52px', maxHeight: '150px', lineHeight: '1.4' }}
-            />
-            <button
-              onClick={() => sendMessage()}
-              disabled={!inputMessage.trim() || isLoading}
-              className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2 flex-shrink-0"
-            >
-              {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Send className="h-5 w-5" />
-              )}
-            </button>
-          </div>
+        {/* Input Area with Voice Support */}
+        <div className="px-6 py-4 bg-white flex-shrink-0 border-t border-gray-200">
+          {/* Voice Recording UI */}
+          {isRecording || audioBlob ? (
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-300 rounded-xl p-4 shadow-md">
+                <div className="flex items-center gap-4">
+                  {/* Waveform Animation */}
+                  {isRecording && (
+                    <div className="flex items-center gap-1">
+                      {[...Array(5)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="w-1 bg-purple-600 rounded-full animate-pulse"
+                          style={{
+                            height: `${Math.random() * 24 + 12}px`,
+                            animationDelay: `${i * 0.1}s`,
+                            animationDuration: '0.8s'
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Status */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      {isRecording ? (
+                        <>
+                          <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                          <span className="text-sm font-semibold text-gray-900">Recording...</span>
+                          <span className="text-sm font-mono text-gray-600">{formatRecordingTime(recordingTime)}</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-semibold text-gray-900">Voice ready to send</span>
+                          <span className="text-sm font-mono text-gray-600">{formatRecordingTime(recordingTime)}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
 
-          {/* Helper Text - Centered Below Input */}
-          <div className="mt-2 text-center max-w-4xl mx-auto">
-            <span className="text-xs text-gray-500">
-              Press <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Shift+Enter</kbd> for new line
-            </span>
-          </div>
+                  {/* Actions */}
+                  <div className="flex items-center gap-2">
+                    {isRecording ? (
+                      <button
+                        onClick={stopRecording}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold text-sm transition-colors flex items-center gap-2 shadow-md"
+                      >
+                        <StopCircle className="h-4 w-4" />
+                        Stop
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={cancelRecording}
+                          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={sendVoiceMessage}
+                          disabled={isLoading}
+                          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg font-semibold text-sm disabled:opacity-50 transition-all flex items-center gap-2 shadow-md"
+                        >
+                          {isLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4" />
+                              Send Voice
+                            </>
+                          )}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Normal Text Input */
+            <div className="max-w-4xl mx-auto">
+              <div className="flex items-start gap-3">
+                <textarea
+                  ref={inputRef as any}
+                  value={inputMessage}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Ask a question about your report..."
+                  disabled={isLoading}
+                  rows={1}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all resize-none overflow-hidden shadow-sm"
+                  style={{ minHeight: '52px', maxHeight: '150px', lineHeight: '1.4' }}
+                />
+                
+                {/* Voice Record Button */}
+                <button
+                  onClick={startRecording}
+                  disabled={isLoading}
+                  className="px-4 py-3 bg-white border-2 border-gray-300 hover:border-purple-500 hover:bg-purple-50 text-gray-700 hover:text-purple-600 rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md flex items-center gap-2 flex-shrink-0 group"
+                  title="Record voice message"
+                >
+                  <Mic className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                </button>
+                
+                <button
+                  onClick={() => sendMessage()}
+                  disabled={!inputMessage.trim() || isLoading}
+                  className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2 flex-shrink-0"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="h-5 w-5" />
+                      Send
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Helper Text */}
+              <div className="mt-2 text-center">
+                <span className="text-xs text-gray-500">
+                  Press <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Shift+Enter</kbd> for new line
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Professional Medical Disclaimer */}

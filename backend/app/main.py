@@ -111,6 +111,14 @@ app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
 app.include_router(chat.router, prefix="/api/v1/reports", tags=["chat"])
 app.include_router(chat_stream.router, prefix="/api/v1/reports", tags=["chat-streaming"])
 
+# Import and include voice router
+try:
+    from .api import voice
+    app.include_router(voice.router, prefix="/api/v1/reports", tags=["voice"])
+    logger.info("Voice transcription endpoint registered")
+except Exception as e:
+    logger.warning(f"Voice router not registered: {e}")
+
 
 if __name__ == "__main__":
     import uvicorn
