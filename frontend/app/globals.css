@@ -213,3 +213,29 @@ body {
 .animate-slideUp {
   animation: slideUp 0.3s ease-out;
 }
+
+/* Fix placeholder alignment in textarea */
+textarea::placeholder {
+  line-height: 1.5;
+  padding-top: 0;
+  padding-bottom: 0;
+  vertical-align: middle;
+}
+
+textarea::-webkit-input-placeholder {
+  line-height: 1.5;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+textarea::-moz-placeholder {
+  line-height: 1.5;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+textarea:-ms-input-placeholder {
+  line-height: 1.5;
+  padding-top: 0;
+  padding-bottom: 0;
+}

@@ -370,12 +370,16 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
   }
 
   const resizeTextarea = (textarea: HTMLTextAreaElement) => {
-    textarea.style.height = '24px' // Reset to min height
-    const newHeight = Math.min(textarea.scrollHeight, 200) // Max 200px
+    // Reset height to get accurate scrollHeight
+    textarea.style.height = 'auto'
+    
+    // Calculate new height, minimum 36px, maximum 200px
+    const scrollHeight = textarea.scrollHeight
+    const newHeight = Math.max(36, Math.min(scrollHeight, 200))
     textarea.style.height = `${newHeight}px`
     
     // Enable scrolling only when at max height
-    if (textarea.scrollHeight > 200) {
+    if (scrollHeight > 200) {
       textarea.style.overflowY = 'auto'
     } else {
       textarea.style.overflowY = 'hidden'
@@ -1311,13 +1315,13 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                   {/* Plus Button - Bottom aligned */}
                   <button
                     onClick={() => toast.info('Attach files coming soon')}
-                    className="flex-shrink-0 p-2 mb-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="flex-shrink-0 p-2 mb-0.5 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors self-end"
                     title="Attach files"
                   >
                     <Plus className="h-5 w-5" />
                   </button>
 
-                  {/* Auto-expanding Textarea */}
+                  {/* Auto-expanding Textarea - Grows upward */}
                   <textarea
                     ref={inputRef as any}
                     value={inputMessage}
@@ -1325,13 +1329,15 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                     onKeyDown={handleKeyDown}
                     placeholder="Ask a question about your report..."
                     disabled={isLoading}
-                    className="flex-1 bg-transparent text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none resize-none overflow-hidden disabled:opacity-50 leading-6"
+                    rows={1}
+                    className="flex-1 bg-transparent text-[15px] text-gray-900 placeholder-gray-400 focus:outline-none resize-none disabled:opacity-50"
                     style={{ 
-                      minHeight: '24px',
+                      minHeight: '36px',
                       maxHeight: '200px',
-                      height: '24px',
                       overflowY: 'hidden',
-                      padding: '2px 0'
+                      paddingTop: '6px',
+                      paddingBottom: '6px',
+                      lineHeight: '1.5'
                     }}
                   />
                   
@@ -1339,7 +1345,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                   <button
                     onClick={startRecording}
                     disabled={isLoading}
-                    className="flex-shrink-0 p-2 mb-1 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg disabled:opacity-50 transition-colors"
+                    className="flex-shrink-0 p-2 mb-0.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg disabled:opacity-50 transition-colors self-end"
                     title="Voice message"
                   >
                     <Mic className="h-5 w-5" />
@@ -1349,7 +1355,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                   <button
                     onClick={() => sendMessage()}
                     disabled={!inputMessage.trim() || isLoading}
-                    className="flex-shrink-0 w-9 h-9 mb-1 bg-purple-600 hover:bg-purple-700 text-white rounded-full disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+                    className="flex-shrink-0 w-9 h-9 mb-0.5 bg-purple-600 hover:bg-purple-700 text-white rounded-full disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center self-end"
                   >
                     {isLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
