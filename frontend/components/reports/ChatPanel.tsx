@@ -77,7 +77,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
   const [audioLevels, setAudioLevels] = useState<number[]>([0, 0, 0, 0, 0])
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -369,15 +369,30 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
     // Shift+Enter allows new line (default textarea behavior)
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputMessage(e.target.value)
-    
-    // Auto-resize textarea - ChatGPT style
-    const textarea = e.target
+  const resizeTextarea = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = '24px' // Reset to min height
     const newHeight = Math.min(textarea.scrollHeight, 200) // Max 200px
     textarea.style.height = `${newHeight}px`
+    
+    // Enable scrolling only when at max height
+    if (textarea.scrollHeight > 200) {
+      textarea.style.overflowY = 'auto'
+    } else {
+      textarea.style.overflowY = 'hidden'
+    }
   }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInputMessage(e.target.value)
+    resizeTextarea(e.target)
+  }
+
+  // Auto-resize when inputMessage changes programmatically (suggested questions, etc.)
+  useEffect(() => {
+    if (inputRef.current) {
+      resizeTextarea(inputRef.current)
+    }
+  }, [inputMessage])
 
   const copyToClipboard = (text: string, messageId: string) => {
     navigator.clipboard.writeText(text)
@@ -934,7 +949,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         )}
 
         {/* Messages - Scrollable area with professional scrollbar */}
-        <div className={`flex-1 bg-gray-50 min-h-0 ${messages.length === 0 && !isLoading ? 'flex flex-col items-center justify-center' : 'overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent'}`}>
+        <div className={`flex-1 bg-[#F9FAFB] min-h-0 ${messages.length === 0 && !isLoading ? 'flex flex-col items-center justify-center' : 'overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent'}`}>
         {messages.length === 0 && !isLoading ? (
           <div className="text-center px-8 w-full max-w-3xl">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
@@ -1209,7 +1224,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         )}
 
         {/* Input Area with Voice Support */}
-        <div className="px-6 py-4 bg-white flex-shrink-0 border-t border-gray-200">
+        <div className="px-6 py-4 bg-[#F9FAFB] flex-shrink-0">
           {/* Voice Recording UI */}
           {isRecording || audioBlob ? (
             <div className="max-w-4xl mx-auto">
@@ -1310,12 +1325,13 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                     onKeyDown={handleKeyDown}
                     placeholder="Ask a question about your report..."
                     disabled={isLoading}
-                    className="flex-1 bg-transparent text-base text-gray-900 placeholder-gray-400 focus:outline-none resize-none overflow-y-auto disabled:opacity-50 py-2"
+                    className="flex-1 bg-transparent text-base text-gray-900 placeholder-gray-400 focus:outline-none resize-none overflow-hidden disabled:opacity-50 py-2"
                     style={{ 
-                      lineHeight: '1.5',
+                      lineHeight: '24px',
                       minHeight: '24px',
                       maxHeight: '200px',
-                      height: '24px'
+                      height: '24px',
+                      overflowY: 'hidden'
                     }}
                   />
                   
@@ -1347,15 +1363,17 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
           )}
         </div>
 
-        {/* Professional Medical Disclaimer */}
-        <div className="px-4 py-2 bg-yellow-50 border-t border-yellow-200 flex-shrink-0">
-          <p className="text-xs text-yellow-900 flex items-center gap-1.5 leading-tight">
-            <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
-            <span>
-              <strong>Disclaimer:</strong> AI responses are for informational purposes only. 
-              Always consult your healthcare provider for medical advice.
-            </span>
-          </p>
+        {/* Professional Medical Disclaimer - Aligned with textbox */}
+        <div className="px-6 py-2 bg-[#F9FAFB] flex-shrink-0">
+          <div className="max-w-4xl mx-auto border-t border-gray-200 pt-2">
+            <p className="text-xs text-gray-500 flex items-center justify-center gap-1.5 leading-tight">
+              <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+              <span>
+                <strong>Disclaimer:</strong> AI responses are for informational purposes only. 
+                Always consult your healthcare provider for medical advice.
+              </span>
+            </p>
+          </div>
         </div>
           </div>
           {/* End Main Chat Area */}
