@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { Activity, Shield, Lock, Eye, Server, Key, CheckCircle, FileCheck, AlertTriangle, Star } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { LoadingBar } from '@/components/ui/LoadingBar'
 
 export default function SecurityPage() {
   const router = useRouter()
@@ -105,13 +106,13 @@ export default function SecurityPage() {
             {/* Navigation Links - Desktop */}
             <div className="hidden lg:flex items-center gap-1">
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/#features')}
                 className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
               >
                 Features
               </button>
               <button
-                onClick={() => router.push('/')}
+                onClick={() => router.push('/#how-it-works')}
                 className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
               >
                 How It Works
@@ -170,6 +171,9 @@ export default function SecurityPage() {
           </div>
         </div>
       </nav>
+
+      {/* Loading Bar */}
+      <LoadingBar />
 
       {/* Hero Section */}
       <div className="py-20 bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { Activity, Upload, Brain, Zap, Shield, CheckCircle, ArrowRight, FileText, Heart, Microscope, ChevronRight, Star } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { LoadingBar } from '@/components/ui/LoadingBar'
 
 export default function LandingPage() {
   const router = useRouter()
@@ -15,6 +16,15 @@ export default function LandingPage() {
     const token = localStorage.getItem('access_token')
     setIsAuthenticated(!!token)
     setIsCheckingAuth(false)
+
+    // Handle hash navigation from other pages
+    const hash = window.location.hash
+    if (hash) {
+      setTimeout(() => {
+        const element = document.getElementById(hash.substring(1))
+        element?.scrollIntoView({ behavior: 'smooth' })
+      }, 100)
+    }
   }, [])
 
   const features = [
@@ -161,6 +171,9 @@ export default function LandingPage() {
           </div>
         </div>
       </nav>
+
+      {/* Loading Bar */}
+      <LoadingBar />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50/30">

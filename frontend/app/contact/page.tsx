@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { Activity, Mail, MessageCircle, Phone, MapPin, Clock, Send, Star, CheckCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { LoadingBar } from '@/components/ui/LoadingBar'
 
 export default function ContactPage() {
   const router = useRouter()
@@ -95,11 +96,51 @@ export default function ContactPage() {
               <div className="bg-gradient-to-br from-slate-800 via-indigo-600 to-blue-600 p-2.5 rounded-xl shadow-lg shadow-indigo-600/30 group-hover:shadow-xl group-hover:shadow-indigo-500/40 transition-all duration-300">
                 <Activity className="h-7 w-7 text-white" strokeWidth={3} />
               </div>
-              <div>
+              <div className="text-left">
                 <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">Medical AI Analyzer</h1>
                 <p className="text-xs font-medium text-slate-500">AI-Powered Diagnostics</p>
               </div>
             </button>
+
+            {/* Navigation Links - Desktop */}
+            <div className="hidden lg:flex items-center gap-1">
+              <button
+                onClick={() => router.push('/#features')}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
+              >
+                Features
+              </button>
+              <button
+                onClick={() => router.push('/#how-it-works')}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
+              >
+                How It Works
+              </button>
+              <button
+                onClick={() => router.push('/pricing')}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
+              >
+                Pricing
+              </button>
+              <button
+                onClick={() => router.push('/security')}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
+              >
+                Security
+              </button>
+              <button
+                onClick={() => router.push('/about')}
+                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200"
+              >
+                About
+              </button>
+              <button
+                onClick={() => router.push('/contact')}
+                className="px-4 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50 rounded-lg transition-all duration-200"
+              >
+                Contact
+              </button>
+            </div>
 
             <div className="flex items-center gap-3">
               {isAuthenticated ? (
@@ -113,7 +154,7 @@ export default function ContactPage() {
                 <>
                   <button
                     onClick={() => router.push('/login')}
-                    className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-all duration-200"
+                    className="hidden sm:block px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-all duration-200"
                   >
                     Sign In
                   </button>
@@ -121,7 +162,7 @@ export default function ContactPage() {
                     onClick={() => router.push('/register')}
                     className="px-5 py-2.5 bg-gradient-to-r from-slate-800 via-indigo-600 to-blue-600 hover:from-slate-700 hover:via-indigo-500 hover:to-blue-500 text-white rounded-lg font-semibold text-sm shadow-lg shadow-indigo-600/40 hover:shadow-xl hover:shadow-indigo-500/50 transition-all duration-300 hover:-translate-y-0.5"
                   >
-                    Get Started Free
+                    Get Started
                   </button>
                 </>
               )}
@@ -129,6 +170,9 @@ export default function ContactPage() {
           </div>
         </div>
       </nav>
+
+      {/* Loading Bar */}
+      <LoadingBar />
 
       {/* Hero Section */}
       <div className="py-20 bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
