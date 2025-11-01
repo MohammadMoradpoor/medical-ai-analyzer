@@ -2,11 +2,20 @@
 
 import { useRouter } from 'next/navigation'
 import { Activity, Upload, Brain, Zap, Shield, CheckCircle, ArrowRight, FileText, Heart, Microscope, ChevronRight, Star } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function LandingPage() {
   const router = useRouter()
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('access_token')
+    setIsAuthenticated(!!token)
+    setIsCheckingAuth(false)
+  }, [])
 
   const features = [
     {
@@ -78,19 +87,36 @@ export default function LandingPage() {
 
             {/* Actions */}
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push('/login')}
-                className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-all duration-200 relative group"
-              >
-                Sign In
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-600 to-blue-600 group-hover:w-full transition-all duration-300"></span>
-              </button>
-              <button
-                onClick={() => router.push('/register')}
-                className="px-5 py-2.5 bg-gradient-to-r from-slate-800 via-indigo-600 to-blue-600 hover:from-slate-700 hover:via-indigo-500 hover:to-blue-500 text-white rounded-lg font-semibold text-sm shadow-lg shadow-indigo-600/40 hover:shadow-xl hover:shadow-indigo-500/50 transition-all duration-300 hover:-translate-y-0.5"
-              >
-                Get Started Free
-              </button>
+              {!isCheckingAuth && (
+                <>
+                  {isAuthenticated ? (
+                    /* Authenticated User */
+                    <button
+                      onClick={() => router.push('/dashboard')}
+                      className="px-5 py-2.5 bg-gradient-to-r from-slate-800 via-indigo-600 to-blue-600 hover:from-slate-700 hover:via-indigo-500 hover:to-blue-500 text-white rounded-lg font-semibold text-sm shadow-lg shadow-indigo-600/40 hover:shadow-xl hover:shadow-indigo-500/50 transition-all duration-300 hover:-translate-y-0.5"
+                    >
+                      Go to Dashboard
+                    </button>
+                  ) : (
+                    /* Not Authenticated */
+                    <>
+                      <button
+                        onClick={() => router.push('/login')}
+                        className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 transition-all duration-200 relative group"
+                      >
+                        Sign In
+                        <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-indigo-600 to-blue-600 group-hover:w-full transition-all duration-300"></span>
+                      </button>
+                      <button
+                        onClick={() => router.push('/register')}
+                        className="px-5 py-2.5 bg-gradient-to-r from-slate-800 via-indigo-600 to-blue-600 hover:from-slate-700 hover:via-indigo-500 hover:to-blue-500 text-white rounded-lg font-semibold text-sm shadow-lg shadow-indigo-600/40 hover:shadow-xl hover:shadow-indigo-500/50 transition-all duration-300 hover:-translate-y-0.5"
+                      >
+                        Get Started Free
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -118,16 +144,29 @@ export default function LandingPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  onClick={() => router.push('/register')}
-                  className="px-8 py-4 bg-gradient-to-r from-slate-800 via-indigo-600 to-blue-600 hover:from-slate-700 hover:via-indigo-500 hover:to-blue-500 text-white rounded-xl font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:shadow-indigo-500/60 transition-all duration-300 hover:-translate-y-1 flex items-center justify-center gap-2 group relative overflow-hidden"
-                >
-                  <span className="relative z-10 flex items-center gap-2">
-                    Start Analyzing Now
-                    <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-blue-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-                </button>
+                {isAuthenticated ? (
+                  <button
+                    onClick={() => router.push('/dashboard')}
+                    className="px-8 py-4 bg-gradient-to-r from-slate-800 via-indigo-600 to-blue-600 hover:from-slate-700 hover:via-indigo-500 hover:to-blue-500 text-white rounded-xl font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:shadow-indigo-500/60 transition-all duration-300 hover:-translate-y-1 flex items-center justify-center gap-2 group relative overflow-hidden"
+                  >
+                    <span className="relative z-10 flex items-center gap-2">
+                      Go to Dashboard
+                      <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-blue-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => router.push('/register')}
+                    className="px-8 py-4 bg-gradient-to-r from-slate-800 via-indigo-600 to-blue-600 hover:from-slate-700 hover:via-indigo-500 hover:to-blue-500 text-white rounded-xl font-bold text-lg shadow-2xl shadow-indigo-600/40 hover:shadow-indigo-500/60 transition-all duration-300 hover:-translate-y-1 flex items-center justify-center gap-2 group relative overflow-hidden"
+                  >
+                    <span className="relative z-10 flex items-center gap-2">
+                      Start Analyzing Now
+                      <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+                    </span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-blue-400 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })
@@ -326,19 +365,31 @@ export default function LandingPage() {
             Start analyzing your reports today - completely free to get started.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => router.push('/register')}
-              className="px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold text-lg shadow-2xl shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all hover:-translate-y-1 flex items-center justify-center gap-2 group"
-            >
-              <Upload className="h-5 w-5 group-hover:scale-110 transition-transform" />
-              Start Free Analysis
-            </button>
-            <button
-              onClick={() => router.push('/login')}
-              className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl font-bold text-lg shadow-xl shadow-indigo-500/30 hover:shadow-2xl transition-all hover:-translate-y-1"
-            >
-              Sign In to Dashboard
-            </button>
+            {isAuthenticated ? (
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold text-lg shadow-2xl shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all hover:-translate-y-1 flex items-center justify-center gap-2 group"
+              >
+                <Upload className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                Go to Dashboard
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => router.push('/register')}
+                  className="px-8 py-4 bg-white text-indigo-600 rounded-xl font-bold text-lg shadow-2xl shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all hover:-translate-y-1 flex items-center justify-center gap-2 group"
+                >
+                  <Upload className="h-5 w-5 group-hover:scale-110 transition-transform" />
+                  Start Free Analysis
+                </button>
+                <button
+                  onClick={() => router.push('/login')}
+                  className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white rounded-xl font-bold text-lg shadow-xl shadow-indigo-500/30 hover:shadow-2xl transition-all hover:-translate-y-1"
+                >
+                  Sign In to Dashboard
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
