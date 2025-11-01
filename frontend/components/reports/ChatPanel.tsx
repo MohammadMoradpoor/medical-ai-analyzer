@@ -32,7 +32,8 @@ import {
   Pause,
   StopCircle,
   Volume2,
-  Plus
+  Plus,
+  ArrowDown
 } from 'lucide-react'
 import toast from '@/lib/toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -75,9 +76,11 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
   const [playingAudio, setPlayingAudio] = useState<string | null>(null)
   const [loadingAudio, setLoadingAudio] = useState<string | null>(null)
   const [audioLevels, setAudioLevels] = useState<number[]>([0, 0, 0, 0, 0])
+  const [showScrollButton, setShowScrollButton] = useState(false)
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -115,8 +118,20 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
     }
   }, [messages, onMessageCountChange])
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  const scrollToBottom = (smooth: boolean = true) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' })
+  }
+
+  // Detect scroll position and show/hide FAB
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget
+    const scrollTop = container.scrollTop
+    const scrollHeight = container.scrollHeight
+    const clientHeight = container.clientHeight
+    
+    // Show button if scrolled up more than 200px from bottom
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+    setShowScrollButton(distanceFromBottom > 200)
   }
 
   const loadChatHistory = async () => {
@@ -960,7 +975,11 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         )}
 
         {/* Messages - Scrollable area with professional scrollbar */}
-        <div className={`flex-1 bg-[#F9FAFB] min-h-0 ${messages.length === 0 && !isLoading ? 'flex flex-col items-center justify-center' : 'overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent'}`}>
+        <div 
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
+          className={`flex-1 bg-[#F9FAFB] min-h-0 relative ${messages.length === 0 && !isLoading ? 'flex flex-col items-center justify-center' : 'overflow-y-auto px-6 py-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent'}`}
+        >
         {messages.length === 0 && !isLoading ? (
           <div className="text-center px-8 w-full max-w-3xl">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-purple-100 rounded-full mb-4">
@@ -1197,6 +1216,19 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         )
         }
         </div>
+
+        {/* Scroll to Bottom FAB - ChatGPT Style (Above Input) */}
+        {showScrollButton && messages.length > 0 && (
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center z-20 pointer-events-none">
+            <button
+              onClick={() => scrollToBottom()}
+              className="pointer-events-auto w-9 h-9 bg-white border border-gray-300 hover:border-gray-400 rounded-full shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center group"
+              title="Scroll to bottom"
+            >
+              <ArrowDown className="h-4 w-4 text-purple-600 group-hover:translate-y-0.5 transition-transform" strokeWidth={2.5} />
+            </button>
+          </div>
+        )}
 
         {/* Medical Terms Dictionary (only in fullscreen mode) */}
         {isFullscreen && Object.keys(showMedicalTerms).length > 0 && (
