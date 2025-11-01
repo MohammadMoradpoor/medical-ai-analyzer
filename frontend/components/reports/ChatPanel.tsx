@@ -1217,19 +1217,6 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         }
         </div>
 
-        {/* Scroll to Bottom FAB - ChatGPT Style (Above Input) */}
-        {showScrollButton && messages.length > 0 && (
-          <div className="absolute bottom-2 left-0 right-0 flex justify-center z-20 pointer-events-none">
-            <button
-              onClick={() => scrollToBottom()}
-              className="pointer-events-auto w-9 h-9 bg-white border border-gray-300 hover:border-gray-400 rounded-full shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center group"
-              title="Scroll to bottom"
-            >
-              <ArrowDown className="h-4 w-4 text-purple-600 group-hover:translate-y-0.5 transition-transform" strokeWidth={2.5} />
-            </button>
-          </div>
-        )}
-
         {/* Medical Terms Dictionary (only in fullscreen mode) */}
         {isFullscreen && Object.keys(showMedicalTerms).length > 0 && (
           <div className="px-4 py-3 bg-gradient-to-br from-blue-50 to-indigo-50 border-t-2 border-blue-200 flex-shrink-0">
@@ -1267,7 +1254,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         )}
 
         {/* Input Area with Voice Support */}
-        <div className="px-6 py-4 bg-[#F9FAFB] flex-shrink-0">
+        <div className="px-6 py-4 bg-[#F9FAFB] flex-shrink-0 relative">
           {/* Voice Recording UI */}
           {isRecording || audioBlob ? (
             <div className="max-w-4xl mx-auto">
@@ -1348,7 +1335,19 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
             </div>
           ) : (
             /* ChatGPT-Style Auto-Expanding Input */
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-4xl mx-auto relative">
+              {/* Scroll to Bottom FAB - Centered above input */}
+              {showScrollButton && messages.length > 0 && (
+                <div className="absolute -top-14 left-0 right-0 flex justify-center pointer-events-none">
+                  <button
+                    onClick={() => scrollToBottom()}
+                    className="pointer-events-auto w-9 h-9 bg-white border border-gray-300 hover:border-gray-400 rounded-full shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center group"
+                    title="Scroll to bottom"
+                  >
+                    <ArrowDown className="h-4 w-4 text-purple-600 group-hover:translate-y-0.5 transition-transform" strokeWidth={2.5} />
+                  </button>
+                </div>
+              )}
               <div className="bg-white border border-gray-300 rounded-3xl shadow-md focus-within:shadow-lg hover:border-gray-400 transition-all">
                 <div className="flex items-end gap-2 p-2">
                   {/* Plus Button - Bottom aligned */}
