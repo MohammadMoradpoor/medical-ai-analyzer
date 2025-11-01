@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { reportsApi, authApi } from '@/lib/api'
 import { MedicalReport } from '@/types'
-import { Activity, Upload, FileText, AlertCircle, CheckCircle, Clock, XCircle, X, Trash2, ArrowRight, Search, ChevronLeft, ChevronRight, RefreshCw, MessageCircle, Zap } from 'lucide-react'
+import { Activity, Upload, FileText, AlertCircle, CheckCircle, Clock, XCircle, X, Trash2, ArrowRight, Search, ChevronLeft, ChevronRight, RefreshCw, MessageCircle, Zap, Home } from 'lucide-react'
 import toast from '@/lib/toast'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
@@ -327,6 +327,18 @@ export default function DashboardPage() {
                 </button>
               </>
             )}
+            
+            <div className="h-8 w-px bg-gray-300"></div>
+            
+            {/* Home Button - Navigate to Public Page */}
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+              title="Go to home page"
+            >
+              <Home className="h-4 w-4" />
+              <span>Home</span>
+            </button>
             
             <div className="h-8 w-px bg-gray-300"></div>
             <NotificationDropdown />
