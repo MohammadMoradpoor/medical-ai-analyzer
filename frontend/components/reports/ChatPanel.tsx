@@ -73,6 +73,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
   const [recordingTime, setRecordingTime] = useState(0)
   const [playingAudio, setPlayingAudio] = useState<string | null>(null)
   const [loadingAudio, setLoadingAudio] = useState<string | null>(null)
+  const [audioLevels, setAudioLevels] = useState<number[]>([0, 0, 0, 0, 0])
   
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -81,6 +82,9 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
   const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null)
   const audioCacheRef = useRef<Map<string, string>>(new Map()) // Cache: messageId -> audio URL
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const animationFrameRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -392,6 +396,21 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
 
+      // Setup audio visualization
+      const audioContext = new AudioContext()
+      const analyser = audioContext.createAnalyser()
+      const microphone = audioContext.createMediaStreamSource(stream)
+      
+      analyser.fftSize = 256
+      analyser.smoothingTimeConstant = 0.8
+      microphone.connect(analyser)
+      
+      audioContextRef.current = audioContext
+      analyserRef.current = analyser
+
+      // Start visualization
+      visualizeAudio()
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data)
@@ -402,6 +421,17 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
         setAudioBlob(audioBlob)
         stream.getTracks().forEach(track => track.stop())
+        
+        // Stop visualization
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current)
+          animationFrameRef.current = null
+        }
+        if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+          audioContextRef.current.close()
+          audioContextRef.current = null
+        }
+        setAudioLevels([0, 0, 0, 0, 0])
       }
 
       mediaRecorder.start()
@@ -417,12 +447,53 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
     }
   }
 
+  const visualizeAudio = () => {
+    if (!analyserRef.current) return
+
+    const analyser = analyserRef.current
+    const bufferLength = analyser.frequencyBinCount
+    const dataArray = new Uint8Array(bufferLength)
+
+    const updateLevels = () => {
+      analyser.getByteFrequencyData(dataArray)
+      
+      // Sample 5 frequency bands for visualization
+      const bands = 5
+      const bandSize = Math.floor(bufferLength / bands)
+      const levels = []
+      
+      for (let i = 0; i < bands; i++) {
+        const start = i * bandSize
+        const end = start + bandSize
+        const bandData = dataArray.slice(start, end)
+        const average = bandData.reduce((sum, val) => sum + val, 0) / bandSize
+        // Normalize to 0-1 range and amplify for visibility
+        const normalized = Math.min((average / 255) * 2, 1)
+        levels.push(normalized)
+      }
+      
+      setAudioLevels(levels)
+      animationFrameRef.current = requestAnimationFrame(updateLevels)
+    }
+
+    updateLevels()
+  }
+
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop()
       setIsRecording(false)
       if (recordingIntervalRef.current) {
         clearInterval(recordingIntervalRef.current)
+        recordingIntervalRef.current = null
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+        animationFrameRef.current = null
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close()
+        audioContextRef.current = null
       }
     }
   }
@@ -431,6 +502,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
     stopRecording()
     setAudioBlob(null)
     setRecordingTime(0)
+    setAudioLevels([0, 0, 0, 0, 0])
   }
 
   const formatRecordingTime = (seconds: number) => {
@@ -1141,17 +1213,16 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
             <div className="max-w-4xl mx-auto">
               <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-300 rounded-xl p-4 shadow-md">
                 <div className="flex items-center gap-4">
-                  {/* Waveform Animation */}
+                  {/* Real-time Audio Waveform */}
                   {isRecording && (
-                    <div className="flex items-center gap-1">
-                      {[...Array(5)].map((_, i) => (
+                    <div className="flex items-center gap-1 h-10">
+                      {audioLevels.map((level, i) => (
                         <div
                           key={i}
-                          className="w-1 bg-purple-600 rounded-full animate-pulse"
+                          className="w-1.5 bg-gradient-to-t from-purple-600 to-purple-400 rounded-full transition-all duration-75"
                           style={{
-                            height: `${Math.random() * 24 + 12}px`,
-                            animationDelay: `${i * 0.1}s`,
-                            animationDuration: '0.8s'
+                            height: `${Math.max(level * 32, 4)}px`,
+                            opacity: level > 0.05 ? 1 : 0.3
                           }}
                         />
                       ))}
