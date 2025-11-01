@@ -139,18 +139,28 @@ CRITICAL RULES:
         # Send completion signal
         yield f"data: {json.dumps({'type': 'done'})}\n\n"
         
-        # Extract medical terms and sources from the response using simple parsing
+        # Extract sources ONLY when AI actually cites specific data
         sources = []
         medical_terms = {}
         
-        # Try to extract sources from response (look for references)
-        if "test result" in full_response.lower() or "report" in full_response.lower():
+        # Only add sources if AI is citing SPECIFIC values/findings (not generic mentions)
+        # Require stronger indicators that actual report data is being referenced
+        lower_response = full_response.lower()
+        
+        # Test Results - only if citing specific values
+        if ("your" in lower_response or "shows" in lower_response) and any(keyword in lower_response for keyword in ["wbc", "rbc", "hemoglobin", "glucose", "creatinine", "alt", "ast", "level of", "count of"]):
             sources.append("Test Results")
-        if "reference range" in full_response.lower():
+        
+        # Reference Ranges - only if comparing to ranges
+        if "normal range" in lower_response or "reference range" in lower_response:
             sources.append("Reference Ranges")
-        if "abnormal" in full_response.lower():
+        
+        # Abnormal Findings - only if discussing specific abnormalities
+        if ("your" in lower_response or "you have" in lower_response) and ("elevated" in lower_response or "low" in lower_response or "high" in lower_response or "abnormal" in lower_response):
             sources.append("Abnormal Findings")
-        if "recommendation" in full_response.lower():
+        
+        # Recommendations - only if giving specific medical advice
+        if any(word in lower_response for word in ["should consult", "recommend", "suggest you", "follow up with", "see a doctor", "speak with"]):
             sources.append("Recommendations")
         
         # Calculate token usage and cost
