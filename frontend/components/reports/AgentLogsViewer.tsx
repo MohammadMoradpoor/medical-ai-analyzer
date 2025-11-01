@@ -241,7 +241,7 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
                   </div>
 
                   {/* Status Icon with subtle animation */}
-                  <div className="flex-shrink-0">
+                <div className="flex-shrink-0">
                     {log.status === 'success' ? (
                       <div className="w-8 h-8 flex items-center justify-center bg-emerald-50 rounded-lg">
                         <CheckCircle className="h-5 w-5 text-emerald-600" strokeWidth={2} />
@@ -250,21 +250,21 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
                       <div className="w-8 h-8 flex items-center justify-center bg-red-50 rounded-lg">
                         <AlertCircle className="h-5 w-5 text-red-600" strokeWidth={2} />
                       </div>
-                    ) : (
+                  ) : (
                       <div className="w-8 h-8 flex items-center justify-center bg-blue-50 rounded-lg animate-pulse">
                         <Clock className="h-5 w-5 text-blue-600" strokeWidth={2} />
                       </div>
-                    )}
-                  </div>
+                  )}
+                </div>
 
-                  {/* Agent Info */}
-                  <div className="flex-1 min-w-0">
+                {/* Agent Info */}
+                <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="font-semibold text-gray-900">
-                        {getAgentTypeLabel(log.agent_type)}
-                      </span>
+                      {getAgentTypeLabel(log.agent_type)}
+                    </span>
                       <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md font-medium">
-                        {log.operation}
+                      {log.operation}
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-gray-500">
@@ -342,13 +342,13 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
                         isSectionExpanded(log.id, 'complete_output') ? 'bg-blue-500' : 'bg-gray-300'
                       }`} />
                       
-                      <div
+                    <div
                         onClick={(e) => {
                           e.stopPropagation()
                           toggleSection(log.id, 'complete_output')
                         }}
                         className="cursor-pointer hover:bg-gray-50 transition-colors duration-150 px-4 py-3"
-                      >
+                    >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
                             <div className={`flex items-center justify-center w-6 h-6 rounded-lg transition-all duration-200 ${
@@ -358,10 +358,10 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
                             }`}>
                               {isSectionExpanded(log.id, 'complete_output') ? (
                                 <ChevronDown className="h-4 w-4 text-white" strokeWidth={2.5} />
-                              ) : (
+                      ) : (
                                 <ChevronRight className="h-4 w-4 text-gray-600" strokeWidth={2.5} />
-                              )}
-                            </div>
+                      )}
+                    </div>
                             <Brain className={`h-4 w-4 transition-colors duration-200 ${
                               isSectionExpanded(log.id, 'complete_output') ? 'text-blue-600' : 'text-gray-500'
                             }`} />
@@ -389,8 +389,8 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
                               ))}
                             </tbody>
                           </table>
-                        </div>
-                      )}
+                      </div>
+                    )}
                     </div>
                   </div>
                 )}

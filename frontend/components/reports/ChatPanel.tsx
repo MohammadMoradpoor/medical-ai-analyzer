@@ -31,7 +31,8 @@ import {
   Play,
   Pause,
   StopCircle,
-  Volume2
+  Volume2,
+  Plus
 } from 'lucide-react'
 import toast from '@/lib/toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
@@ -371,10 +372,11 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputMessage(e.target.value)
     
-    // Auto-resize textarea
+    // Auto-resize textarea - ChatGPT style
     const textarea = e.target
-    textarea.style.height = 'auto'
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 150)}px`
+    textarea.style.height = '24px' // Reset to min height
+    const newHeight = Math.min(textarea.scrollHeight, 200) // Max 200px
+    textarea.style.height = `${newHeight}px`
   }
 
   const copyToClipboard = (text: string, messageId: string) => {
@@ -1287,52 +1289,59 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
               </div>
             </div>
           ) : (
-            /* Normal Text Input */
+            /* ChatGPT-Style Auto-Expanding Input */
             <div className="max-w-4xl mx-auto">
-              <div className="flex items-start gap-3">
-                <textarea
-                  ref={inputRef as any}
-                  value={inputMessage}
-                  onChange={handleInputChange}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask a question about your report..."
-                  disabled={isLoading}
-                  rows={1}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm text-gray-900 placeholder:text-gray-500 bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-all resize-none overflow-hidden shadow-sm"
-                  style={{ minHeight: '52px', maxHeight: '150px', lineHeight: '1.4' }}
-                />
-                
-                {/* Voice Record Button */}
-                <button
-                  onClick={startRecording}
-                  disabled={isLoading}
-                  className="px-4 py-3 bg-white border-2 border-gray-300 hover:border-purple-500 hover:bg-purple-50 text-gray-700 hover:text-purple-600 rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md flex items-center gap-2 flex-shrink-0 group"
-                  title="Record voice message"
-                >
-                  <Mic className="h-5 w-5 group-hover:scale-110 transition-transform" />
-                </button>
-                
-                <button
-                  onClick={() => sendMessage()}
-                  disabled={!inputMessage.trim() || isLoading}
-                  className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg flex items-center gap-2 flex-shrink-0"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Send className="h-5 w-5" />
-                      Send
-                    </>
-                  )}
-                </button>
-              </div>
+              <div className="bg-white border border-gray-300 rounded-3xl shadow-md focus-within:shadow-lg hover:border-gray-400 transition-all">
+                <div className="flex items-end gap-2 p-2">
+                  {/* Plus Button - Bottom aligned */}
+                  <button
+                    onClick={() => toast.info('Attach files coming soon')}
+                    className="flex-shrink-0 p-2 mb-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Attach files"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </button>
 
-              {/* Helper Text */}
-              <div className="mt-2 text-center">
-                <span className="text-xs text-gray-500">
-                  Press <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Shift+Enter</kbd> for new line
-                </span>
+                  {/* Auto-expanding Textarea */}
+                  <textarea
+                    ref={inputRef as any}
+                    value={inputMessage}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Ask a question about your report..."
+                    disabled={isLoading}
+                    className="flex-1 bg-transparent text-base text-gray-900 placeholder-gray-400 focus:outline-none resize-none overflow-y-auto disabled:opacity-50 py-2"
+                    style={{ 
+                      lineHeight: '1.5',
+                      minHeight: '24px',
+                      maxHeight: '200px',
+                      height: '24px'
+                    }}
+                  />
+                  
+                  {/* Voice Button - Bottom aligned */}
+                  <button
+                    onClick={startRecording}
+                    disabled={isLoading}
+                    className="flex-shrink-0 p-2 mb-1 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg disabled:opacity-50 transition-colors"
+                    title="Voice message"
+                  >
+                    <Mic className="h-5 w-5" />
+                  </button>
+                  
+                  {/* Send Button - Bottom aligned */}
+                  <button
+                    onClick={() => sendMessage()}
+                    disabled={!inputMessage.trim() || isLoading}
+                    className="flex-shrink-0 w-9 h-9 mb-1 bg-purple-600 hover:bg-purple-700 text-white rounded-full disabled:bg-gray-300 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           )}
