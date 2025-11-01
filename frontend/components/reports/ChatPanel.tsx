@@ -1024,12 +1024,12 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         {messages.map((message, index) => (
           <div
             key={message.id}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} mb-3`}
           >
             {/* Message Bubble - No Avatars */}
             <div className={`max-w-[80%] ${
                 message.role === 'user'
-                  ? 'bg-blue-600 text-white rounded-2xl px-4 py-3 shadow-md'
+                  ? 'bg-blue-600 text-white rounded-2xl px-4 pt-3 pb-2 shadow-md'
                   : 'bg-white border border-gray-200 text-gray-900 rounded-2xl px-4 py-3 shadow-sm'
               }`}>
                 {/* Message Content with Markdown */}
@@ -1059,7 +1059,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                 
                 {/* User Message Timestamp - Inside bubble, bottom right (shows immediately) */}
                 {message.role === 'user' && message.created_at && (
-                  <div className="mt-2 text-right">
+                  <div className="mt-0.5 text-right">
                     <span className="text-xs text-blue-200 opacity-80">
                       {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
