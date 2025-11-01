@@ -235,7 +235,7 @@ export default function LandingPage() {
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-white">
+      <div id="features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-extrabold text-gray-900 mb-4">
@@ -443,22 +443,54 @@ export default function LandingPage() {
             </div>
             
             <div>
-              <h4 className="font-bold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">How It Works</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
+              <h4 className="font-bold mb-4 text-white">Product</h4>
+              <ul className="space-y-3 text-sm text-gray-400">
+                <li>
+                  <button onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white transition-colors">
+                    Features
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })} className="hover:text-white transition-colors">
+                    How It Works
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => router.push('/register')} className="hover:text-white transition-colors">
+                    Pricing
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => router.push('/register')} className="hover:text-white transition-colors">
+                    Security
+                  </button>
+                </li>
               </ul>
             </div>
             
             <div>
-              <h4 className="font-bold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
+              <h4 className="font-bold mb-4 text-white">Company</h4>
+              <ul className="space-y-3 text-sm text-gray-400">
+                <li>
+                  <button onClick={() => router.push('/register')} className="hover:text-white transition-colors">
+                    About Us
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => router.push('/register')} className="hover:text-white transition-colors">
+                    Contact
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => router.push('/register')} className="hover:text-white transition-colors">
+                    Privacy Policy
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => router.push('/register')} className="hover:text-white transition-colors">
+                    Terms of Service
+                  </button>
+                </li>
               </ul>
             </div>
           </div>
