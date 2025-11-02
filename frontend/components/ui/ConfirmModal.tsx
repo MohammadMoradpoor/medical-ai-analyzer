@@ -1,12 +1,12 @@
 'use client'
 
-import { AlertTriangle, X } from 'lucide-react'
-import { useEffect } from 'react'
+import { AlertTriangle, X, Loader2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface ConfirmModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => void
+  onConfirm: () => void | Promise<void>
   title: string
   message: string
   confirmText?: string
@@ -24,16 +24,37 @@ export function ConfirmModal({
   cancelText = 'Cancel',
   type = 'danger'
 }: ConfirmModalProps) {
-  // Close on Escape key
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Close on Escape key (but not while loading)
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape' && isOpen && !isLoading) {
         onClose()
       }
     }
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, isLoading])
+
+  // Reset loading state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsLoading(false)
+    }
+  }, [isOpen])
+
+  const handleConfirm = async () => {
+    try {
+      setIsLoading(true)
+      await Promise.resolve(onConfirm())
+      onClose()
+    } catch (error) {
+      console.error('Confirm action failed:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   if (!isOpen) return null
 
@@ -70,7 +91,7 @@ export function ConfirmModal({
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
+        onClick={isLoading ? undefined : onClose}
       ></div>
 
       {/* Modal */}
@@ -82,7 +103,8 @@ export function ConfirmModal({
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+            disabled={isLoading}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <X className="h-5 w-5" />
           </button>
@@ -108,18 +130,20 @@ export function ConfirmModal({
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isLoading}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {cancelText}
               </button>
               <button
-                onClick={() => {
-                  onConfirm()
-                  onClose()
-                }}
-                className={`flex-1 px-4 py-2.5 text-sm font-semibold text-white rounded-lg transition-colors ${colors.confirmBg}`}
+                onClick={handleConfirm}
+                disabled={isLoading}
+                className={`flex-1 px-4 py-2.5 text-sm font-semibold text-white rounded-lg transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${colors.confirmBg}`}
               >
-                {confirmText}
+                {isLoading && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {isLoading ? 'Processing...' : confirmText}
               </button>
             </div>
           </div>
