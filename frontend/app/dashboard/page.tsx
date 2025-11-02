@@ -14,6 +14,7 @@ import { UploadModal } from '@/components/ui/UploadModal'
 import { ProfessionalSelect } from '@/components/ui/ProfessionalSelect'
 import { usePageTransition } from '@/contexts/PageTransitionContext'
 import { useReportsCache } from '@/contexts/ReportsCacheContext'
+import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton'
 
 type TabType = 'overview'
 
@@ -219,7 +220,6 @@ export default function DashboardPage() {
     }
   }
 
-
   const formatReportType = (reportType?: string) => {
     if (!reportType) return 'Unknown'
     
@@ -293,7 +293,6 @@ export default function DashboardPage() {
         type="danger"
       />
       
-      <div>
       {/* Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="px-6 py-4 flex items-center justify-between">
@@ -369,9 +368,12 @@ export default function DashboardPage() {
       {/* Main Content - Professional Scrollbar */}
       <div className="flex-1 overflow-auto bg-gray-50 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         <div className="w-full">
-          
-          {/* Stats Overview */}
-          <div className="grid grid-cols-6 gap-4 px-6 py-4 bg-white border-b border-gray-200">
+          {isLoading && !cachedReports ? (
+            <DashboardSkeleton />
+          ) : (
+            <>
+              {/* Stats Overview */}
+              <div className="grid grid-cols-6 gap-4 px-6 py-4 bg-white border-b border-gray-200">
               <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-100">
                 <div className="p-2 bg-blue-500 rounded-lg">
                   <FileText className="h-5 w-5 text-white" />
@@ -442,11 +444,10 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </div>
 
-            {/* Filters - Compact و حرفه‌ای */}
-          <div className="bg-white shadow-sm border-t border-gray-200">
-              <div>
+              {/* Filters - Compact و حرفه‌ای */}
+              <div className="bg-white shadow-sm border-t border-gray-200">
+                <div>
                   <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
                     <div className="flex items-center justify-between">
                       {/* Left: Title & Info */}
@@ -808,8 +809,10 @@ export default function DashboardPage() {
                     </div>
                   )}
                   </div>
+                </div>
               </div>
-            </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react'
+import React, { createContext, useContext, useState, useEffect, useRef, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 
 interface PageTransitionContextType {
@@ -18,7 +18,7 @@ export function usePageTransition() {
   return context
 }
 
-export function PageTransitionProvider({ children }: { children: React.ReactNode }) {
+function PageTransitionProviderInternal({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isNavigating, setIsNavigating] = useState(false)
@@ -64,6 +64,14 @@ export function PageTransitionProvider({ children }: { children: React.ReactNode
     <PageTransitionContext.Provider value={value}>
       {children}
     </PageTransitionContext.Provider>
+  )
+}
+
+export function PageTransitionProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <PageTransitionProviderInternal>{children}</PageTransitionProviderInternal>
+    </Suspense>
   )
 }
 
