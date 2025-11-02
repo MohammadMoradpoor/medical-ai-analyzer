@@ -1,12 +1,17 @@
 import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { usePageTransition } from '@/contexts/PageTransitionContext'
 
 /**
  * Enhanced navigation hook with realistic progress tracking
  * Uses easing functions for natural-feeling progress animations
+ * 
+ * CRITICAL: Integrates with global loading bar to ensure bar shows
+ * on current page before navigation, not on destination page.
  */
 export function usePublicNavigation() {
   const router = useRouter()
+  const { startNavigation } = usePageTransition()
   const [isNavigating, setIsNavigating] = useState(false)
   const [progress, setProgress] = useState(0)
   const navigationRef = useRef<{
@@ -69,12 +74,19 @@ export function usePublicNavigation() {
 
   /**
    * Navigate to a new path with smooth progress indication
+   * 
+   * CRITICAL: Calls startNavigation() BEFORE router.push() to ensure
+   * the global loading bar shows on current page, not destination page.
    */
   const navigateTo = useCallback(async (path: string) => {
     // Prevent multiple simultaneous navigations
     if (navigationRef.current.isActive) {
       return
     }
+
+    // CRITICAL: Start global navigation FIRST
+    // This ensures the top loading bar shows on the CURRENT page
+    startNavigation()
 
     // Initialize navigation state
     setIsNavigating(true)
@@ -113,6 +125,7 @@ export function usePublicNavigation() {
       await new Promise(resolve => setTimeout(resolve, 150))
 
       // Perform the actual navigation
+      // Global loading bar will hide automatically when pathname changes
       router.push(path)
 
       // Reset state after navigation with smooth fade out
@@ -129,7 +142,7 @@ export function usePublicNavigation() {
       setProgress(0)
       cleanup()
     }
-  }, [router, calculateProgress, cleanup])
+  }, [router, calculateProgress, cleanup, startNavigation])
 
   /**
    * Cancel ongoing navigation (useful for fast successive clicks)

@@ -12,6 +12,7 @@ import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { UploadModal } from '@/components/ui/UploadModal'
 import { ProfessionalSelect } from '@/components/ui/ProfessionalSelect'
+import { LoadingProgressBar } from '@/components/ui/LoadingProgressBar'
 
 type TabType = 'overview'
 
@@ -252,13 +253,10 @@ export default function DashboardPage() {
     }
   }
 
-  // No loading spinner - transition handled by progress bar
-  // if (isLoading) {
-  //   return null
-  // }
-
   return (
     <div className="h-screen flex flex-col bg-gray-50">
+      {/* Show top loading bar during data fetch */}
+      <LoadingProgressBar variant="top-bar" isNavigating={isLoading} />
       {/* Upload Modal */}
       <UploadModal
         isOpen={uploadModalOpen}

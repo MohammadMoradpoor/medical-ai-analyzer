@@ -4,13 +4,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { User, LogOut, Settings as SettingsIcon, ChevronDown, Activity } from 'lucide-react'
 import toast from '@/lib/toast'
-import { usePageTransition } from '@/contexts/PageTransitionContext'
 
 export function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const { navigate, isTransitioning, targetPage } = usePageTransition()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -26,7 +24,7 @@ export function UserDropdown() {
 
   const navigateTo = (path: string) => {
     setIsOpen(false)
-    navigate(path)
+    router.push(path)
   }
 
   const handleLogout = () => {
@@ -87,8 +85,7 @@ export function UserDropdown() {
           <div className="py-1">
             <button
               onClick={() => navigateTo('/profile')}
-              disabled={isTransitioning}
-              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors disabled:opacity-50"
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors"
             >
               <User className="w-4 h-4" />
               <span>Profile</span>
@@ -96,8 +93,7 @@ export function UserDropdown() {
 
             <button
               onClick={() => navigateTo('/settings')}
-              disabled={isTransitioning}
-              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors disabled:opacity-50"
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors"
             >
               <SettingsIcon className="w-4 h-4" />
               <span>Settings</span>
@@ -105,8 +101,7 @@ export function UserDropdown() {
 
             <button
               onClick={() => navigateTo('/dashboard')}
-              disabled={isTransitioning}
-              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors disabled:opacity-50"
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors"
             >
               <Activity className="w-4 h-4" />
               <span>Dashboard</span>

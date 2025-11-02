@@ -1,38 +1,35 @@
 'use client'
 
 import { usePageTransition } from '@/contexts/PageTransitionContext'
-import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 /**
- * PageTransitionWrapper keeps the current page visible while the next page loads
- * This prevents white screens and ensures smooth transitions
+ * PageTransitionWrapper provides smooth transitions during page navigation.
+ * 
+ * CRITICAL: Keeps the current page visible while the loading bar is active,
+ * then instantly swaps to the new page when navigation completes.
+ * 
+ * This ensures:
+ * - Loading bar shows on Page 1 (source page)
+ * - Page 1 stays visible during navigation
+ * - When ready, instantly show Page 2 without loading bar
  */
 export function PageTransitionWrapper({ children }: { children: React.ReactNode }) {
-  const { isTransitioning, currentPage, targetPage } = usePageTransition()
-  const pathname = usePathname()
+  const { isNavigating } = usePageTransition()
   const [displayContent, setDisplayContent] = useState(children)
-  const [isVisible, setIsVisible] = useState(true)
+  const previousChildren = useRef(children)
 
   useEffect(() => {
-    if (isTransitioning) {
-      // Keep showing the current page content
-      setIsVisible(true)
-    } else {
-      // Show new page content after transition completes
+    if (!isNavigating) {
+      // Navigation complete - update to new page content immediately
+      // No delay needed because loading bar already hid
       setDisplayContent(children)
-      setIsVisible(true)
+      previousChildren.current = children
     }
-  }, [isTransitioning, children])
+    // If isNavigating is true, keep showing the old content
+    // (displayContent stays as the previous page)
+  }, [isNavigating, children])
 
-  return (
-    <div
-      className={`transition-opacity duration-200 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      }`}
-    >
-      {isTransitioning ? displayContent : children}
-    </div>
-  )
+  return <>{displayContent}</>
 }
 

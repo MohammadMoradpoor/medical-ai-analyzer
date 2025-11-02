@@ -13,6 +13,7 @@ import { FloatingChatButton } from '@/components/reports/FloatingChatButton'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
+import { LoadingProgressBar } from '@/components/ui/LoadingProgressBar'
 
 export default function ReportDetailPage() {
   const router = useRouter()
@@ -173,17 +174,14 @@ export default function ReportDetailPage() {
   }
 
 
-  // No loading spinner - transition handled by progress bar
-  // if (isLoading) {
-  //   return null
-  // }
-
-  if (!report) {
+  if (!report && !isLoading) {
     return null
   }
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
+      {/* Show top loading bar during data fetch */}
+      <LoadingProgressBar variant="top-bar" isNavigating={isLoading} />
       {/* Compact Header با contrast بهتر */}
       <div className="bg-white border-b-2 border-gray-200 shadow-md">
         <div className="px-6 py-3 flex items-center justify-between">
