@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { User, LogOut, Settings as SettingsIcon, ChevronDown, Activity, Loader2 } from 'lucide-react'
+import { User, LogOut, Settings as SettingsIcon, ChevronDown, Activity } from 'lucide-react'
 import toast from '@/lib/toast'
+import { usePageTransition } from '@/contexts/PageTransitionContext'
 
 export function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false)
-  const [isNavigating, setIsNavigating] = useState(false)
-  const [loadingRoute, setLoadingRoute] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const { navigate, isTransitioning, targetPage } = usePageTransition()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -24,21 +24,9 @@ export function UserDropdown() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const navigateTo = async (path: string) => {
-    setLoadingRoute(path)
-    setIsNavigating(true)
+  const navigateTo = (path: string) => {
     setIsOpen(false)
-    
-    // Show loading for minimum 300ms for smooth UX
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    router.push(path)
-    
-    // Reset after navigation
-    setTimeout(() => {
-      setIsNavigating(false)
-      setLoadingRoute(null)
-    }, 500)
+    navigate(path)
   }
 
   const handleLogout = () => {
@@ -50,13 +38,7 @@ export function UserDropdown() {
   }
 
   return (
-    <>
-      {/* Global Loading Bar for Navigation */}
-      {isNavigating && (
-        <div className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-600 via-blue-600 to-cyan-600 z-50 animate-pulse" />
-      )}
-      
-      <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef}>
         {/* Trigger Button */}
         <button
         type="button"
@@ -105,38 +87,29 @@ export function UserDropdown() {
           <div className="py-1">
             <button
               onClick={() => navigateTo('/profile')}
-              disabled={isNavigating}
-              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between transition-colors disabled:opacity-50"
+              disabled={isTransitioning}
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors disabled:opacity-50"
             >
-              <div className="flex items-center space-x-3">
-                <User className="w-4 h-4" />
-                <span>Profile</span>
-              </div>
-              {loadingRoute === '/profile' && <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />}
+              <User className="w-4 h-4" />
+              <span>Profile</span>
             </button>
 
             <button
               onClick={() => navigateTo('/settings')}
-              disabled={isNavigating}
-              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between transition-colors disabled:opacity-50"
+              disabled={isTransitioning}
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors disabled:opacity-50"
             >
-              <div className="flex items-center space-x-3">
-                <SettingsIcon className="w-4 h-4" />
-                <span>Settings</span>
-              </div>
-              {loadingRoute === '/settings' && <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />}
+              <SettingsIcon className="w-4 h-4" />
+              <span>Settings</span>
             </button>
 
             <button
               onClick={() => navigateTo('/dashboard')}
-              disabled={isNavigating}
-              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center justify-between transition-colors disabled:opacity-50"
+              disabled={isTransitioning}
+              className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-3 transition-colors disabled:opacity-50"
             >
-              <div className="flex items-center space-x-3">
-                <Activity className="w-4 h-4" />
-                <span>Dashboard</span>
-              </div>
-              {loadingRoute === '/dashboard' && <Loader2 className="w-3 h-3 animate-spin text-indigo-600" />}
+              <Activity className="w-4 h-4" />
+              <span>Dashboard</span>
             </button>
           </div>
 
@@ -166,8 +139,7 @@ export function UserDropdown() {
           </div>
         </div>
       )}
-      </div>
-    </>
+    </div>
   )
 }
 

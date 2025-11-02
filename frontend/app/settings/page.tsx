@@ -343,8 +343,10 @@ export default function SettingsPage() {
                   <div className="p-6">
                     {isLoadingReports ? (
                       <div className="py-12 text-center">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-blue-600 mb-2"></div>
-                        <p className="text-sm text-gray-600">Loading report history...</p>
+                        <div className="space-y-3">
+                          <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mx-auto"></div>
+                          <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2 mx-auto"></div>
+                        </div>
                       </div>
                     ) : reports.length === 0 ? (
                       <div className="text-center py-12">
@@ -477,8 +479,10 @@ export default function SettingsPage() {
                   <div className="p-6">
                     {isLoadingUsage ? (
                       <div className="py-12 text-center">
-                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-blue-600 mb-2"></div>
-                        <p className="text-sm text-gray-600">Loading usage statistics...</p>
+                        <div className="space-y-3">
+                          <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mx-auto"></div>
+                          <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2 mx-auto"></div>
+                        </div>
                       </div>
                     ) : usageStats ? (
                       <div className="space-y-6">

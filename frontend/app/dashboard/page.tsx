@@ -252,16 +252,10 @@ export default function DashboardPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-blue-600 mb-4"></div>
-          <p className="text-sm text-gray-600 font-medium">Loading dashboard...</p>
-        </div>
-      </div>
-    )
-  }
+  // No loading spinner - transition handled by progress bar
+  // if (isLoading) {
+  //   return null
+  // }
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
