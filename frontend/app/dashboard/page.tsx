@@ -13,6 +13,7 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { UploadModal } from '@/components/ui/UploadModal'
 import { ProfessionalSelect } from '@/components/ui/ProfessionalSelect'
 import { usePageTransition } from '@/contexts/PageTransitionContext'
+import { useReportsCache } from '@/contexts/ReportsCacheContext'
 
 type TabType = 'overview'
 
@@ -20,9 +21,10 @@ export default function DashboardPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { startNavigation } = usePageTransition()
+  const { cachedReports, chatCounts: cachedChatCounts, setCachedReports, setChatCounts: setCachedChatCounts } = useReportsCache()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [reports, setReports] = useState<MedicalReport[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [reports, setReports] = useState<MedicalReport[]>(cachedReports || [])
+  const [isLoading, setIsLoading] = useState(!cachedReports)
   const [activeTab, setActiveTab] = useState<TabType>('overview')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -38,24 +40,30 @@ export default function DashboardPage() {
     fileName: ''
   })
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
-  const [chatCounts, setChatCounts] = useState<Record<string, {conversations: number, messages: number}>>({})
+  const [chatCounts, setChatCounts] = useState<Record<string, {conversations: number, messages: number}>>(cachedChatCounts || {})
   const [autoRefresh, setAutoRefresh] = useState(true)
 
   useEffect(() => {
-    // Check authentication
     const token = localStorage.getItem('access_token')
     if (!token) {
       router.push('/login')
       return
     }
     
-    // Check URL parameter for upload
     const tabParam = searchParams?.get('tab')
     if (tabParam === 'upload') {
       setUploadModalOpen(true)
     }
     
-    fetchReports()
+    if (cachedReports) {
+      setReports(cachedReports)
+      setChatCounts(cachedChatCounts || {})
+      setIsLoading(false)
+      fetchReports()
+    } else {
+      fetchReports()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Auto-refresh for processing reports
@@ -78,11 +86,15 @@ export default function DashboardPage() {
   const fetchReports = async () => {
     try {
       const data = await reportsApi.list()
-      setReports(data || [])
+      const freshReports = data || []
+      setReports(freshReports)
+      setCachedReports(freshReports)
       fetchChatCounts()
     } catch (error) {
       console.error('Error fetching reports:', error)
-      setReports([])
+      if (!cachedReports) {
+        setReports([])
+      }
     } finally {
       setIsLoading(false)
     }
@@ -93,10 +105,14 @@ export default function DashboardPage() {
       console.log('[Dashboard] Fetching chat counts...')
       const counts = await reportsApi.getAllChatCounts()
       console.log('[Dashboard] Chat counts received:', counts)
-      setChatCounts(counts || {})
+      const freshCounts = counts || {}
+      setChatCounts(freshCounts)
+      setCachedChatCounts(freshCounts)
     } catch (error) {
       console.error('[Dashboard] Failed to load chat counts:', error)
-      setChatCounts({})
+      if (!cachedChatCounts) {
+        setChatCounts({})
+      }
     }
   }
 

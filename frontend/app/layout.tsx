@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { PageTransitionProvider } from '@/contexts/PageTransitionContext'
+import { ReportsCacheProvider } from '@/contexts/ReportsCacheContext'
 import { ToasterProvider } from '@/components/ui/ToasterProvider'
 import { NavigationLoadingBar } from '@/components/ui/NavigationLoadingBar'
 import { PageTransitionWrapper } from '@/components/ui/PageTransitionWrapper'
@@ -25,10 +26,12 @@ export default function RootLayout({
         <PageTransitionProvider>
           <NavigationLoadingBar />
           <AuthProvider>
-            <PageTransitionWrapper>
-              {children}
-            </PageTransitionWrapper>
-            <ToasterProvider />
+            <ReportsCacheProvider>
+              <PageTransitionWrapper>
+                {children}
+              </PageTransitionWrapper>
+              <ToasterProvider />
+            </ReportsCacheProvider>
           </AuthProvider>
         </PageTransitionProvider>
       </body>
