@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Settings, ChevronDown, Shield, Bell, FileText, Activity } from 'lucide-react'
 import toast from '@/lib/toast'
+import { usePageTransition } from '@/contexts/PageTransitionContext'
 
 const settingsMenuItems = [
   { id: 'account', label: 'Account Settings', icon: Shield, action: 'account' },
@@ -16,6 +17,7 @@ export function SettingsDropdown() {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const { startNavigation } = usePageTransition()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -30,6 +32,8 @@ export function SettingsDropdown() {
   }, [])
 
   const handleMenuClick = (action: string) => {
+    startNavigation()
+    
     switch (action) {
       case 'account':
         router.push('/settings?section=account')

@@ -14,10 +14,12 @@ import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
 import { LoadingProgressBar } from '@/components/ui/LoadingProgressBar'
+import { usePageTransition } from '@/contexts/PageTransitionContext'
 
 export default function ReportDetailPage() {
   const router = useRouter()
   const params = useParams()
+  const { startNavigation } = usePageTransition()
   const reportId = params?.id as string
   const [report, setReport] = useState<ReportAnalysis | null>(null)
   const [agentLogs, setAgentLogs] = useState<any[]>([])
@@ -174,20 +176,33 @@ export default function ReportDetailPage() {
   }
 
 
-  if (!report && !isLoading) {
-    return null
-  }
-
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       {/* Show top loading bar during data fetch */}
       <LoadingProgressBar variant="top-bar" isNavigating={isLoading} />
+      
+      {/* Show minimal UI while loading or if report not found */}
+      {!report ? (
+        <div className="flex-1 flex items-center justify-center bg-gray-100">
+          <div className="text-center">
+            {isLoading ? (
+              <p className="text-gray-600">Loading report...</p>
+            ) : (
+              <p className="text-gray-600">Report not found</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
       {/* Compact Header با contrast بهتر */}
       <div className="bg-white border-b-2 border-gray-200 shadow-md">
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => {
+                startNavigation()
+                router.push('/dashboard')
+              }}
               className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
               title="Back to Dashboard"
             >
@@ -799,6 +814,8 @@ export default function ReportDetailPage() {
         onClose={() => setIsChatOpen(false)}
         onMessageCountChange={(count) => setChatMessageCount(count)}
       />
+      </>
+      )}
     </div>
   )
 }

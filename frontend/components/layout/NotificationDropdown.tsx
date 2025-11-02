@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Bell, X, AlertCircle, Info } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { reportsApi } from '@/lib/api'
+import { usePageTransition } from '@/contexts/PageTransitionContext'
 
 interface Notification {
   id: string
@@ -23,6 +24,7 @@ export function NotificationDropdown() {
   const [unreadCount, setUnreadCount] = useState(0)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const { startNavigation } = usePageTransition()
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -91,6 +93,7 @@ export function NotificationDropdown() {
     }
 
     if (notification.report_id) {
+      startNavigation()
       router.push(`/reports/${notification.report_id}`)
       setIsOpen(false)
     }

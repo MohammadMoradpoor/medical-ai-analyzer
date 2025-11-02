@@ -13,12 +13,14 @@ import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { UploadModal } from '@/components/ui/UploadModal'
 import { ProfessionalSelect } from '@/components/ui/ProfessionalSelect'
 import { LoadingProgressBar } from '@/components/ui/LoadingProgressBar'
+import { usePageTransition } from '@/contexts/PageTransitionContext'
 
 type TabType = 'overview'
 
 export default function DashboardPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { startNavigation } = usePageTransition()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [reports, setReports] = useState<MedicalReport[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -330,7 +332,10 @@ export default function DashboardPage() {
             
             {/* Home Button - Navigate to Public Page */}
             <button
-              onClick={() => router.push('/')}
+              onClick={() => {
+                startNavigation()
+                router.push('/')
+              }}
               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
               title="Go to home page"
             >
@@ -567,8 +572,10 @@ export default function DashboardPage() {
                               key={report.id} 
                               onClick={() => {
                                 if (report.analysis_status === 'completed') {
+                                  startNavigation()
                                   router.push(`/reports/${report.id}`)
                                 } else if (report.analysis_status === 'failed') {
+                                  startNavigation()
                                   router.push(`/reports/${report.id}?tab=agent-logs`)
                                 }
                               }}

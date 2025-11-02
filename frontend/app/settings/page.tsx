@@ -9,10 +9,12 @@ import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { reportsApi, authApi } from '@/lib/api'
 import toast from '@/lib/toast'
+import { usePageTransition } from '@/contexts/PageTransitionContext'
 
 export default function SettingsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { startNavigation } = usePageTransition()
   const [activeSection, setActiveSection] = useState('account')
   const [reports, setReports] = useState<any[]>([])
   const [isLoadingReports, setIsLoadingReports] = useState(false)
@@ -143,7 +145,10 @@ export default function SettingsPage() {
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => {
+                startNavigation()
+                router.push('/dashboard')
+              }}
               className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
               title="Back to Dashboard"
             >
@@ -353,7 +358,10 @@ export default function SettingsPage() {
                         <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-600 font-medium">No reports yet</p>
                         <button
-                          onClick={() => router.push('/dashboard')}
+                          onClick={() => {
+                            startNavigation()
+                            router.push('/dashboard')
+                          }}
                           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-semibold"
                         >
                           Upload Your First Report
@@ -398,7 +406,10 @@ export default function SettingsPage() {
                             {reports.map((report) => (
                               <div
                                 key={report.id}
-                                onClick={() => router.push(`/reports/${report.id}`)}
+                                onClick={() => {
+                                  startNavigation()
+                                  router.push(`/reports/${report.id}`)
+                                }}
                                 className="flex items-start gap-4 p-4 bg-gray-50 hover:bg-blue-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-all cursor-pointer"
                               >
                                 <div className="flex-shrink-0">
@@ -747,7 +758,10 @@ export default function SettingsPage() {
               <div className="col-span-9">
                 <div className="flex justify-end gap-3 mt-6">
                   <button
-                    onClick={() => router.push('/dashboard')}
+                    onClick={() => {
+                      startNavigation()
+                      router.push('/dashboard')
+                    }}
                     className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold text-sm"
                   >
                     Cancel
@@ -755,7 +769,10 @@ export default function SettingsPage() {
                   <button
                     onClick={() => {
                       toast.success('Settings saved successfully!')
-                      setTimeout(() => router.push('/dashboard'), 1000)
+                      setTimeout(() => {
+                        startNavigation()
+                        router.push('/dashboard')
+                      }, 1000)
                     }}
                     className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm"
                   >

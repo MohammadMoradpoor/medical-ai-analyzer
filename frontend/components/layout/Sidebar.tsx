@@ -3,6 +3,7 @@
 import { Home, Upload, FileText, BarChart3, Settings, Users } from 'lucide-react'
 import { useRouter, usePathname } from 'next/navigation'
 import clsx from 'clsx'
+import { usePageTransition } from '@/contexts/PageTransitionContext'
 
 const menuItems = [
   { icon: Home, label: 'Home', path: '/dashboard' },
@@ -16,6 +17,7 @@ const menuItems = [
 export function Sidebar() {
   const router = useRouter()
   const pathname = usePathname()
+  const { startNavigation } = usePageTransition()
 
   return (
     <div className="w-64 bg-gray-900 text-white flex-shrink-0 border-r border-gray-800">
@@ -27,7 +29,10 @@ export function Sidebar() {
           return (
             <button
               key={item.path}
-              onClick={() => router.push(item.path)}
+              onClick={() => {
+                startNavigation()
+                router.push(item.path)
+              }}
               className={clsx(
                 'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-left',
                 isActive

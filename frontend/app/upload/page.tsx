@@ -5,14 +5,17 @@ import { useRouter } from 'next/navigation'
 import { reportsApi } from '@/lib/api'
 import { Activity, Upload, FileText, X, Search, Bell, Settings, User } from 'lucide-react'
 import toast from '@/lib/toast'
+import { usePageTransition } from '@/contexts/PageTransitionContext'
 
 export default function UploadPage() {
   const router = useRouter()
+  const { startNavigation } = usePageTransition()
   
   // Redirect to dashboard upload tab
   useEffect(() => {
+    startNavigation()
     router.push('/dashboard?tab=upload')
-  }, [router])
+  }, [router, startNavigation])
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -77,6 +80,7 @@ export default function UploadPage() {
     try {
       const result = await reportsApi.upload(selectedFile)
       toast.success('File uploaded successfully. Analysis in progress...')
+      startNavigation()
       router.push('/dashboard')
     } catch (error: any) {
       toast.error(error.response?.data?.detail || 'Upload failed')
@@ -117,13 +121,19 @@ export default function UploadPage() {
               <Bell className="h-5 w-5" />
             </button>
             <button 
-              onClick={() => router.push('/dashboard')}
+              onClick={() => {
+                startNavigation()
+                router.push('/dashboard')
+              }}
               className="p-2 hover:bg-gray-800 rounded-lg"
             >
               <Settings className="h-5 w-5" />
             </button>
             <div 
-              onClick={() => router.push('/dashboard')}
+              onClick={() => {
+                startNavigation()
+                router.push('/dashboard')
+              }}
               className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 rounded-lg hover:bg-blue-700 cursor-pointer"
             >
               <User className="h-5 w-5" />
@@ -134,7 +144,10 @@ export default function UploadPage() {
 
         <div className="bg-gray-800 px-6 border-t border-gray-700">
           <nav className="flex gap-8">
-            <button onClick={() => router.push('/dashboard')} className="px-4 py-3 text-sm font-medium text-gray-400 hover:text-white">
+            <button onClick={() => {
+              startNavigation()
+              router.push('/dashboard')
+            }} className="px-4 py-3 text-sm font-medium text-gray-400 hover:text-white">
               Home
             </button>
             <button className="px-4 py-3 text-sm font-medium text-white bg-blue-600 rounded-t">

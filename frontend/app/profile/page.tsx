@@ -6,9 +6,11 @@ import { User as UserIcon, Mail, Calendar, Activity, ChevronRight } from 'lucide
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
+import { usePageTransition } from '@/contexts/PageTransitionContext'
 
 export default function ProfilePage() {
   const router = useRouter()
+  const { startNavigation } = usePageTransition()
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
@@ -24,7 +26,10 @@ export default function ProfilePage() {
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => {
+                startNavigation()
+                router.push('/dashboard')
+              }}
               className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
               title="Back to Dashboard"
             >
