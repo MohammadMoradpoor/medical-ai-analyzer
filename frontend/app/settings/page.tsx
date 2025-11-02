@@ -140,7 +140,7 @@ export default function SettingsPage() {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      {/* Header - مانند Report Details */}
+      {/* Header */}
       <div className="bg-white border-b-2 border-gray-200 shadow-md">
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -753,7 +753,7 @@ export default function SettingsPage() {
               )}
             </div>
 
-            {/* Save Button - فقط برای بخش‌های قابل ویرایش (نه History و نه Usage) */}
+            {/* Save Button */}
             {activeSection !== 'history' && activeSection !== 'usage' && (
               <div className="col-span-9">
                 <div className="flex justify-end gap-3 mt-6">

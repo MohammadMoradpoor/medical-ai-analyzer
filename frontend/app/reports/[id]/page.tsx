@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { reportsApi } from '@/lib/api'
 import { ReportAnalysis } from '@/types'
-import { Activity, AlertCircle, CheckCircle, FileText, TrendingUp, Clock, ChevronDown, ChevronRight, ArrowRight, TestTube, MessageCircle, Copy, Check, Printer, Download, Settings } from 'lucide-react'
+import { Activity, AlertCircle, CheckCircle, FileText, Clock, ChevronDown, ChevronRight, TestTube, MessageCircle, Copy, Check, Printer, Download, Settings } from 'lucide-react'
 import toast from '@/lib/toast'
 import { AgentLogsViewer } from '@/components/reports/AgentLogsViewer'
 import { RawDataEditor } from '@/components/reports/RawDataEditor'
@@ -182,7 +182,7 @@ export default function ReportDetailPage() {
 
   return (
     <div className="h-screen flex flex-col bg-gray-100">
-      {/* Compact Header با contrast بهتر */}
+      {/* Header */}
       <div className="bg-white border-b-2 border-gray-200 shadow-md">
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -776,8 +776,7 @@ export default function ReportDetailPage() {
               </div>
             )}
 
-            {/* Medical Disclaimer - آخرین بخش */}
-            {/* Medical Disclaimer - Compact */}
+            {/* Medical Disclaimer */}
             <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-500 rounded-r-xl p-3 shadow-sm">
               <p className="text-xs text-gray-800 leading-snug">
                 <strong className="font-bold text-yellow-900">Medical Disclaimer:</strong> This AI analysis is for informational purposes only. Consult a qualified healthcare professional for proper medical interpretation and treatment.

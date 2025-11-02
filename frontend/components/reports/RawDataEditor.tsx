@@ -21,7 +21,6 @@ interface TestResult {
   is_normal?: boolean
 }
 
-// InputField component خارج از RawDataEditor برای جلوگیری از re-render
 const InputField = ({ label, value, onChange, disabled, icon: Icon, placeholder, isEditing }: any) => (
   <div>
     <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -461,7 +460,6 @@ export function RawDataEditor({ data, reportId, onSave, onReprocess }: RawDataEd
           )}
         </div>
 
-        {/* Note برای Editing - Compact */}
         {isEditing && (
           <div className="bg-blue-50 border-l-4 border-blue-500 rounded-r p-3">
             <p className="text-xs text-blue-900 font-medium">

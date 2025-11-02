@@ -21,7 +21,7 @@ export default function ProfilePage() {
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      {/* Header - مانند Report Details */}
+      {/* Header */}
       <div className="bg-white border-b-2 border-gray-200 shadow-md">
         <div className="px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">

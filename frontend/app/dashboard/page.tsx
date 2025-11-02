@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { reportsApi, authApi } from '@/lib/api'
+import { reportsApi } from '@/lib/api'
 import { MedicalReport } from '@/types'
-import { Activity, Upload, FileText, AlertCircle, CheckCircle, Clock, XCircle, X, Trash2, ArrowRight, Search, ChevronLeft, ChevronRight, RefreshCw, MessageCircle, Zap, Home } from 'lucide-react'
+import { Activity, Upload, FileText, AlertCircle, CheckCircle, Clock, XCircle, X, Trash2, Search, ChevronLeft, ChevronRight, RefreshCw, MessageCircle, Zap, Home } from 'lucide-react'
 import toast from '@/lib/toast'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
@@ -16,20 +16,13 @@ import { usePageTransition } from '@/contexts/PageTransitionContext'
 import { useReportsCache } from '@/contexts/ReportsCacheContext'
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton'
 
-type TabType = 'overview'
-
 export default function DashboardPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { startNavigation } = usePageTransition()
   const { cachedReports, chatCounts: cachedChatCounts, setCachedReports, setChatCounts: setCachedChatCounts } = useReportsCache()
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const [reports, setReports] = useState<MedicalReport[]>(cachedReports || [])
   const [isLoading, setIsLoading] = useState(!cachedReports)
-  const [activeTab, setActiveTab] = useState<TabType>('overview')
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [severityFilter, setSeverityFilter] = useState<string>('all')
@@ -445,7 +438,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-              {/* Filters - Compact و حرفه‌ای */}
+              {/* Filters */}
               <div className="bg-white shadow-sm border-t border-gray-200">
                 <div>
                   <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
