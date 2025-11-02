@@ -1,10 +1,9 @@
 import axios from 'axios'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'
+import { API } from './constants'
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 120000,
+  baseURL: API.BASE_URL,
+  timeout: API.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -126,7 +125,7 @@ export const reportsApi = {
 
   downloadPDF: async (reportId: string) => {
     const token = localStorage.getItem('access_token')
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1'}/reports/${reportId}/download-pdf`, {
+    const response = await fetch(`${API.BASE_URL}/reports/${reportId}/download-pdf`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -238,7 +237,7 @@ export const reportsApi = {
   ) => {
     try {
       const token = localStorage.getItem('access_token')
-      const response = await fetch(`${API_BASE_URL}/reports/${reportId}/chat/stream`, {
+      const response = await fetch(`${API.BASE_URL}/reports/${reportId}/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

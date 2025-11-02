@@ -15,6 +15,9 @@ import { ProfessionalSelect } from '@/components/ui/ProfessionalSelect'
 import { usePageTransition } from '@/contexts/PageTransitionContext'
 import { useReportsCache } from '@/contexts/ReportsCacheContext'
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton'
+import { logger } from '@/lib/logger'
+import { DASHBOARD, UI } from '@/lib/constants'
+import { useDebounce } from '@/hooks/useDebounce'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -24,6 +27,7 @@ export default function DashboardPage() {
   const [reports, setReports] = useState<MedicalReport[]>(cachedReports || [])
   const [isLoading, setIsLoading] = useState(!cachedReports)
   const [searchQuery, setSearchQuery] = useState('')
+  const debouncedSearchQuery = useDebounce(searchQuery, UI.DEBOUNCE.SEARCH)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [severityFilter, setSeverityFilter] = useState<string>('all')
   const [currentPage, setCurrentPage] = useState(1)
@@ -72,7 +76,7 @@ export default function DashboardPage() {
     // Auto-refresh every 3 seconds when there are processing reports
     const interval = setInterval(() => {
       fetchReports()
-    }, 3000)
+    }, DASHBOARD.AUTO_REFRESH_INTERVAL)
     
     return () => clearInterval(interval)
   }, [reports, autoRefresh])
@@ -85,7 +89,7 @@ export default function DashboardPage() {
       setCachedReports(freshReports)
       fetchChatCounts()
     } catch (error) {
-      console.error('Error fetching reports:', error)
+      logger.error('Dashboard: Error fetching reports', error)
       if (!cachedReports) {
         setReports([])
       }
@@ -96,14 +100,14 @@ export default function DashboardPage() {
 
   const fetchChatCounts = async () => {
     try {
-      console.log('[Dashboard] Fetching chat counts...')
+      logger.debug('Dashboard: Fetching chat counts')
       const counts = await reportsApi.getAllChatCounts()
-      console.log('[Dashboard] Chat counts received:', counts)
+      logger.debug('Dashboard: Chat counts received', { count: Object.keys(counts || {}).length })
       const freshCounts = counts || {}
       setChatCounts(freshCounts)
       setCachedChatCounts(freshCounts)
     } catch (error) {
-      console.error('[Dashboard] Failed to load chat counts:', error)
+      logger.error('Dashboard: Failed to load chat counts', error)
       if (!cachedChatCounts) {
         setChatCounts({})
       }
@@ -129,10 +133,9 @@ export default function DashboardPage() {
 
   // Filter and search reports
   const filteredReports = reports.filter(report => {
-    // Search filter
-    const matchesSearch = searchQuery === '' || 
-      report.file_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (report.report_type && report.report_type.toLowerCase().includes(searchQuery.toLowerCase()))
+    const matchesSearch = debouncedSearchQuery === '' || 
+      report.file_name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+      (report.report_type && report.report_type.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
     
     // Status filter
     const matchesStatus = statusFilter === 'all' || report.analysis_status === statusFilter
@@ -152,7 +155,7 @@ export default function DashboardPage() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, statusFilter, severityFilter])
+  }, [debouncedSearchQuery, statusFilter, severityFilter])
 
   const getSeverityColor = (severity?: string) => {
     switch (severity) {

@@ -38,6 +38,8 @@ import {
 import toast from '@/lib/toast'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { MarkdownText } from '@/components/ui/MarkdownText'
+import { API, CHAT } from '@/lib/constants'
+import { logger } from '@/lib/logger'
 
 interface ChatPanelProps {
   reportId: string
@@ -136,13 +138,11 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
 
   const loadChatHistory = async () => {
     try {
-      // Force fresh fetch - no cache
       const history = await reportsApi.getChatHistory(reportId, activeConversationId)
-      // Completely replace messages (don't merge)
       setMessages(history || [])
-      console.log('[Chat] Loaded messages:', history.length)
+      logger.debug('Chat: Loaded messages', { count: history.length })
     } catch (error) {
-      console.error('Error loading chat history:', error)
+      logger.error('Chat: Failed to load history', error)
       setMessages([])
     }
   }
@@ -189,15 +189,9 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
 
   const deleteConversation = async (convId: string) => {
     try {
-      console.log('=== DELETE CONVERSATION DEBUG ===')
-      console.log('Conversation ID:', convId)
-      console.log('Report ID:', reportId)
-      console.log('API Base URL:', process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1')
-      
       const result = await reportsApi.clearChatHistory(reportId, convId)
-      console.log('Delete successful! Result:', result)
+      logger.debug('Chat: Conversation deleted successfully', { conversationId: convId, deletedCount: result.deleted_count })
       
-      // Remove from list immediately
       setAllConversations(prev => prev.filter(c => c.id !== convId))
       
       // If deleting active conversation, start new one
@@ -215,14 +209,11 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
       }, 500)
       
     } catch (error: any) {
-      console.error('=== DELETE CONVERSATION ERROR ===')
-      console.error('Conversation ID that failed:', convId)
-      console.error('Full error object:', error)
-      console.error('Error message:', error?.message)
-      console.error('Error code:', error?.code)
-      console.error('Error response:', error?.response)
-      console.error('Error response data:', error?.response?.data)
-      console.error('Error stack:', error?.stack)
+      logger.error('Chat: Delete conversation failed', { 
+        conversationId: convId,
+        error: error?.message,
+        response: error?.response?.data 
+      })
       
       const errorMsg = error?.response?.data?.detail || error?.message || 'Failed to delete conversation'
       toast.error(`Delete failed: ${errorMsg}`)
@@ -254,8 +245,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
       const result = await reportsApi.getSuggestedQuestions(reportId)
       setSuggestedQuestions(result.questions || [])
     } catch (error) {
-      console.error('Error loading suggested questions:', error)
-      // Set fallback questions (3 questions)
+      logger.error('Chat: Failed to load suggested questions', error)
       setSuggestedQuestions([
         "What do my test results mean?",
         "Are any of my results concerning?",
@@ -349,9 +339,9 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
                 }))
               }
             }
-          } catch (error) {
-            console.error('Error fetching complete message:', error)
-          }
+            } catch (error) {
+              logger.error('Chat: Failed to fetch complete message', error)
+            }
           
           // Reload conversations to update sidebar (if in fullscreen)
           if (isFullscreen) {
@@ -482,7 +472,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         setRecordingTime(prev => prev + 1)
       }, 1000)
     } catch (err) {
-      console.error('Microphone error:', err)
+      logger.error('Voice: Microphone access denied', err)
       toast.error('Microphone access denied')
     }
   }
@@ -584,13 +574,12 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
       if (audioCacheRef.current.has(messageId)) {
         // Use cached audio - instant playback!
         audioUrl = audioCacheRef.current.get(messageId)!
-        console.log('[TTS] Using cached audio for message', messageId)
+        logger.debug('TTS: Using cached audio', { messageId })
       } else {
         // Set loading state (only if not cached)
         setLoadingAudio(messageId)
 
-        // Request TTS from backend
-        const response = await fetch(`http://localhost:5000/api/v1/reports/${reportId}/chat/text-to-speech`, {
+        const response = await fetch(`${API.BASE_URL}/reports/${reportId}/chat/text-to-speech`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
@@ -608,7 +597,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         
         // Cache the audio URL for instant replay
         audioCacheRef.current.set(messageId, audioUrl)
-        console.log('[TTS] Cached audio for message', messageId)
+        logger.debug('TTS: Cached audio', { messageId })
         
         // Clear loading state
         setLoadingAudio(null)
@@ -633,7 +622,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
 
       await audio.play()
     } catch (error) {
-      console.error('TTS error:', error)
+      logger.error('TTS: Playback failed', error)
       toast.error('Failed to play audio')
       setPlayingAudio(null)
       setLoadingAudio(null)
@@ -680,8 +669,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
       const formData = new FormData()
       formData.append('audio', audioBlob, 'voice-message.webm')
 
-      // Upload and transcribe (use base URL without /api/v1 since it's in the path)
-      const response = await fetch(`http://localhost:5000/api/v1/reports/${reportId}/chat/voice`, {
+      const response = await fetch(`${API.BASE_URL}/reports/${reportId}/chat/voice`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`
@@ -707,7 +695,7 @@ export function ChatPanel({ reportId, reportContext, isOpen, onClose, onMessageC
         toast.error('No speech detected in audio')
       }
     } catch (error) {
-      console.error('Voice message error:', error)
+      logger.error('Voice: Transcription failed', error)
       toast.error('Failed to transcribe voice message')
       setAudioBlob(null)
       setRecordingTime(0)

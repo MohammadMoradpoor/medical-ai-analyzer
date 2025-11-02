@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { logger } from '@/lib/logger'
 
 interface PageTransitionContextType {
   isNavigating: boolean
@@ -32,7 +33,7 @@ function PageTransitionProviderInternal({ children }: { children: React.ReactNod
     if (isInitialMount.current) {
       isInitialMount.current = false
       setLastPath(currentPath)
-      console.log(`[PageTransition] Initial mount: ${currentPath}`)
+      logger.debug('PageTransition: Initial mount', { path: currentPath })
       return
     }
 
@@ -40,17 +41,15 @@ function PageTransitionProviderInternal({ children }: { children: React.ReactNod
       return
     }
 
-    console.log(`[PageTransition] Pathname changed: ${lastPath} -> ${currentPath}`)
-    
     const elapsed = Date.now() - navigationStartTime.current
-    console.log(`[PageTransition] Navigation completed in ${elapsed}ms`)
+    logger.debug('PageTransition: Completed', { from: lastPath, to: currentPath, elapsed })
     
     setIsNavigating(false)
     setLastPath(currentPath)
   }, [pathname, searchParams, lastPath])
 
   const startNavigation = () => {
-    console.log(`[PageTransition] Navigation started from: ${lastPath}`)
+    logger.debug('PageTransition: Started', { from: lastPath })
     navigationStartTime.current = Date.now()
     setIsNavigating(true)
   }
