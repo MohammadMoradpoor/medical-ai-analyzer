@@ -57,20 +57,17 @@ export function PageTransitionProvider({ children }: { children: React.ReactNode
 
     console.log(`[PageTransition] Pathname changed: ${lastPath} -> ${currentPath}`)
     
-    // Pathname has changed = navigation completed
-    // Hide loading bar immediately so it doesn't appear on the new page
+    // CRITICAL: Pathname has changed = navigation completed
+    // Hide loading bar IMMEDIATELY and UNCONDITIONALLY
+    // This ensures the bar is hidden BEFORE the new page renders
     const elapsed = Date.now() - navigationStartTime.current
     console.log(`[PageTransition] Navigation completed in ${elapsed}ms`)
     
-    // Update last path
+    // CRITICAL: Set to false FIRST, THEN update path
+    // This ensures isNavigating is false before any component on new page renders
+    setIsNavigating(false)
     setLastPath(currentPath)
-    
-    // If we were navigating, complete it immediately
-    if (isNavigating) {
-      // Hide loading bar instantly - new page should never see it
-      setIsNavigating(false)
-    }
-  }, [pathname, searchParams, lastPath, isNavigating])
+  }, [pathname, searchParams, lastPath])
 
   // Function to start navigation (must be called BEFORE router.push)
   const startNavigation = () => {

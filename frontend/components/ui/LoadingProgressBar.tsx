@@ -82,17 +82,14 @@ export function LoadingProgressBar({
         setProgress(Math.min(newProgress, 95)) // Cap at 95% until explicitly completed
       }, 50)
     } else {
-      // Navigation complete - jump to 100%
+      // CRITICAL: Navigation complete - hide immediately
+      // Clear interval and reset progress to 0 without delay
+      // This prevents the bar from appearing on the destination page
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
         intervalRef.current = null
       }
-      setProgress(100)
-      
-      // Reset after animation completes
-      setTimeout(() => {
-        setProgress(0)
-      }, 300)
+      setProgress(0)  // Reset immediately - no 100% animation, no delay
     }
     
     return () => {
@@ -105,8 +102,9 @@ export function LoadingProgressBar({
 
   // Top bar variant - fixed position at top of page
   if (variant === 'top-bar') {
-    // Don't render if progress is 0 and not navigating
-    if (progress === 0 && !isNavigating) return null
+    // CRITICAL: Only render when actively navigating
+    // Hide immediately when isNavigating becomes false to prevent showing on Page 2
+    if (!isNavigating) return null
 
     return (
       <div 
