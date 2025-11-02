@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Activity, Mail, Lock, Eye, EyeOff, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
 import toast from '@/lib/toast'
 import { usePublicNavigation } from '@/hooks/usePublicNavigation'
-import { PublicLoadingBar } from '@/components/ui/PublicLoadingBar'
 
 export default function LoginPage() {
   const { navigateTo, isNavigating, progress } = usePublicNavigation()
@@ -117,8 +116,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Loading Bar */}
-      <PublicLoadingBar progress={progress} isNavigating={isNavigating} />
-      
       <div className={`max-w-md w-full space-y-8 ${shakeError ? 'animate-shake' : ''}`}>
         {/* Back Button */}
         <button

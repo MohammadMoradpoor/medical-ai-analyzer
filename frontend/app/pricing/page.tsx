@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { Activity, Check, X, ArrowRight, Shield, Zap, Brain, Star } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePublicNavigation } from '@/hooks/usePublicNavigation'
-import { PublicLoadingBar } from '@/components/ui/PublicLoadingBar'
 
 export default function PricingPage() {
   const router = useRouter()
@@ -159,9 +158,6 @@ export default function PricingPage() {
           </div>
         </div>
       </nav>
-
-      {/* Loading Bar */}
-      <PublicLoadingBar progress={progress} isNavigating={isNavigating} />
 
       {/* Hero Section */}
       <div className="py-20 bg-gradient-to-br from-slate-50 via-white to-blue-50/30">

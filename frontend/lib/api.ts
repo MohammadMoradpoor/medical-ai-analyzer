@@ -77,6 +77,14 @@ export const authApi = {
     const response = await api.post('/auth/refresh', { refresh_token: refreshToken })
     return response.data
   },
+
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    const response = await api.post('/auth/change-password', {
+      current_password: currentPassword,
+      new_password: newPassword
+    })
+    return response.data
+  },
 }
 
 // Reports API
@@ -200,6 +208,16 @@ export const reportsApi = {
   getUnreadCount: async () => {
     // Placeholder - returns 0 unread notifications
     return { count: 0 }
+  },
+
+  getNotifications: async () => {
+    // Placeholder - returns empty notifications array
+    return []
+  },
+
+  markNotificationAsRead: async (notificationId: string) => {
+    // Placeholder - marks notification as read
+    return { success: true }
   },
 
   submitChatFeedback: async (reportId: string, messageId: string, isHelpful: boolean | null) => {

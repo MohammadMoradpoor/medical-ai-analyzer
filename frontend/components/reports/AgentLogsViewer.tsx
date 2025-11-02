@@ -81,7 +81,7 @@ export function AgentLogsViewer({ logs }: AgentLogsViewerProps) {
   const toggleSection = (logId: string, sectionId: string) => {
     setExpandedSections(prev => {
       const newMap = new Map(prev)
-      const logSections = new Set(newMap.get(logId) || new Set())
+      const logSections = new Set<string>(newMap.get(logId) || new Set<string>())
       
       if (logSections.has(sectionId)) {
         logSections.delete(sectionId)

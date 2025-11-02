@@ -7,7 +7,7 @@ import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
-import { reportsApi } from '@/lib/api'
+import { reportsApi, authApi } from '@/lib/api'
 import toast from '@/lib/toast'
 import { Loading } from '@/components/ui/Loading'
 

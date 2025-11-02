@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { Activity, Shield, Lock, Eye, FileText, CheckCircle } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePublicNavigation } from '@/hooks/usePublicNavigation'
-import { PublicLoadingBar } from '@/components/ui/PublicLoadingBar'
 
 export default function PrivacyPage() {
   const router = useRouter()
@@ -258,8 +257,6 @@ export default function PrivacyPage() {
         </div>
       </nav>
 
-      {/* Loading Bar */}
-      <PublicLoadingBar progress={progress} isNavigating={isNavigating} />
 
       {/* Header */}
       <div className="py-16 bg-gradient-to-br from-slate-50 via-white to-blue-50/30">

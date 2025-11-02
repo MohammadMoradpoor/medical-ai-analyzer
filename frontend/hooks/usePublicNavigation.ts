@@ -1,56 +1,149 @@
-import { useState } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
+/**
+ * Enhanced navigation hook with realistic progress tracking
+ * Uses easing functions for natural-feeling progress animations
+ */
 export function usePublicNavigation() {
   const router = useRouter()
   const [isNavigating, setIsNavigating] = useState(false)
   const [progress, setProgress] = useState(0)
+  const navigationRef = useRef<{
+    intervalId?: NodeJS.Timeout
+    timeoutId?: NodeJS.Timeout
+    startTime?: number
+    isActive: boolean
+  }>({ isActive: false })
 
-  const navigateTo = async (path: string) => {
-    // Start navigation
+  /**
+   * Easing function for natural progress curve
+   * Fast at start, slows down as it approaches completion
+   */
+  const easeOutCubic = useCallback((t: number): number => {
+    return 1 - Math.pow(1 - t, 3)
+  }, [])
+
+  /**
+   * Calculate realistic progress based on elapsed time
+   * Phases:
+   * 0-200ms: Quick jump to 30% (route prefetch)
+   * 200-600ms: Smooth progress to 70% (simulated data fetch)
+   * 600ms+: Slow crawl to 90% (waiting for actual navigation)
+   * Manual trigger: Jump to 100% (navigation complete)
+   */
+  const calculateProgress = useCallback((elapsedTime: number): number => {
+    if (elapsedTime < 200) {
+      // Fast initial progress (0 -> 30%)
+      return easeOutCubic(elapsedTime / 200) * 30
+    } else if (elapsedTime < 600) {
+      // Steady middle progress (30% -> 70%)
+      const phase = (elapsedTime - 200) / 400
+      return 30 + easeOutCubic(phase) * 40
+    } else if (elapsedTime < 1200) {
+      // Slow final progress (70% -> 90%)
+      const phase = (elapsedTime - 600) / 600
+      return 70 + easeOutCubic(phase) * 20
+    } else {
+      // Cap at 90% until navigation completes
+      return 90
+    }
+  }, [easeOutCubic])
+
+  /**
+   * Clean up any running timers and intervals
+   */
+  const cleanup = useCallback(() => {
+    const ref = navigationRef.current
+    if (ref.intervalId) {
+      clearInterval(ref.intervalId)
+      ref.intervalId = undefined
+    }
+    if (ref.timeoutId) {
+      clearTimeout(ref.timeoutId)
+      ref.timeoutId = undefined
+    }
+    ref.isActive = false
+    ref.startTime = undefined
+  }, [])
+
+  /**
+   * Navigate to a new path with smooth progress indication
+   */
+  const navigateTo = useCallback(async (path: string) => {
+    // Prevent multiple simultaneous navigations
+    if (navigationRef.current.isActive) {
+      return
+    }
+
+    // Initialize navigation state
     setIsNavigating(true)
     setProgress(0)
+    navigationRef.current.isActive = true
+    navigationRef.current.startTime = Date.now()
 
     try {
-      // Simulate progress (smooth animation on current page)
-    const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 90) {
-        clearInterval(progressInterval)
-            return 90
-      }
-          return prev + 10
-        })
-      }, 50)
+      // Prefetch the route for faster navigation
+      router.prefetch(path)
 
-      // Prefetch the route (Next.js optimization)
-    router.prefetch(path)
+      // Start progress animation
+      navigationRef.current.intervalId = setInterval(() => {
+        const ref = navigationRef.current
+        if (!ref.startTime || !ref.isActive) return
 
-      // Wait for minimum display time (smooth UX)
-      await new Promise(resolve => setTimeout(resolve, 500))
-
-      // Complete progress
-      clearInterval(progressInterval)
-      setProgress(100)
-      
-      // Small delay to show 100% completion
-      await new Promise(resolve => setTimeout(resolve, 100))
-
-      // Instant navigation (no loading screen)
-        router.push(path)
+        const elapsed = Date.now() - ref.startTime
+        const newProgress = calculateProgress(elapsed)
         
-      // Reset after navigation
-        setTimeout(() => {
-          setIsNavigating(false)
-          setProgress(0)
-      }, 200)
+        setProgress(prev => {
+          // Ensure progress always moves forward
+          return Math.max(prev, newProgress)
+        })
+      }, 16) // ~60fps for smooth animation
+
+      // Wait for minimum display time for better UX
+      // Users should see the progress bar for at least this duration
+      await new Promise(resolve => {
+        navigationRef.current.timeoutId = setTimeout(resolve, 400)
+      })
+
+      // Complete progress to 100%
+      setProgress(100)
+
+      // Brief pause to show completion
+      await new Promise(resolve => setTimeout(resolve, 150))
+
+      // Perform the actual navigation
+      router.push(path)
+
+      // Reset state after navigation with smooth fade out
+      setTimeout(() => {
+        setIsNavigating(false)
+        setProgress(0)
+        cleanup()
+      }, 300)
 
     } catch (error) {
       console.error('Navigation error:', error)
+      // Immediate cleanup on error
       setIsNavigating(false)
       setProgress(0)
+      cleanup()
     }
-  }
+  }, [router, calculateProgress, cleanup])
 
-  return { navigateTo, isNavigating, progress }
+  /**
+   * Cancel ongoing navigation (useful for fast successive clicks)
+   */
+  const cancelNavigation = useCallback(() => {
+    setIsNavigating(false)
+    setProgress(0)
+    cleanup()
+  }, [cleanup])
+
+  return { 
+    navigateTo, 
+    cancelNavigation,
+    isNavigating, 
+    progress 
+  }
 }

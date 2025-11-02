@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { Activity, Upload, Brain, Zap, Shield, CheckCircle, ArrowRight, FileText, Heart, Microscope, ChevronRight, Star } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { usePublicNavigation } from '@/hooks/usePublicNavigation'
-import { PublicLoadingBar } from '@/components/ui/PublicLoadingBar'
 
 export default function LandingPage() {
   const router = useRouter()
@@ -173,9 +172,6 @@ export default function LandingPage() {
           </div>
         </div>
       </nav>
-
-      {/* Loading Bar */}
-      <PublicLoadingBar progress={progress} isNavigating={isNavigating} />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50/30">

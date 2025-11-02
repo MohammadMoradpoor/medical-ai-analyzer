@@ -239,3 +239,30 @@ textarea:-ms-input-placeholder {
   padding-top: 0;
   padding-bottom: 0;
 }
+
+/* Loading bar animations */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes loadingPulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-loadingPulse {
+  animation: loadingPulse 1s ease-in-out infinite;
+}
