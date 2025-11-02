@@ -18,19 +18,6 @@ export function usePageTransition() {
   return context
 }
 
-/**
- * Professional page transition provider that tracks Next.js navigation state.
- * 
- * CRITICAL: The loading bar must show on the SOURCE page (before navigation),
- * never on the DESTINATION page (after navigation).
- * 
- * How it works:
- * 1. Navigation is triggered via startNavigation() BEFORE router.push()
- * 2. Loading bar shows on current page
- * 3. When pathname changes, we know navigation completed
- * 4. Hide loading bar immediately
- * 5. Show new page without loading bar
- */
 export function PageTransitionProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -42,7 +29,6 @@ export function PageTransitionProvider({ children }: { children: React.ReactNode
   useEffect(() => {
     const currentPath = pathname + (searchParams?.toString() || '')
     
-    // Skip initial mount - don't show loading bar on first page load
     if (isInitialMount.current) {
       isInitialMount.current = false
       setLastPath(currentPath)
@@ -50,26 +36,19 @@ export function PageTransitionProvider({ children }: { children: React.ReactNode
       return
     }
 
-    // Skip if path hasn't actually changed
     if (currentPath === lastPath) {
       return
     }
 
     console.log(`[PageTransition] Pathname changed: ${lastPath} -> ${currentPath}`)
     
-    // CRITICAL: Pathname has changed = navigation completed
-    // Hide loading bar IMMEDIATELY and UNCONDITIONALLY
-    // This ensures the bar is hidden BEFORE the new page renders
     const elapsed = Date.now() - navigationStartTime.current
     console.log(`[PageTransition] Navigation completed in ${elapsed}ms`)
     
-    // CRITICAL: Set to false FIRST, THEN update path
-    // This ensures isNavigating is false before any component on new page renders
     setIsNavigating(false)
     setLastPath(currentPath)
   }, [pathname, searchParams, lastPath])
 
-  // Function to start navigation (must be called BEFORE router.push)
   const startNavigation = () => {
     console.log(`[PageTransition] Navigation started from: ${lastPath}`)
     navigationStartTime.current = Date.now()
