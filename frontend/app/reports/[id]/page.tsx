@@ -13,7 +13,6 @@ import { FloatingChatButton } from '@/components/reports/FloatingChatButton'
 import { UserDropdown } from '@/components/layout/UserDropdown'
 import { NotificationDropdown } from '@/components/layout/NotificationDropdown'
 import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
-import { Loading } from '@/components/ui/Loading'
 
 export default function ReportDetailPage() {
   const router = useRouter()
@@ -175,7 +174,14 @@ export default function ReportDetailPage() {
 
 
   if (isLoading) {
-    return <Loading fullScreen message="Loading report..." />
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-blue-600 mb-4"></div>
+          <p className="text-sm text-gray-600 font-medium">Loading report...</p>
+        </div>
+      </div>
+    )
   }
 
   if (!report) {

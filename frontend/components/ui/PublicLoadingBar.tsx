@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 
 interface PublicLoadingBarProps {
@@ -11,16 +11,9 @@ interface PublicLoadingBarProps {
 }
 
 /**
- * Professional loading bar component that tracks actual Next.js navigation
- * Features:
- * - Automatic route change detection
- * - Realistic progress tracking with intelligent delays
- * - Accessibility support (ARIA)
- * - Dark mode support
- * - Smart instant-navigation detection
- * - GPU-accelerated animations
+ * Internal component that uses useSearchParams
  */
-export function PublicLoadingBar({ 
+function LoadingBarInternal({ 
   progress: externalProgress, 
   isNavigating: externalNavigating,
   minDisplayTime = 300,
@@ -213,5 +206,23 @@ export function PublicLoadingBar({
         />
       </div>
     </div>
+  )
+}
+
+/**
+ * Professional loading bar component that tracks actual Next.js navigation
+ * Features:
+ * - Automatic route change detection
+ * - Realistic progress tracking with intelligent delays
+ * - Accessibility support (ARIA)
+ * - Dark mode support
+ * - Smart instant-navigation detection
+ * - GPU-accelerated animations
+ */
+export function PublicLoadingBar(props: PublicLoadingBarProps = {}) {
+  return (
+    <Suspense fallback={null}>
+      <LoadingBarInternal {...props} />
+    </Suspense>
   )
 }

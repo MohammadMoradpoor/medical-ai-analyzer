@@ -9,7 +9,6 @@ import { SettingsDropdown } from '@/components/layout/SettingsDropdown'
 import { ConfirmModal } from '@/components/ui/ConfirmModal'
 import { reportsApi, authApi } from '@/lib/api'
 import toast from '@/lib/toast'
-import { Loading } from '@/components/ui/Loading'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -343,8 +342,9 @@ export default function SettingsPage() {
                   </div>
                   <div className="p-6">
                     {isLoadingReports ? (
-                      <div className="py-12">
-                        <Loading message="Loading report history..." />
+                      <div className="py-12 text-center">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-blue-600 mb-2"></div>
+                        <p className="text-sm text-gray-600">Loading report history...</p>
                       </div>
                     ) : reports.length === 0 ? (
                       <div className="text-center py-12">
@@ -476,8 +476,9 @@ export default function SettingsPage() {
                   </div>
                   <div className="p-6">
                     {isLoadingUsage ? (
-                      <div className="py-12">
-                        <Loading message="Loading usage statistics..." />
+                      <div className="py-12 text-center">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-slate-200 border-t-blue-600 mb-2"></div>
+                        <p className="text-sm text-gray-600">Loading usage statistics...</p>
                       </div>
                     ) : usageStats ? (
                       <div className="space-y-6">
