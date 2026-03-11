@@ -113,23 +113,28 @@ sequenceDiagram
 - Docker Engine `24+`
 - Docker Compose plugin (`docker compose`)
 - OpenAI API key (for AI/voice features)
-- Linux/macOS shell utilities (`bash`, `curl`)
+- Linux/macOS shell utilities (`bash`, `curl`, `openssl`, `jq`)
 
 ### 1) Clone and Enter Repository
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/MohammadMoradpoor/medical-ai-analyzer.git
 cd medical-ai-analyzer
 ```
 
 ### 2) Create Root `.env`
 ```bash
-cat > .env <<'EOF'
+read -rsp "Enter OPENAI_API_KEY: " OPENAI_API_KEY && echo
+MYSQL_PASSWORD="$(openssl rand -hex 18)"
+MYSQL_ROOT_PASSWORD="$(openssl rand -hex 18)"
+SECRET_KEY="$(openssl rand -hex 32)"
+
+cat > .env <<EOF
 MYSQL_DATABASE=medical_analyzer
 MYSQL_USER=medicalai
-MYSQL_PASSWORD=change-me-app
-MYSQL_ROOT_PASSWORD=change-me-root
-SECRET_KEY=change-me-long-random
-OPENAI_API_KEY=sk-...
+MYSQL_PASSWORD=${MYSQL_PASSWORD}
+MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+SECRET_KEY=${SECRET_KEY}
+OPENAI_API_KEY=${OPENAI_API_KEY}
 NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
 ACCESS_TOKEN_EXPIRE_MINUTES=480
 REFRESH_TOKEN_EXPIRE_DAYS=30
@@ -243,13 +248,18 @@ Required in root `.env` (or defaults are applied):
 
 Example:
 ```bash
-cat > .env <<'EOF'
+read -rsp "Enter OPENAI_API_KEY: " OPENAI_API_KEY && echo
+MYSQL_PASSWORD="$(openssl rand -hex 18)"
+MYSQL_ROOT_PASSWORD="$(openssl rand -hex 18)"
+SECRET_KEY="$(openssl rand -hex 32)"
+
+cat > .env <<EOF
 MYSQL_DATABASE=medical_analyzer
 MYSQL_USER=medicalai
-MYSQL_PASSWORD=change-me-app
-MYSQL_ROOT_PASSWORD=change-me-root
-SECRET_KEY=change-me-long-random
-OPENAI_API_KEY=sk-...
+MYSQL_PASSWORD=${MYSQL_PASSWORD}
+MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+SECRET_KEY=${SECRET_KEY}
+OPENAI_API_KEY=${OPENAI_API_KEY}
 NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
 ACCESS_TOKEN_EXPIRE_MINUTES=480
 REFRESH_TOKEN_EXPIRE_DAYS=30
@@ -303,7 +313,10 @@ curl -X POST "$API_URL/auth/login" \
 
 Upload report:
 ```bash
-TOKEN="<access_token>"
+TOKEN="$(curl -s -X POST "$API_URL/auth/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=doctor1&password=StrongPass123" | jq -r '.access_token')"
+
 curl -X POST "$API_URL/reports/upload" \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@test-files/sample.pdf"
@@ -311,7 +324,10 @@ curl -X POST "$API_URL/reports/upload" \
 
 Check processing:
 ```bash
-REPORT_ID="<report_id>"
+REPORT_ID="$(curl -s -X POST "$API_URL/reports/upload" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F "file=@test-files/sample.pdf" | jq -r '.id')"
+
 curl -H "Authorization: Bearer $TOKEN" \
   "$API_URL/reports/$REPORT_ID/processing-status"
 ```
