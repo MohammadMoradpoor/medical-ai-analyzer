@@ -1,0 +1,246 @@
+name: medical-ai-analyzer
+
+x-backend-env: &backend-env
+  DATABASE_URL: mysql+pymysql://${MYSQL_USER:-medicalai}:${MYSQL_PASSWORD:-medical2025}@db:3306/${MYSQL_DATABASE:-medical_analyzer}
+  SECRET_KEY: ${SECRET_KEY:-change-this-in-production}
+  ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-480}
+  REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
+  OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  API_HOST: 0.0.0.0
+  API_PORT: 5000
+  WORKERS: ${WORKERS:-1}
+  PYTHONUNBUFFERED: "1"
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  db:
+    image: mysql:8.4
+    container_name: maa-db
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-medical_analyzer}
+      MYSQL_USER: ${MYSQL_USER:-medicalai}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-medical2025}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-change-me}
+      TZ: UTC
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: "1.50"
+    networks:
+      - app-net
+    logging: *default-logging
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: maa-redis
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.50"
+    networks:
+      - app-net
+    logging: *default-logging
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-prod
+      args:
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+        VCS_REF: ${VCS_REF:-local}
+    container_name: maa-backend
+    environment: *backend-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+    ports:
+      - "5000:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=4); sys.exit(0)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 35s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:size=128m,noexec,nosuid
+    restart: unless-stopped
+    mem_limit: 2g
+    cpus: "2.00"
+    pids_limit: 256
+    networks:
+      - app-net
+    logging: *default-logging
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend-prod
+      args:
+        APP_VERSION: ${APP_VERSION:-1.0.0}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+        VCS_REF: ${VCS_REF:-local}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000/api/v1}
+    container_name: maa-frontend
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5000/api/v1}
+      HOSTNAME: 0.0.0.0
+      PORT: 3333
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3333:3333"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3333', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: "1.00"
+    pids_limit: 128
+    networks:
+      - app-net
+    logging: *default-logging
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: maa-adminer
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: "0.25"
+    networks:
+      - app-net
+    logging: *default-logging
+
+  backend-dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend-dev
+    container_name: maa-backend-dev
+    user: "${UID:-1000}:${GID:-1000}"
+    environment: *backend-env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 5000 --reload"]
+    volumes:
+      - ./backend:/app
+      - backend_dev_uploads:/app/uploads
+      - backend_dev_logs:/app/logs
+    ports:
+      - "5001:5000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=4); sys.exit(0)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 35s
+    restart: unless-stopped
+    mem_limit: 2g
+    cpus: "2.00"
+    networks:
+      - app-net
+    logging: *default-logging
+
+  frontend-dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend-dev
+    container_name: maa-frontend-dev
+    user: "${UID:-1000}:${GID:-1000}"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:5001/api/v1
+      HOSTNAME: 0.0.0.0
+      PORT: 3333
+    depends_on:
+      backend-dev:
+        condition: service_healthy
+    command: ["npm", "run", "dev", "--", "-H", "0.0.0.0", "-p", "3333"]
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - frontend_next_cache:/app/.next
+    ports:
+      - "3334:3333"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://127.0.0.1:3333', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    mem_limit: 1g
+    cpus: "1.00"
+    networks:
+      - app-net
+    logging: *default-logging
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
+  backend_uploads:
+  backend_logs:
+  backend_dev_uploads:
+  backend_dev_logs:
+  frontend_node_modules:
+  frontend_next_cache:

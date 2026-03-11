@@ -1,0 +1,1038 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Medical AI Analyzer | Technical Truth Source</title>
+    <meta
+      name="description"
+      content="World-class single-page technical documentation dashboard for Medical AI Analyzer."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      (function () {
+        var storedTheme = localStorage.getItem("theme");
+        var systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (storedTheme === "dark" || (!storedTheme && systemDark)) {
+          document.documentElement.classList.add("dark");
+        }
+
+        var storedBoardroom = localStorage.getItem("boardroom_mode");
+        if (storedBoardroom === "on") {
+          document.documentElement.classList.add("boardroom");
+        }
+      })();
+    </script>
+
+    <script>
+      tailwind = {
+        config: {
+          darkMode: "class",
+          theme: {
+            extend: {
+              fontFamily: {
+                sans: ["Inter", "SF Pro Text", "SF Pro Display", "-apple-system", "sans-serif"],
+                mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace"],
+              },
+              boxShadow: {
+                glass: "0 14px 48px -24px rgba(0, 0, 0, 0.38)",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+
+      body {
+        font-family: Inter, "SF Pro Text", "SF Pro Display", -apple-system, sans-serif;
+      }
+
+      * {
+        transition-property: background-color, border-color, color, box-shadow, transform, opacity;
+        transition-duration: 300ms;
+        transition-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      .bg-noise {
+        background-image: radial-gradient(rgba(100, 116, 139, 0.14) 1px, transparent 1px);
+        background-size: 18px 18px;
+      }
+
+      .dark .bg-noise {
+        background-image: radial-gradient(rgba(113, 113, 122, 0.22) 1px, transparent 1px);
+      }
+
+      .glass {
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+      }
+
+      .interactive:hover {
+        transform: translateY(-4px);
+      }
+
+      .nav-link-active {
+        background: rgba(39, 39, 42, 0.1);
+        color: rgb(24, 24, 27);
+      }
+
+      .dark .nav-link-active {
+        background: rgba(250, 250, 250, 0.14);
+        color: rgb(250, 250, 250);
+      }
+
+      .diagram-shell {
+        overflow: hidden;
+      }
+
+      .diagram-scroll {
+        overflow: hidden;
+        height: clamp(420px, 52vh, 680px);
+      }
+
+      .diagram-scroll .mermaid {
+        width: 100%;
+        min-width: 100%;
+        height: 100%;
+      }
+
+      @media (min-width: 1024px) {
+        .diagram-scroll {
+          height: clamp(500px, 58vh, 820px);
+        }
+      }
+
+      .diagram-scroll svg {
+        display: block;
+        width: 100% !important;
+        max-width: 100%;
+        height: 100% !important;
+        margin: 0 auto;
+        cursor: grab;
+      }
+
+      .diagram-scroll svg:active {
+        cursor: grabbing;
+      }
+
+      .health-dot {
+        position: relative;
+        display: inline-flex;
+        height: 0.65rem;
+        width: 0.65rem;
+        border-radius: 9999px;
+        animation: healthPulse 2.2s ease-in-out infinite;
+      }
+
+      .health-dot::after {
+        content: "";
+        position: absolute;
+        inset: -0.3rem;
+        border-radius: 9999px;
+        opacity: 0.35;
+      }
+
+      .health-dot-up {
+        background: #22c55e;
+      }
+
+      .health-dot-up::after {
+        background: rgba(34, 197, 94, 0.4);
+      }
+
+      .health-dot-wait {
+        background: #f59e0b;
+      }
+
+      .health-dot-wait::after {
+        background: rgba(245, 158, 11, 0.4);
+      }
+
+      @keyframes healthPulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.16);
+        }
+      }
+
+      html.boardroom .boardroom-title {
+        font-size: clamp(2.2rem, 5vw, 4rem);
+        line-height: 1.05;
+      }
+
+      html.boardroom .boardroom-section {
+        font-size: clamp(1.7rem, 2.8vw, 2.6rem);
+      }
+
+      html.boardroom .boardroom-hide {
+        display: none !important;
+      }
+
+      .code .comment {
+        color: #64748b;
+      }
+
+      .code .cmd {
+        color: #0f172a;
+        font-weight: 700;
+      }
+
+      .code .arg {
+        color: #0f766e;
+      }
+
+      .code .val {
+        color: #a16207;
+      }
+
+      .dark .code .comment {
+        color: #94a3b8;
+      }
+
+      .dark .code .cmd {
+        color: #e2e8f0;
+      }
+
+      .dark .code .arg {
+        color: #5eead4;
+      }
+
+      .dark .code .val {
+        color: #facc15;
+      }
+    </style>
+  </head>
+
+  <body class="bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100">
+    <div class="pointer-events-none fixed inset-0 -z-20 bg-noise"></div>
+    <div
+      class="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_18%_8%,rgba(56,189,248,0.18),transparent_34%),radial-gradient(circle_at_82%_0%,rgba(120,119,198,0.18),transparent_34%)] dark:bg-[radial-gradient(circle_at_18%_8%,rgba(8,47,73,0.8),transparent_36%),radial-gradient(circle_at_82%_0%,rgba(37,99,235,0.25),transparent_34%)]"
+      aria-hidden="true"
+    ></div>
+
+    <header class="sticky top-0 z-50 border-b border-zinc-200/70 bg-zinc-50/75 glass dark:border-zinc-800 dark:bg-zinc-950/75">
+      <div class="mx-auto flex w-full max-w-[1700px] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-950">
+            <i data-lucide="shield-check" class="h-5 w-5"></i>
+          </div>
+          <div>
+            <p class="text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500 dark:text-zinc-400">Technical Truth Source</p>
+            <p class="text-sm font-bold">Medical AI Analyzer</p>
+          </div>
+        </div>
+
+        <nav class="hidden items-center gap-1 rounded-xl border border-zinc-200 bg-white/75 p-1 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70 lg:flex">
+          <a href="#overview" data-nav="overview" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Overview</a>
+          <a href="#blueprint" data-nav="blueprint" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Blueprint</a>
+          <a href="#network" data-nav="network" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Network Hub</a>
+          <a href="#docker" data-nav="docker" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Docker Ops</a>
+          <a href="#stack" data-nav="stack" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Stack Matrix</a>
+          <a href="#roadmap" data-nav="roadmap" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Roadmap</a>
+        </nav>
+
+        <div class="flex items-center gap-2">
+          <button
+            id="mobileMenuToggle"
+            type="button"
+            class="inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-3 text-xs font-semibold text-zinc-700 shadow-glass glass hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-200 dark:hover:bg-zinc-800 lg:hidden"
+          >
+            <i data-lucide="menu" class="h-4 w-4"></i>
+            Menu
+          </button>
+
+          <button
+            id="boardroomToggle"
+            type="button"
+            class="inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-3 text-xs font-semibold text-zinc-700 shadow-glass glass hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          >
+            <i data-lucide="presentation" class="h-4 w-4"></i>
+            <span id="boardroomLabel">Boardroom Off</span>
+          </button>
+
+          <button
+            id="themeToggle"
+            type="button"
+            class="inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-white/80 px-3 text-xs font-semibold text-zinc-700 shadow-glass glass hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900/70 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          >
+            <i data-lucide="moon" class="h-4 w-4"></i>
+            <span id="themeLabel">Dark</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="mobileMenu" class="hidden border-t border-zinc-200 bg-zinc-50/90 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950/90 lg:hidden">
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <a href="#overview" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Overview</a>
+          <a href="#blueprint" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Blueprint</a>
+          <a href="#network" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Network Hub</a>
+          <a href="#docker" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Docker Ops</a>
+          <a href="#stack" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Stack Matrix</a>
+          <a href="#roadmap" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Roadmap</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto w-full max-w-[1700px] space-y-14 px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
+      <section id="overview" class="scroll-mt-28">
+        <div class="grid gap-6 lg:grid-cols-12">
+          <article class="interactive rounded-3xl border border-zinc-200/80 bg-white/85 p-7 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70 lg:col-span-7">
+            <p class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Executive Overview</p>
+            <h1 class="boardroom-title mt-3 text-3xl font-extrabold tracking-tight sm:text-5xl">
+              A single intelligence layer for medical data clarity and confidence
+            </h1>
+            <p class="boardroom-hide mt-4 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300 sm:text-base">
+              Medical AI Analyzer exists to bridge unstructured clinical documents and understandable decisions. It combines
+              multi-agent AI pipelines, secure API boundaries, and auditable output traces to produce rapid, explainable,
+              and stakeholder-ready insights.
+            </p>
+            <div class="mt-6 flex flex-wrap gap-2">
+              <span class="rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs font-semibold dark:border-zinc-700 dark:bg-zinc-800">AI Agents</span>
+              <span class="rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs font-semibold dark:border-zinc-700 dark:bg-zinc-800">API-First</span>
+              <span class="rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs font-semibold dark:border-zinc-700 dark:bg-zinc-800">Voice + Chat</span>
+              <span class="rounded-full border border-zinc-200 bg-zinc-100 px-3 py-1 text-xs font-semibold dark:border-zinc-700 dark:bg-zinc-800">Traceable Outputs</span>
+            </div>
+          </article>
+
+          <article class="interactive rounded-3xl border border-zinc-200/80 bg-white/85 p-6 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70 lg:col-span-5">
+            <h2 class="text-sm font-bold uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-400">Mission Lens</h2>
+            <ul class="mt-4 space-y-3 text-sm text-zinc-600 dark:text-zinc-300">
+              <li class="flex items-start gap-3">
+                <i data-lucide="check-circle-2" class="mt-0.5 h-4 w-4 text-cyan-500"></i>
+                <span><strong class="text-zinc-900 dark:text-zinc-100">What:</strong> AI-powered analysis + communication platform for clinical documents.</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i data-lucide="check-circle-2" class="mt-0.5 h-4 w-4 text-cyan-500"></i>
+                <span><strong class="text-zinc-900 dark:text-zinc-100">Why:</strong> Cut interpretation latency while maintaining human oversight.</span>
+              </li>
+              <li class="flex items-start gap-3">
+                <i data-lucide="check-circle-2" class="mt-0.5 h-4 w-4 text-cyan-500"></i>
+                <span><strong class="text-zinc-900 dark:text-zinc-100">How:</strong> Multi-agent routing, context-aware chat, and operational telemetry.</span>
+              </li>
+            </ul>
+          </article>
+
+          <article class="interactive rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70 lg:col-span-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Primary Domains</p>
+            <p class="mt-3 text-3xl font-bold">4+</p>
+            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">Lab, Imaging, ECG/EKG, EEG</p>
+          </article>
+          <article class="interactive rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70 lg:col-span-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Output Channels</p>
+            <p class="mt-3 text-3xl font-bold">3</p>
+            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">Dashboard, Chat, PDF</p>
+          </article>
+          <article class="interactive rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70 lg:col-span-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Realtime Interaction</p>
+            <p class="mt-3 text-3xl font-bold">SSE</p>
+            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">Low-latency streamed responses</p>
+          </article>
+          <article class="interactive rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70 lg:col-span-3">
+            <p class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Observability</p>
+            <p class="mt-3 text-3xl font-bold">Per-Agent</p>
+            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-300">Tokens, durations, cost estimates</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="blueprint" class="scroll-mt-28">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Technical Blueprint</p>
+        <h2 class="boardroom-section mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Interactive architecture and data flow</h2>
+
+        <div class="mt-6 grid gap-5 xl:grid-cols-2">
+          <article class="diagram-shell rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <div class="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">System Architecture</h3>
+                <p class="boardroom-hide mt-1 text-xs text-zinc-600 dark:text-zinc-300">Scroll to zoom, drag to pan.</p>
+              </div>
+              <div class="inline-flex items-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 shadow-sm dark:border-zinc-700 dark:bg-zinc-950/70">
+                <button
+                  type="button"
+                  data-diagram-action="zoom-in"
+                  data-diagram-target="arch"
+                  class="inline-flex h-9 w-9 items-center justify-center border-r border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  aria-label="Zoom in architecture diagram"
+                >
+                  <i data-lucide="plus" class="h-4 w-4"></i>
+                </button>
+                <button
+                  type="button"
+                  data-diagram-action="zoom-out"
+                  data-diagram-target="arch"
+                  class="inline-flex h-9 w-9 items-center justify-center border-r border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  aria-label="Zoom out architecture diagram"
+                >
+                  <i data-lucide="minus" class="h-4 w-4"></i>
+                </button>
+                <button
+                  type="button"
+                  data-diagram-action="reset"
+                  data-diagram-target="arch"
+                  class="inline-flex h-9 items-center gap-1.5 px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  aria-label="Reset architecture diagram zoom"
+                >
+                  <i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>
+                  <span>Reset</span>
+                </button>
+              </div>
+            </div>
+            <div class="diagram-scroll rounded-2xl border border-zinc-200/80 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+              <div class="mermaid" data-diagram-id="arch">
+flowchart TB
+    U[User Browser] --> EDGE[CDN / Edge]
+    EDGE --> LB[Load Balancer]
+    LB --> FE[Frontend Service :3333]
+    LB --> API[Backend API :5000]
+    FE <--> API
+    API --> DB[(MySQL :3306)]
+    API --> CACHE[(Redis :6379)]
+    API --> STORE[(Object Storage)]
+    API --> AI[OpenAI APIs]
+              </div>
+            </div>
+          </article>
+
+          <article class="diagram-shell rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <div class="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Data Flow & Control</h3>
+                <p class="boardroom-hide mt-1 text-xs text-zinc-600 dark:text-zinc-300">Streamlined ingest-to-insight path.</p>
+              </div>
+              <div class="inline-flex items-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 shadow-sm dark:border-zinc-700 dark:bg-zinc-950/70">
+                <button
+                  type="button"
+                  data-diagram-action="zoom-in"
+                  data-diagram-target="flow"
+                  class="inline-flex h-9 w-9 items-center justify-center border-r border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  aria-label="Zoom in data flow diagram"
+                >
+                  <i data-lucide="plus" class="h-4 w-4"></i>
+                </button>
+                <button
+                  type="button"
+                  data-diagram-action="zoom-out"
+                  data-diagram-target="flow"
+                  class="inline-flex h-9 w-9 items-center justify-center border-r border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  aria-label="Zoom out data flow diagram"
+                >
+                  <i data-lucide="minus" class="h-4 w-4"></i>
+                </button>
+                <button
+                  type="button"
+                  data-diagram-action="reset"
+                  data-diagram-target="flow"
+                  class="inline-flex h-9 items-center gap-1.5 px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  aria-label="Reset data flow diagram zoom"
+                >
+                  <i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>
+                  <span>Reset</span>
+                </button>
+              </div>
+            </div>
+            <div class="diagram-scroll rounded-2xl border border-zinc-200/80 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+              <div class="mermaid" data-diagram-id="flow">
+sequenceDiagram
+    participant C as Client
+    participant FE as Frontend
+    participant API as Backend
+    participant PIPE as AI Pipeline
+    participant DB as Database
+
+    C->>FE: Upload report
+    FE->>API: POST /reports/upload
+    API->>DB: Create pending report
+    API->>PIPE: Classify + extract + analyze
+    PIPE-->>API: Structured result
+    API->>DB: Persist final findings
+    FE->>API: Poll/Stream status
+    API-->>FE: Completed payload
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="network" class="scroll-mt-28">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Environment & Network Hub</p>
+        <h2 class="boardroom-section mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Service surfaces, protocols, and access boundaries</h2>
+
+        <div class="mt-6 grid gap-5 xl:grid-cols-12">
+          <article class="rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70 xl:col-span-8">
+            <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Service Mapping</h3>
+            <div class="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-800">
+              <table class="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
+                <thead class="bg-zinc-100/90 dark:bg-zinc-900/80">
+                  <tr>
+                    <th class="px-4 py-3 text-left font-semibold">Service</th>
+                    <th class="px-4 py-3 text-left font-semibold">Port</th>
+                    <th class="px-4 py-3 text-left font-semibold">Protocol</th>
+                    <th class="px-4 py-3 text-left font-semibold">Access</th>
+                    <th class="px-4 py-3 text-left font-semibold">Profile</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  <tr>
+                    <td class="px-4 py-3">Frontend UI</td>
+                    <td class="px-4 py-3"><code class="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">3333</code></td>
+                    <td class="px-4 py-3">HTTP/HTTPS</td>
+                    <td class="px-4 py-3">External</td>
+                    <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">Compose default</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-3">Backend API</td>
+                    <td class="px-4 py-3"><code class="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">5000</code></td>
+                    <td class="px-4 py-3">HTTP/HTTPS + SSE</td>
+                    <td class="px-4 py-3">External + internal (`backend` DNS)</td>
+                    <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">Compose default</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-3">MySQL Database</td>
+                    <td class="px-4 py-3"><code class="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">3306</code></td>
+                    <td class="px-4 py-3">MySQL TCP</td>
+                    <td class="px-4 py-3">Internal only</td>
+                    <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">Persistent volume</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-3">Redis Cache</td>
+                    <td class="px-4 py-3"><code class="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">6379</code></td>
+                    <td class="px-4 py-3">RESP TCP</td>
+                    <td class="px-4 py-3">Internal only</td>
+                    <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300">Ready for caching features</td>
+                  </tr>
+                  <tr>
+                    <td class="px-4 py-3">Adminer (tools profile)</td>
+                    <td class="px-4 py-3"><code class="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">8080</code></td>
+                    <td class="px-4 py-3">HTTP</td>
+                    <td class="px-4 py-3">External optional</td>
+                    <td class="px-4 py-3 text-zinc-600 dark:text-zinc-300"><code class="rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">--profile tools</code></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70 xl:col-span-4">
+            <h3 class="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Environment Variables</h3>
+            <div class="space-y-3 text-sm">
+              <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+                <p><code class="font-mono">DATABASE_URL</code></p>
+                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">Database connection contract.</p>
+              </div>
+              <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+                <p><code class="font-mono">OPENAI_API_KEY</code></p>
+                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">AI inference provider credential.</p>
+              </div>
+              <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+                <p><code class="font-mono">SECRET_KEY</code></p>
+                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">JWT signature secret.</p>
+              </div>
+              <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+                <p><code class="font-mono">NEXT_PUBLIC_API_URL</code></p>
+                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">Frontend API endpoint base.</p>
+              </div>
+              <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+                <p><code class="font-mono">MYSQL_DATABASE</code>, <code class="font-mono">MYSQL_USER</code>, <code class="font-mono">MYSQL_PASSWORD</code></p>
+                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">Compose-level database bootstrap contract.</p>
+              </div>
+              <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+                <p><code class="font-mono">MAX_UPLOAD_SIZE</code>, <code class="font-mono">ALLOWED_EXTENSIONS</code></p>
+                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-300">Intake policy and file constraints.</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="docker" class="scroll-mt-28">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Container Orchestration</p>
+        <h2 class="boardroom-section mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Infrastructure map, health gates, and runtime contracts</h2>
+
+        <div class="mt-6 grid gap-5 xl:grid-cols-12">
+          <article class="diagram-shell rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70 xl:col-span-8">
+            <div class="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Compose Runtime Topology</h3>
+                <p class="boardroom-hide mt-1 text-xs text-zinc-600 dark:text-zinc-300">Network-isolated services with persistent volumes.</p>
+              </div>
+              <div class="inline-flex items-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 shadow-sm dark:border-zinc-700 dark:bg-zinc-950/70">
+                <button
+                  type="button"
+                  data-diagram-action="zoom-in"
+                  data-diagram-target="compose"
+                  class="inline-flex h-9 w-9 items-center justify-center border-r border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  aria-label="Zoom in container orchestration diagram"
+                >
+                  <i data-lucide="plus" class="h-4 w-4"></i>
+                </button>
+                <button
+                  type="button"
+                  data-diagram-action="zoom-out"
+                  data-diagram-target="compose"
+                  class="inline-flex h-9 w-9 items-center justify-center border-r border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  aria-label="Zoom out container orchestration diagram"
+                >
+                  <i data-lucide="minus" class="h-4 w-4"></i>
+                </button>
+                <button
+                  type="button"
+                  data-diagram-action="reset"
+                  data-diagram-target="compose"
+                  class="inline-flex h-9 items-center gap-1.5 px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:text-zinc-200 dark:hover:bg-zinc-800"
+                  aria-label="Reset container orchestration diagram zoom"
+                >
+                  <i data-lucide="rotate-ccw" class="h-3.5 w-3.5"></i>
+                  <span>Reset</span>
+                </button>
+              </div>
+            </div>
+            <div class="diagram-scroll rounded-2xl border border-zinc-200/80 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+              <div class="mermaid" data-diagram-id="compose">
+flowchart LR
+    subgraph HOST[Host Machine]
+      BR[Browser and CLI]
+    end
+
+    subgraph NET[Docker Bridge Network: app-net]
+      FE[frontend :3333]
+      BE[backend :5000]
+      DB[(db :3306)]
+      RC[(redis :6379)]
+    end
+
+    subgraph VOLS[Persistent Volumes]
+      VDB[(mysql_data)]
+      VRD[(redis_data)]
+      VUP[(backend_uploads)]
+      VLG[(backend_logs)]
+    end
+
+    BR -->|http://localhost:3333| FE
+    BR -->|http://localhost:5000| BE
+    FE -->|NEXT_PUBLIC_API_URL| BE
+    BE -->|mysql+pymysql://...@db:3306| DB
+    BE -. optional cache path .-> RC
+    DB --- VDB
+    RC --- VRD
+    BE --- VUP
+    BE --- VLG
+              </div>
+            </div>
+          </article>
+
+          <article class="rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70 xl:col-span-4">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">System Health</h3>
+            <p class="boardroom-hide mt-2 text-xs text-zinc-600 dark:text-zinc-300">Container readiness gates used by Docker Compose.</p>
+
+            <div class="mt-4 space-y-3 text-sm">
+              <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <span class="health-dot health-dot-up"></span>
+                    <span class="font-semibold">db</span>
+                  </div>
+                  <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">healthy</span>
+                </div>
+                <p class="mt-2 font-mono text-[11px] text-zinc-600 dark:text-zinc-300">mysqladmin ping -h 127.0.0.1</p>
+              </div>
+
+              <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <span class="health-dot health-dot-up"></span>
+                    <span class="font-semibold">redis</span>
+                  </div>
+                  <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">healthy</span>
+                </div>
+                <p class="mt-2 font-mono text-[11px] text-zinc-600 dark:text-zinc-300">redis-cli ping</p>
+              </div>
+
+              <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <span class="health-dot health-dot-up"></span>
+                    <span class="font-semibold">backend</span>
+                  </div>
+                  <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">healthy</span>
+                </div>
+                <p class="mt-2 font-mono text-[11px] text-zinc-600 dark:text-zinc-300">python probe: GET /health</p>
+              </div>
+
+              <div class="rounded-xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/70">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <span class="health-dot health-dot-wait"></span>
+                    <span class="font-semibold">frontend</span>
+                  </div>
+                  <span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-900/50 dark:text-amber-200">waits on backend</span>
+                </div>
+                <p class="mt-2 font-mono text-[11px] text-zinc-600 dark:text-zinc-300">node probe: GET /</p>
+              </div>
+            </div>
+
+            <div class="mt-4 rounded-xl border border-zinc-200 bg-zinc-100/80 p-3 text-xs text-zinc-600 dark:border-zinc-800 dark:bg-zinc-900/70 dark:text-zinc-300">
+              <code class="font-mono">depends_on: condition: service_healthy</code> enforces boot order:
+              DB/Redis → Backend → Frontend.
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="stack" class="scroll-mt-28">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Tech Stack Matrix</p>
+        <h2 class="boardroom-section mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Technology choices and technical justification</h2>
+
+        <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <article class="interactive rounded-2xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <i data-lucide="app-window" class="h-5 w-5 text-cyan-500"></i>
+            <h3 class="mt-3 font-semibold">React / Next.js</h3>
+            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Componentized UI with robust routing and production-ready build pipeline.</p>
+          </article>
+          <article class="interactive rounded-2xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <i data-lucide="server" class="h-5 w-5 text-cyan-500"></i>
+            <h3 class="mt-3 font-semibold">FastAPI (Python)</h3>
+            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">High-velocity API layer for auth, uploads, streaming, and AI orchestration.</p>
+          </article>
+          <article class="interactive rounded-2xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <i data-lucide="database" class="h-5 w-5 text-cyan-500"></i>
+            <h3 class="mt-3 font-semibold">SQL Datastore</h3>
+            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Structured persistence for users, reports, chat history, and agent telemetry.</p>
+          </article>
+          <article class="interactive rounded-2xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <i data-lucide="brain-circuit" class="h-5 w-5 text-cyan-500"></i>
+            <h3 class="mt-3 font-semibold">OpenAI Runtime</h3>
+            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">LLM, vision, speech-to-text, and TTS powering multimodal intelligence.</p>
+          </article>
+          <article class="interactive rounded-2xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <i data-lucide="boxes" class="h-5 w-5 text-cyan-500"></i>
+            <h3 class="mt-3 font-semibold">Docker Strategy</h3>
+            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Target-state containerization for deterministic deploys and environment parity.</p>
+          </article>
+          <article class="interactive rounded-2xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <i data-lucide="workflow" class="h-5 w-5 text-cyan-500"></i>
+            <h3 class="mt-3 font-semibold">CI/CD Pipeline</h3>
+            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Lint/test/build gates with artifact promotion to deployment environments.</p>
+          </article>
+          <article class="interactive rounded-2xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <i data-lucide="radio" class="h-5 w-5 text-cyan-500"></i>
+            <h3 class="mt-3 font-semibold">SSE Streaming</h3>
+            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Incremental response streaming for premium conversational responsiveness.</p>
+          </article>
+          <article class="interactive rounded-2xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <i data-lucide="binary" class="h-5 w-5 text-cyan-500"></i>
+            <h3 class="mt-3 font-semibold">Go Service Layer (optional)</h3>
+            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Reserved for high-throughput auxiliary microservices if scale demands it.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="roadmap" class="scroll-mt-28">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Project Roadmap</p>
+        <h2 class="boardroom-section mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Milestones from current system to enterprise scale</h2>
+
+        <div class="mt-6 rounded-3xl border border-zinc-200/80 bg-white/85 p-6 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+          <ol class="relative space-y-6 border-l border-zinc-200 pl-5 dark:border-zinc-800">
+            <li>
+              <span class="absolute -left-[9px] mt-1 h-4 w-4 rounded-full border border-cyan-400 bg-cyan-500"></span>
+              <h3 class="font-semibold">Phase 1: Stabilize Technical Truth Source</h3>
+              <p class="boardroom-hide mt-1 text-sm text-zinc-600 dark:text-zinc-300">Finalize docs, enforce configuration consistency, and baseline performance telemetry.</p>
+            </li>
+            <li>
+              <span class="absolute -left-[9px] mt-1 h-4 w-4 rounded-full border border-zinc-400 bg-zinc-300 dark:bg-zinc-700"></span>
+              <h3 class="font-semibold">Phase 2: Containerization + CI hardening</h3>
+              <p class="boardroom-hide mt-1 text-sm text-zinc-600 dark:text-zinc-300">Ship Docker assets, add automated test gates, and publish immutable images.</p>
+            </li>
+            <li>
+              <span class="absolute -left-[9px] mt-1 h-4 w-4 rounded-full border border-zinc-400 bg-zinc-300 dark:bg-zinc-700"></span>
+              <h3 class="font-semibold">Phase 3: Scalable Runtime Plane</h3>
+              <p class="boardroom-hide mt-1 text-sm text-zinc-600 dark:text-zinc-300">Introduce queue-based workers, object storage, and autoscaling controls.</p>
+            </li>
+            <li>
+              <span class="absolute -left-[9px] mt-1 h-4 w-4 rounded-full border border-zinc-400 bg-zinc-300 dark:bg-zinc-700"></span>
+              <h3 class="font-semibold">Phase 4: Enterprise Readiness</h3>
+              <p class="boardroom-hide mt-1 text-sm text-zinc-600 dark:text-zinc-300">Security hardening, audit trails, cost governance, and SLO-backed observability.</p>
+            </li>
+          </ol>
+        </div>
+
+        <div class="mt-5 rounded-3xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+          <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Quick Start Snippet</h3>
+          <pre class="code overflow-x-auto rounded-2xl border border-zinc-200 bg-zinc-50 p-4 font-mono text-xs leading-6 dark:border-zinc-800 dark:bg-zinc-950"><code><span class="comment"># 1) Start local services</span>
+<span class="cmd">docker compose up -d --build</span>
+
+<span class="comment"># 2) Validate backend and frontend health</span>
+<span class="cmd">curl</span> <span class="arg">http://localhost:5000/health</span>
+<span class="cmd">curl</span> <span class="arg">-I http://localhost:3333</span>
+
+<span class="comment"># 3) Run full integration verification</span>
+<span class="cmd">bash</span> <span class="arg">verify_stack.sh</span>
+
+<span class="comment"># 4) Stop the stack</span>
+<span class="cmd">docker compose down</span></code></pre>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-zinc-200/70 bg-zinc-50/75 py-6 glass dark:border-zinc-800 dark:bg-zinc-950/75">
+      <div class="mx-auto flex w-full max-w-[1700px] flex-wrap items-center justify-between gap-2 px-4 text-xs text-zinc-500 sm:px-6 lg:px-8">
+        <p>Medical AI Analyzer • Technical Truth Source Dashboard</p>
+        <p>Built for investor pitches and senior engineering onboarding</p>
+      </div>
+    </footer>
+
+    <script>
+      (function () {
+        var diagramNodes = Array.from(document.querySelectorAll(".mermaid"));
+        var panZoomInstances = {};
+
+        diagramNodes.forEach(function (node) {
+          node.dataset.source = node.textContent.trim();
+        });
+
+        function mermaidConfig(isDark) {
+          return {
+            startOnLoad: false,
+            securityLevel: "loose",
+            theme: isDark ? "dark" : "default",
+            flowchart: {
+              useMaxWidth: true,
+              htmlLabels: false,
+              curve: "basis",
+              diagramPadding: 14,
+              nodeSpacing: 34,
+              rankSpacing: 44,
+            },
+            sequence: {
+              useMaxWidth: true,
+              width: 110,
+              actorMargin: 30,
+              messageMargin: 24,
+            },
+            themeVariables: isDark
+              ? {
+                  background: "#09090b",
+                  primaryColor: "#18181b",
+                  primaryTextColor: "#fafafa",
+                  primaryBorderColor: "#3f3f46",
+                  lineColor: "#94a3b8",
+                  secondaryColor: "#0f172a",
+                  tertiaryColor: "#082f49",
+                }
+              : {
+                  background: "#fafafa",
+                  primaryColor: "#ffffff",
+                  primaryTextColor: "#18181b",
+                  primaryBorderColor: "#d4d4d8",
+                  lineColor: "#334155",
+                  secondaryColor: "#f1f5f9",
+                  tertiaryColor: "#ecfeff",
+                },
+            fontFamily: "Inter, sans-serif",
+          };
+        }
+
+        function destroyPanZoom() {
+          Object.keys(panZoomInstances).forEach(function (key) {
+            try {
+              panZoomInstances[key].destroy();
+            } catch (e) {
+              // ignore cleanup errors
+            }
+          });
+          panZoomInstances = {};
+        }
+
+        function fitSvg(svg) {
+          try {
+            if (!svg.getAttribute("viewBox")) {
+              var box = svg.getBBox();
+              if (box && box.width > 0 && box.height > 0) {
+                svg.setAttribute("viewBox", [box.x, box.y, box.width, box.height].join(" "));
+              }
+            }
+          } catch (e) {
+            // keep default viewBox if available
+          }
+
+          svg.removeAttribute("width");
+          svg.removeAttribute("height");
+          svg.style.width = "100%";
+          svg.style.maxWidth = "100%";
+          svg.style.height = "100%";
+        }
+
+        function fillDiagramViewport(instance) {
+          if (!instance) return;
+
+          instance.resize();
+          instance.fit();
+          instance.center();
+
+          var sizes = instance.getSizes();
+          if (!sizes || !sizes.viewBox || !sizes.width || !sizes.height) return;
+
+          var viewBoxWidth = sizes.viewBox.width;
+          var viewBoxHeight = sizes.viewBox.height;
+          if (!viewBoxWidth || !viewBoxHeight) return;
+
+          // Cover mode: fill the full diagram box, then let pan handle overflow.
+          var targetZoom = Math.max(sizes.width / viewBoxWidth, sizes.height / viewBoxHeight);
+          if (Number.isFinite(targetZoom) && targetZoom > 0) {
+            instance.zoom(Math.min(targetZoom, 40));
+            instance.center();
+          }
+        }
+
+        function initPanZoom() {
+          document.querySelectorAll(".mermaid[data-diagram-id]").forEach(function (container) {
+            var id = container.dataset.diagramId;
+            var svg = container.querySelector("svg");
+            if (!id || !svg) return;
+
+            fitSvg(svg);
+
+            panZoomInstances[id] = svgPanZoom(svg, {
+              zoomEnabled: true,
+              panEnabled: true,
+              controlIconsEnabled: false,
+              fit: false,
+              center: false,
+              minZoom: 0.1,
+              maxZoom: 40,
+              dblClickZoomEnabled: true,
+              mouseWheelZoomEnabled: true,
+              preventMouseEventsDefault: false,
+            });
+
+            fillDiagramViewport(panZoomInstances[id]);
+          });
+        }
+
+        function renderMermaid() {
+          destroyPanZoom();
+
+          var isDark = document.documentElement.classList.contains("dark");
+          mermaid.initialize(mermaidConfig(isDark));
+
+          diagramNodes.forEach(function (node) {
+            node.removeAttribute("data-processed");
+            node.textContent = node.dataset.source;
+          });
+
+          mermaid
+            .run({ querySelector: ".mermaid" })
+            .then(function () {
+              initPanZoom();
+            })
+            .catch(function (err) {
+              console.error("Mermaid render error:", err);
+            });
+        }
+
+        function setTheme(isDark) {
+          document.documentElement.classList.toggle("dark", isDark);
+          localStorage.setItem("theme", isDark ? "dark" : "light");
+          document.getElementById("themeLabel").textContent = isDark ? "Light" : "Dark";
+          renderMermaid();
+        }
+
+        function setBoardroom(on) {
+          document.documentElement.classList.toggle("boardroom", on);
+          localStorage.setItem("boardroom_mode", on ? "on" : "off");
+          document.getElementById("boardroomLabel").textContent = on ? "Boardroom On" : "Boardroom Off";
+        }
+
+        function setupNavObserver() {
+          var links = Array.from(document.querySelectorAll(".nav-link"));
+          var sections = Array.from(document.querySelectorAll("main section[id]"));
+
+          var observer = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                  var id = entry.target.getAttribute("id");
+                  links.forEach(function (link) {
+                    if (link.dataset.nav === id) link.classList.add("nav-link-active");
+                    else link.classList.remove("nav-link-active");
+                  });
+                }
+              });
+            },
+            { threshold: 0.45 }
+          );
+
+          sections.forEach(function (section) {
+            observer.observe(section);
+          });
+        }
+
+        function setupDiagramControls() {
+          document.querySelectorAll("[data-diagram-action][data-diagram-target]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var id = btn.dataset.diagramTarget;
+              var action = btn.dataset.diagramAction;
+              var instance = panZoomInstances[id];
+              if (!instance || !action) return;
+
+              if (action === "zoom-in") {
+                instance.zoomIn();
+              } else if (action === "zoom-out") {
+                instance.zoomOut();
+              } else if (action === "reset") {
+                instance.resetZoom();
+                fillDiagramViewport(instance);
+              }
+            });
+          });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+          lucide.createIcons();
+
+          setBoardroom(document.documentElement.classList.contains("boardroom"));
+          setTheme(document.documentElement.classList.contains("dark"));
+
+          setupNavObserver();
+          setupDiagramControls();
+
+          document.getElementById("themeToggle").addEventListener("click", function () {
+            var isDark = document.documentElement.classList.contains("dark");
+            setTheme(!isDark);
+          });
+
+          document.getElementById("boardroomToggle").addEventListener("click", function () {
+            var on = document.documentElement.classList.contains("boardroom");
+            setBoardroom(!on);
+          });
+
+          var mobileMenuToggle = document.getElementById("mobileMenuToggle");
+          var mobileMenu = document.getElementById("mobileMenu");
+          if (mobileMenuToggle && mobileMenu) {
+            mobileMenuToggle.addEventListener("click", function () {
+              mobileMenu.classList.toggle("hidden");
+            });
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
