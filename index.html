@@ -852,11 +852,11 @@ flowchart LR
 <span class="cmd">curl</span> <span class="arg">http://localhost:5000/health</span>
 <span class="cmd">curl</span> <span class="arg">-I http://localhost:3333</span>
 
-<span class="comment"># 3) Run full integration verification</span>
-<span class="cmd">bash</span> <span class="arg">verify_stack.sh</span>
+<span class="comment"># 3) Inspect runtime logs</span>
+<span class="cmd">docker compose logs -f --tail=120</span>
 
-<span class="comment"># 4) Stop the stack</span>
-<span class="cmd">docker compose down</span></code></pre>
+<span class="comment"># 4) Stop and clean volumes</span>
+<span class="cmd">docker compose down -v</span></code></pre>
         </div>
       </section>
     </main>
@@ -949,7 +949,7 @@ flowchart LR
           svg.style.height = "100%";
         }
 
-        function fillDiagramViewport(instance) {
+        function fillDiagramViewport(instance, diagramId) {
           if (!instance) return;
 
           instance.resize();
@@ -968,6 +968,14 @@ flowchart LR
           if (Number.isFinite(targetZoom) && targetZoom > 0) {
             instance.zoom(Math.min(targetZoom, 40));
             instance.center();
+
+            // System Architecture: slightly less default zoom + subtle left shift for visual centering.
+            if (diagramId === "arch") {
+              instance.zoom(Math.max(Math.min(targetZoom * 0.68, 40), 0.1));
+              instance.center();
+              var pan = instance.getPan();
+              instance.pan({ x: pan.x - sizes.width * 0.09, y: pan.y - sizes.height * 0.05 });
+            }
           }
         }
 
@@ -992,7 +1000,7 @@ flowchart LR
               preventMouseEventsDefault: false,
             });
 
-            fillDiagramViewport(panZoomInstances[id]);
+            fillDiagramViewport(panZoomInstances[id], id);
           });
         }
 
@@ -1068,7 +1076,7 @@ flowchart LR
                 instance.zoomOut();
               } else if (action === "reset") {
                 instance.resetZoom();
-                fillDiagramViewport(instance);
+                fillDiagramViewport(instance, id);
               }
             });
           });

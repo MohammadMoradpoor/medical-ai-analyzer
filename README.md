@@ -65,7 +65,7 @@ flowchart TD
 | AI Runtime | OpenAI `gpt-4o`, Vision, Whisper (`whisper-1`), TTS (`tts-1`) |
 | Document Handling | PyPDF2, Pillow, pdf2image, pytesseract |
 | Reporting | ReportLab + QR code PDF generation |
-| Dev Scripts | `start.sh` / `stop.sh` for local orchestration |
+| Runtime Orchestration | Docker Compose, container healthchecks, isolated bridge network |
 
 ### Architecture Notes
 - Backend uses a **layered design** (`api`, `auth`, `db`, `services`, `agents`).
@@ -110,59 +110,36 @@ sequenceDiagram
 
 ## Getting Started
 ### Prerequisites
-- Python `3.10+`
-- Node.js `18+`
-- MySQL `8+`
-- OpenAI API key
-- Linux/macOS shell utilities (`bash`, `lsof`, `curl`)
+- Docker Engine `24+`
+- Docker Compose plugin (`docker compose`)
+- OpenAI API key (for AI/voice features)
+- Linux/macOS shell utilities (`bash`, `curl`)
 
-Optional but useful for richer OCR workflows:
-- `tesseract-ocr`
-- Poppler utilities (`pdftoppm`, etc.)
-
-### 1) Clone Repository
+### 1) Clone and Enter Repository
 ```bash
 git clone <your-repo-url>
 cd medical-ai-analyzer
 ```
 
-### 2) Configure Backend
+### 2) Create Root `.env`
 ```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-
-# Recommended extras used by the codebase
-pip install reportlab qrcode[pil] email-validator
-
-cp env.example .env
+cat > .env <<'EOF'
+MYSQL_DATABASE=medical_analyzer
+MYSQL_USER=medicalai
+MYSQL_PASSWORD=change-me-app
+MYSQL_ROOT_PASSWORD=change-me-root
+SECRET_KEY=change-me-long-random
+OPENAI_API_KEY=sk-...
+NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+ACCESS_TOKEN_EXPIRE_MINUTES=480
+REFRESH_TOKEN_EXPIRE_DAYS=30
+WORKERS=1
+EOF
 ```
 
-Edit `backend/.env` at minimum:
-- `DATABASE_URL=mysql+pymysql://<user>:<password>@localhost:3306/medical_analyzer`
-- `OPENAI_API_KEY=<your-key>`
-- `SECRET_KEY=<secure-random-hex>`
-
-### 3) Create MySQL Database
-```sql
-CREATE DATABASE medical_analyzer CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### 4) Configure Frontend
+### 3) Start the Platform (Docker-only)
 ```bash
-cd ../frontend
-npm install
-printf "NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1\n" > .env.local
-```
-
-### 5) Run the Platform
-Recommended (from repository root):
-```bash
-cd ..
-chmod +x start.sh stop.sh
-./start.sh
+docker compose up -d --build
 ```
 
 This starts:
@@ -170,14 +147,10 @@ This starts:
 - Frontend: `http://localhost:3333`
 - Swagger: `http://localhost:5000/docs`
 
-Stop services:
+### 4) Health Check
 ```bash
-./stop.sh
-```
-
-### 6) Health Check
-```bash
-curl http://localhost:5000/health
+curl -f http://localhost:5000/health
+curl -I http://localhost:3333
 ```
 
 ## Docker Deployment (Production-Grade)
@@ -299,11 +272,8 @@ docker compose ps
 curl -f http://localhost:5000/health
 curl -I http://localhost:3333
 
-# 5) Full stack verification (recommended)
-bash verify_stack.sh
-
-# Optional: preserve volumes/data during verification
-RESET_STACK=0 bash verify_stack.sh
+# 5) Inspect live logs
+docker compose logs -f --tail=120
 ```
 
 ## Usage Examples
@@ -412,8 +382,9 @@ medical-ai-analyzer/
 │   ├── hooks/
 │   ├── lib/                       # API client, constants, logging, env
 │   └── types/
-├── start.sh                       # Launches backend (:5000) + frontend (:3333)
-├── stop.sh                        # Stops running services
+├── Dockerfile                     # Multi-stage backend/frontend build targets
+├── docker-compose.yml             # Runtime orchestration, healthchecks, volumes
+├── .dockerignore                  # Build context pruning
 └── README.md
 ```
 
@@ -424,9 +395,9 @@ Contributions are welcome. For consistent collaboration:
 2. Keep commits focused (`feat`, `fix`, `docs`, `refactor` style is recommended).
 3. Update docs when behavior or endpoints change.
 4. Validate locally:
-   - Backend starts and `/health` responds.
-   - Frontend runs and can authenticate + upload.
-   - Core report flow (`upload -> process -> view -> chat`) works.
+   - `docker compose up -d --build` succeeds.
+   - `docker compose ps` reports healthy services.
+   - Core report flow (`upload -> process -> view -> chat`) works through containerized stack.
 5. Submit a PR with:
    - Clear problem statement
    - Scope of change
