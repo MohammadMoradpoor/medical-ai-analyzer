@@ -208,10 +208,10 @@ flowchart LR
       VLG[(backend_logs)]
     end
 
-    BR -->|http://localhost:3333| FE
-    BR -->|http://localhost:5000| BE
-    FE -->|NEXT_PUBLIC_API_URL| BE
-    BE -->|mysql+pymysql://...@db:3306| DB
+    BR -->|localhost:3333| FE
+    BR -->|localhost:5000| BE
+    FE -->|NEXT_PUBLIC_API_URL env| BE
+    BE -->|mysql over db:3306| DB
     BE -. optional cache path .-> RC
     DB --- VDB
     RC --- VRD
