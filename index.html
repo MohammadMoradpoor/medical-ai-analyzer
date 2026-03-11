@@ -246,6 +246,7 @@
           <a href="#blueprint" data-nav="blueprint" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Blueprint</a>
           <a href="#network" data-nav="network" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Network Hub</a>
           <a href="#docker" data-nav="docker" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Docker Ops</a>
+          <a href="#command-center" data-nav="command-center" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Command Center</a>
           <a href="#stack" data-nav="stack" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Stack Matrix</a>
           <a href="#roadmap" data-nav="roadmap" class="nav-link rounded-lg px-3 py-2 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">Roadmap</a>
         </nav>
@@ -286,6 +287,7 @@
           <a href="#blueprint" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Blueprint</a>
           <a href="#network" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Network Hub</a>
           <a href="#docker" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Docker Ops</a>
+          <a href="#command-center" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Command Center</a>
           <a href="#stack" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Stack Matrix</a>
           <a href="#roadmap" class="rounded-lg border border-zinc-200 px-3 py-2 font-semibold text-zinc-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 dark:border-zinc-700 dark:text-zinc-200">Roadmap</a>
         </div>
@@ -697,6 +699,73 @@ flowchart LR
         </div>
       </section>
 
+      <section id="command-center" class="scroll-mt-28">
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Interactive Operations Center</p>
+        <h2 class="boardroom-section mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Command Center</h2>
+
+        <div class="mt-6 grid gap-4 lg:grid-cols-3">
+          <article class="interactive rounded-2xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Deployment</h3>
+                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Launch full stack with fresh images and service graph orchestration.</p>
+              </div>
+              <i data-lucide="rocket" class="h-5 w-5 text-cyan-500"></i>
+            </div>
+            <pre class="mt-4 overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs dark:border-zinc-800 dark:bg-zinc-950/70"><code>docker compose up -d --build</code></pre>
+            <button
+              type="button"
+              data-copy-value="docker compose up -d --build"
+              class="mt-4 inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-100 px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              aria-label="Copy deploy command"
+            >
+              <i data-lucide="copy" class="h-4 w-4"></i>
+              <span data-copy-label>Copy Command</span>
+            </button>
+          </article>
+
+          <article class="interactive rounded-2xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Observation</h3>
+                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Tail live logs across services for health, startup, and incident triage.</p>
+              </div>
+              <i data-lucide="activity" class="h-5 w-5 text-cyan-500"></i>
+            </div>
+            <pre class="mt-4 overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs dark:border-zinc-800 dark:bg-zinc-950/70"><code>docker compose logs -f</code></pre>
+            <button
+              type="button"
+              data-copy-value="docker compose logs -f"
+              class="mt-4 inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-100 px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              aria-label="Copy logs command"
+            >
+              <i data-lucide="copy" class="h-4 w-4"></i>
+              <span data-copy-label>Copy Command</span>
+            </button>
+          </article>
+
+          <article class="interactive rounded-2xl border border-zinc-200/80 bg-white/85 p-5 shadow-glass glass dark:border-zinc-800 dark:bg-zinc-900/70">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Teardown & Clean</h3>
+                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300">Stop services and remove named volumes for a fully clean local reset.</p>
+              </div>
+              <i data-lucide="trash-2" class="h-5 w-5 text-cyan-500"></i>
+            </div>
+            <pre class="mt-4 overflow-x-auto rounded-xl border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs dark:border-zinc-800 dark:bg-zinc-950/70"><code>docker compose down -v</code></pre>
+            <button
+              type="button"
+              data-copy-value="docker compose down -v"
+              class="mt-4 inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-100 px-3 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+              aria-label="Copy teardown command"
+            >
+              <i data-lucide="copy" class="h-4 w-4"></i>
+              <span data-copy-label>Copy Command</span>
+            </button>
+          </article>
+        </div>
+      </section>
+
       <section id="stack" class="scroll-mt-28">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">Tech Stack Matrix</p>
         <h2 class="boardroom-section mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Technology choices and technical justification</h2>
@@ -1005,6 +1074,57 @@ flowchart LR
           });
         }
 
+        function copyText(value) {
+          if (navigator.clipboard && window.isSecureContext) {
+            return navigator.clipboard.writeText(value);
+          }
+          return new Promise(function (resolve, reject) {
+            var ta = document.createElement("textarea");
+            ta.value = value;
+            ta.setAttribute("readonly", "");
+            ta.style.position = "absolute";
+            ta.style.left = "-9999px";
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+              var ok = document.execCommand("copy");
+              document.body.removeChild(ta);
+              if (ok) resolve();
+              else reject(new Error("copy failed"));
+            } catch (e) {
+              document.body.removeChild(ta);
+              reject(e);
+            }
+          });
+        }
+
+        function setupCopyButtons() {
+          document.querySelectorAll("[data-copy-value]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var value = btn.getAttribute("data-copy-value");
+              var labelNode = btn.querySelector("[data-copy-label]");
+              if (!value || !labelNode) return;
+              var original = labelNode.textContent;
+
+              copyText(value)
+                .then(function () {
+                  labelNode.textContent = "Copied";
+                  btn.classList.add("ring-2", "ring-cyan-500");
+                  setTimeout(function () {
+                    labelNode.textContent = original;
+                    btn.classList.remove("ring-2", "ring-cyan-500");
+                  }, 1400);
+                })
+                .catch(function () {
+                  labelNode.textContent = "Copy Failed";
+                  setTimeout(function () {
+                    labelNode.textContent = original;
+                  }, 1600);
+                });
+            });
+          });
+        }
+
         document.addEventListener("DOMContentLoaded", function () {
           lucide.createIcons();
 
@@ -1013,6 +1133,7 @@ flowchart LR
 
           setupNavObserver();
           setupDiagramControls();
+          setupCopyButtons();
 
           document.getElementById("themeToggle").addEventListener("click", function () {
             var isDark = document.documentElement.classList.contains("dark");

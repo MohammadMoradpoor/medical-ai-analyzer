@@ -74,6 +74,40 @@ flowchart TD
 - Chat supports both **request/response** and **SSE streaming** modes.
 - Frontend uses typed API wrappers and shared contexts for auth, transitions, and report cache.
 
+### Dashboard Diagram Sync (README + HTML Parity)
+#### System Architecture
+```mermaid
+flowchart TB
+    U[User Browser] --> EDGE[CDN / Edge]
+    EDGE --> LB[Load Balancer]
+    LB --> FE[Frontend Service :3333]
+    LB --> API[Backend API :5000]
+    FE <--> API
+    API --> DB[(MySQL :3306)]
+    API --> CACHE[(Redis :6379)]
+    API --> STORE[(Object Storage)]
+    API --> AI[OpenAI APIs]
+```
+
+#### Data Flow & Control
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant FE as Frontend
+    participant API as Backend
+    participant PIPE as AI Pipeline
+    participant DB as Database
+
+    C->>FE: Upload report
+    FE->>API: POST /reports/upload
+    API->>DB: Create pending report
+    API->>PIPE: Classify + extract + analyze
+    PIPE-->>API: Structured result
+    API->>DB: Persist final findings
+    FE->>API: Poll/Stream status
+    API-->>FE: Completed payload
+```
+
 ## Getting Started
 ### Prerequisites
 - Python `3.10+`
@@ -168,36 +202,48 @@ Stop and remove persistent volumes:
 docker compose down -v
 ```
 
-### Docker Network Isolation (Runtime Topology)
+### Command Center (Synced with HTML)
+```bash
+# Deployment
+docker compose up -d --build
+
+# Observation
+docker compose logs -f
+
+# Teardown & Clean
+docker compose down -v
+```
+
+### Compose Runtime Topology
 ```mermaid
 flowchart LR
-    subgraph HOST[Developer Host]
-      BROWSER[Browser :3333/:5000]
+    subgraph HOST[Host Machine]
+      BR[Browser and CLI]
     end
 
-    subgraph NET[bridge network: app-net]
-      FE[frontend\nNext.js :3333]
-      BE[backend\nFastAPI :5000]
-      DB[(db\nMySQL :3306)]
-      REDIS[(redis\nRedis :6379)]
+    subgraph NET[Docker Bridge Network: app-net]
+      FE[frontend :3333]
+      BE[backend :5000]
+      DB[(db :3306)]
+      RC[(redis :6379)]
     end
 
-    subgraph VOLUMES[Named Volumes]
-      V1[(mysql_data)]
-      V2[(redis_data)]
-      V3[(backend_uploads)]
-      V4[(backend_logs)]
+    subgraph VOLS[Persistent Volumes]
+      VDB[(mysql_data)]
+      VRD[(redis_data)]
+      VUP[(backend_uploads)]
+      VLG[(backend_logs)]
     end
 
-    BROWSER -->|HTTP| FE
-    BROWSER -->|HTTP| BE
-    FE -->|API calls| BE
-    BE -->|SQLAlchemy| DB
-    BE -. optional cache .-> REDIS
-    DB --- V1
-    REDIS --- V2
-    BE --- V3
-    BE --- V4
+    BR -->|http://localhost:3333| FE
+    BR -->|http://localhost:5000| BE
+    FE -->|NEXT_PUBLIC_API_URL| BE
+    BE -->|mysql+pymysql://...@db:3306| DB
+    BE -. optional cache path .-> RC
+    DB --- VDB
+    RC --- VRD
+    BE --- VUP
+    BE --- VLG
 ```
 
 ### Service Mesh Table (Ports + Health)
